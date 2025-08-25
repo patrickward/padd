@@ -5,9 +5,26 @@
         <header class="margin-start-5xl">
             <div class="split align-center">
                 <h1>{{.CurrentFile.Display}}</h1>
-                {{if .CanEdit}}
-                    <a href="/edit/{{.CurrentFile.ID}}" class="btn outline size-2xs">Edit</a>
-                {{end}}
+                <div class="cluster gap-2xs">
+                    {{if eq .CurrentFile.Name "daily.md"}}
+                        <button command="show-modal" commandfor="entry-modal-daily" class="primary outline size-xs">
+                            Daily Entry
+                        </button>
+                    {{else if eq .CurrentFile.Name "inbox.md"}}
+                        <button command="show-modal" commandfor="entry-modal-ideas" class="primary outline size-xs">Add
+                            Idea
+                        </button>
+                        <button command="show-modal" commandfor="entry-modal-task" class="primary outline size-xs">Add
+                            Task
+                        </button>
+                        <button command="show-modal" commandfor="entry-modal-quick" class="primary outline size-xs">
+                            Quick Capture
+                        </button>
+                    {{end}}
+                    {{if .CanEdit}}
+                        <a href="/edit/{{.CurrentFile.ID}}" class="btn outline size-2xs">Edit</a>
+                    {{end}}
+                </div>
             </div>
         </header>
 
@@ -16,9 +33,11 @@
         <kelp-toc target="#content-display"></kelp-toc>
 
         {{if eq .CurrentFile.Name "daily.md"}}
-            {{template "add-entry" (dict "Title" "Add Daily Entry" "Action" "/daily" "Placeholder" "What did you do?")}}
+            {{template "entry-modal" (dict "ID" "daily" "Title" "Add Daily Entry" "Action" "/daily" "Placeholder" "What did you do?")}}
         {{else if eq .CurrentFile.Name "inbox.md"}}
-            {{template "add-entry" (dict "Title" "Add to Inbox" "Action" "/inbox/add" "Placeholder" "What do you need to remember?")}}
+            {{template "entry-modal" (dict "ID" "ideas" "Title" "Add Idea" "Action" "/inbox/add" "Placeholder" "What's your idea?" "Header" "Ideas")}}
+            {{template "entry-modal" (dict "ID" "quick" "Title" "Quick Capture" "Action" "/inbox/add" "Placeholder" "What's on your mind?")}}
+            {{template "entry-modal" (dict "ID" "task" "Title" "Add Task" "Action" "/inbox/add" "Placeholder" "What's the task?" "Header" "Tasks")}}
         {{end}}
 
         <div id="content-display" class="content-display">
@@ -27,20 +46,15 @@
     </article>
 {{end}}
 
-{{define "add-entry"}}
-    <div class="margin-start-xl">
-        <details>
-            <summary>
-                <strong>{{.Title}}</strong>
-            </summary>
-            <form action="{{.Action}}" method="post">
-                <label for="entry" class="visually-hidden">{{.Title}}</label>
-                <kelp-autogrow>
-                    <textarea id="entry" name="entry" rows="3" placeholder="{{.Placeholder}}" required
-                              autofocus></textarea>
-                </kelp-autogrow>
-                <button type="submit" class="margin-start-2xs">Add Entry</button>
-            </form>
-        </details>
-    </div>
+{{define "entry-modal"}}
+    <dialog id="entry-modal-{{.ID}}" closedby="any">
+        <form action="{{.Action}}" method="post">
+            <input type="hidden" name="section_header" value="{{.Header}}">
+            <label for="entry" class="visually-hidden">{{.Title}}</label>
+            <kelp-autogrow>
+                <textarea id="entry" name="entry" rows="3" placeholder="{{.Placeholder}}" required autofocus></textarea>
+            </kelp-autogrow>
+            <button type="submit" class="margin-start-3xs primary">{{.Title}}</button>
+        </form>
+    </dialog>
 {{end}}

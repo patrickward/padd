@@ -69,16 +69,18 @@ func (s *Server) handleAddEntry(w http.ResponseWriter, r *http.Request, config E
 
 // insertIntoSection handles insertion under specific ## headers
 func (s *Server) insertIntoSection(lines []string, formattedEntry string, config SectionInsertionConfig) []string {
-	// Find the target section
+	// Find the target section (normalize whitespace for comparison)
 	sectionStartIdx := -1
 	sectionEndIdx := len(lines)
+	targetHeader := strings.TrimSpace(config.SectionHeader)
 
 	for i, line := range lines {
-		if line == config.SectionHeader {
+		normalizedLine := strings.TrimSpace(line)
+		if normalizedLine == targetHeader {
 			sectionStartIdx = i
 			// Find the end of this section (next ## header or end of file)
 			for j := i + 1; j < len(lines); j++ {
-				if strings.HasPrefix(lines[j], "## ") {
+				if strings.HasPrefix(strings.TrimSpace(lines[j]), "## ") {
 					sectionEndIdx = j
 					break
 				}

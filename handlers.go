@@ -124,12 +124,20 @@ func (s *Server) handleDaily(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleInboxAdd(w http.ResponseWriter, r *http.Request) {
+	var header string
+	// Look for a header field from the form. If not found, use "## Quick Capture"
+	if h := r.FormValue("section_header"); h != "" {
+		header = "## " + strings.TrimSpace(h)
+	} else {
+		header = "## Quick Capture"
+	}
+
 	config := EntryConfig{
 		FileName:       "inbox.md",
 		RedirectPath:   "/inbox",
 		EntryFormatter: s.inboxEntryFormatter,
 		SectionConfig: &SectionInsertionConfig{
-			SectionHeader:   "## Quick Capture",
+			SectionHeader:   header,
 			CreateIfMissing: true,
 			InsertAtTop:     true,
 			BlankLineAfter:  false,
