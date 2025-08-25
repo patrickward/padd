@@ -30,7 +30,9 @@
 
         <hr>
 
-        <kelp-toc target="#content-display"></kelp-toc>
+        <div class="margin-end-xl">
+            <kelp-toc target="#content-display"></kelp-toc>
+        </div>
 
         {{if eq .CurrentFile.Name "daily.md"}}
             {{template "entry-modal" (dict "ID" "daily" "Title" "Add Daily Entry" "Action" "/daily" "Placeholder" "What did you do?")}}

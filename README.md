@@ -2,6 +2,10 @@
 
 A simple, local, markdown-based personal information system for capturing and organizing thoughts, tasks, and knowledge. PADD serves as a personal command center for managing daily workflow and information.
 
+### Why?
+
+I needed a simple, distraction-free way to capture and organize my notes, tasks, and ideas without relying on complex software or cloud services. Plus, I needed an excuse to practice with Go and the KelpUI css framework.
+
 ## Core Concepts
 
 PADD uses a simple capture → process → execute → store workflow with three core files and a resources directory:
