@@ -52,7 +52,7 @@ tidy:
 ## build: build the padd application
 .PHONY: build
 build:
-	go build -o=/tmp/bin/padd ./main.go
+	go build -o=/tmp/bin/padd ./...
 
 ## run: run the padd application
 .PHONY: run

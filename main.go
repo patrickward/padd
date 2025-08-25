@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +22,10 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
-const appName = "PADD"
+const (
+	appName      = "PADD"
+	resourcesDir = "resources"
+)
 
 //go:embed templates/*
 var templateFS embed.FS
@@ -31,6 +35,7 @@ var staticFS embed.FS
 
 type Server struct {
 	dataDir       string
+	dirManager    *DirectoryManager
 	md            goldmark.Markdown
 	baseTempl     *template.Template // Common templates (layouts, partials)
 	resourceCache []FileInfo
@@ -89,8 +94,8 @@ var filesMap = map[string]FileInfo{
 }
 
 func NewServer(dataDir string) (*Server, error) {
-	// Ensure data directory exists
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	dirManager, err := NewDirectoryManager(dataDir)
+	if err != nil {
 		return nil, err
 	}
 
@@ -126,14 +131,14 @@ func NewServer(dataDir string) (*Server, error) {
 	}
 
 	s := &Server{
-		dataDir:   dataDir,
-		md:        md,
-		baseTempl: tmpl,
+		dataDir:    dataDir,
+		dirManager: dirManager,
+		md:         md,
+		baseTempl:  tmpl,
 	}
 
-	// Initialize files if they don't exist
 	s.initializeFiles()
-	s.refreshResourceCache() // Initial cache population
+	s.refreshResourceCache()
 	go s.backgroundCacheRefresh()
 
 	return s, nil
@@ -167,7 +172,7 @@ func (s *Server) refreshResourceCache() {
 
 	s.resourceCache = s.scanResourceFiles("")
 	s.lastCacheTime = time.Now()
-	log.Printf("Resource cache refreshed with %d files", len(s.resourceCache))
+	//log.Printf("Resource cache refreshed with %d files", len(s.resourceCache))
 }
 
 func (s *Server) backgroundCacheRefresh() {
@@ -194,9 +199,9 @@ func (s *Server) initializeFiles() {
 	}
 
 	for file, content := range defaults {
-		path := filepath.Join(s.dataDir, file)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			_ = os.WriteFile(path, []byte(content), 0644)
+		if err := s.dirManager.CreateFileIfNotExists(file, content); err != nil {
+			log.Printf("Error creating default file %s: %v", file, err)
+			continue
 		}
 	}
 }
@@ -260,66 +265,57 @@ func (s *Server) buildDirectoryTree(files []FileInfo) *DirectoryNode {
 }
 
 func (s *Server) scanResourceFiles(current string) []FileInfo {
-	var files []FileInfo
-	resourceDir := filepath.Join(s.dataDir, "resources")
-
 	// Create the resources directory if it doesn't exist
-	if err := os.MkdirAll(resourceDir, 0755); err != nil {
-		return files
+	if err := s.dirManager.MkdirAll(resourcesDir, 0755); err != nil {
+		log.Printf("Error creating resources directory: %v", err)
+		return []FileInfo{}
 	}
 
-	// Walk through the resources directory and list markdown files
-	err := filepath.Walk(resourceDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil // Continue walking despite errors for now
-		}
-
-		if !info.IsDir() && strings.HasSuffix(info.Name(), ".md") {
-			relPath, err := filepath.Rel(s.dataDir, path)
-			if err != nil {
-				return nil
-			}
-
-			// Create ID from relative path (replace separators)
-			id := strings.ReplaceAll(relPath, string(filepath.Separator), "_")
-			id = strings.TrimSuffix(id, ".md")
-
-			// Extract directory info
-			pathWithoutPrefix := strings.TrimPrefix(relPath, "resources/")
-			dir := filepath.Dir(pathWithoutPrefix)
-			if dir == "." {
-				dir = "" // Root of resources
-			}
-
-			// Calculate depth
-			depth := 0
-			if dir != "" {
-				depth = strings.Count(dir, string(filepath.Separator)) + 1
-			}
-
-			// Create display name
-			display := s.createDisplayName(relPath)
-			displayBase := strings.TrimSuffix(info.Name(), ".md")
-			displayBase = strings.ReplaceAll(displayBase, "-", " ")
-			displayBase = strings.ReplaceAll(displayBase, "_", " ")
-			//goland:noinspection GoDeprecation
-			displayBase = strings.Title(displayBase)
-
-			files = append(files, FileInfo{
-				ID:          id,
-				Name:        relPath,
-				Display:     display,
-				DisplayBase: displayBase,
-				IsCurrent:   relPath == current,
-				Directory:   dir,
-				Depth:       depth,
-			})
-		}
-		return nil
+	results, err := s.dirManager.Scan(resourcesDir, func(path string, d fs.DirEntry) bool {
+		return !d.IsDir() && strings.HasSuffix(d.Name(), ".md")
 	})
 
 	if err != nil {
-		log.Printf("Error walking resource directory: %v", err)
+		log.Printf("Error scanning resources directory: %v", err)
+		return []FileInfo{}
+	}
+
+	var files []FileInfo
+	for _, result := range results {
+		// Create ID from relative path (replace separators)
+		id := strings.ReplaceAll(result.Path, string(filepath.Separator), "_")
+		id = strings.TrimSuffix(id, ".md")
+
+		// Extract directory info
+		pathWithoutPrefix := strings.TrimPrefix(result.Path, resourcesDir+"/")
+		dir := filepath.Dir(pathWithoutPrefix)
+		if dir == "." {
+			dir = "" // Root of resources
+		}
+
+		// Calculate depth
+		depth := 0
+		if dir != "" {
+			depth = strings.Count(dir, string(filepath.Separator)) + 1
+		}
+
+		// Create display name
+		display := s.createDisplayName(result.Path)
+		displayBase := strings.TrimSuffix(filepath.Base(result.Name), ".md")
+		displayBase = strings.ReplaceAll(displayBase, "-", " ")
+		displayBase = strings.ReplaceAll(displayBase, "_", " ")
+		//goland:noinspection GoDeprecation
+		displayBase = strings.Title(displayBase)
+
+		files = append(files, FileInfo{
+			ID:          id,
+			Name:        result.Path,
+			Display:     display,
+			DisplayBase: displayBase,
+			IsCurrent:   result.Path == current,
+			Directory:   dir,
+			Depth:       depth,
+		})
 	}
 
 	// Sort files alphabetically by display name for consistency
@@ -351,7 +347,7 @@ func (s *Server) scanResourceFiles(current string) []FileInfo {
 
 func (s *Server) createDisplayName(relPath string) string {
 	// Remove the "resources/" prefix and ".md" suffix
-	pathWithoutPrefix := strings.TrimPrefix(relPath, "resources/")
+	pathWithoutPrefix := strings.TrimPrefix(relPath, resourcesDir+"/")
 	pathWithoutSuffix := strings.TrimSuffix(pathWithoutPrefix, ".md")
 
 	// Split into directory parts
@@ -377,11 +373,8 @@ func (s *Server) isValidFile(fileName string) bool {
 		}
 	}
 
-	if strings.HasPrefix(fileName, "resources/") && strings.HasSuffix(fileName, ".md") {
-		fullPath := filepath.Join(s.dataDir, fileName)
-		if _, err := os.Stat(fullPath); err == nil {
-			return true
-		}
+	if strings.HasPrefix(fileName, resourcesDir+"/") && strings.HasSuffix(fileName, ".md") {
+		return s.dirManager.Exists(fileName)
 	}
 
 	return false
@@ -474,7 +467,7 @@ func (s *Server) getFileInfo(id string) FileInfo {
 
 func (s *Server) searchFile(file FileInfo, query string) []SearchMatch {
 	var matches []SearchMatch
-	content, err := os.ReadFile(filepath.Join(s.dataDir, file.Name))
+	content, err := s.dirManager.ReadFile(file.Name)
 	if err != nil {
 		return matches
 	}
@@ -508,13 +501,13 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := os.ReadFile(filepath.Join(s.dataDir, file.Name))
+	content, err := s.dirManager.ReadFile(file.Name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Get search query and match parameters
+	// Get the search query and match parameters
 	searchQuery := strings.TrimSpace(r.URL.Query().Get("q"))
 	var searchMatch int
 	if matchStr := r.URL.Query().Get("match"); matchStr != "" {
@@ -568,7 +561,7 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := os.ReadFile(filepath.Join(s.dataDir, file.Name))
+	content, err := s.dirManager.ReadFile(file.Name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -597,9 +590,7 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	content := r.FormValue("content")
-	filePath := filepath.Join(s.dataDir, file.Name)
-
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+	if err := s.dirManager.WriteString(file.Name, content); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -619,9 +610,8 @@ func (s *Server) handleDaily(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Read existing daily file
-	dailyPath := filepath.Join(s.dataDir, "daily.md")
-	existingContent, err := os.ReadFile(dailyPath)
+	dailyFile := "daily.md"
+	existingContent, err := s.dirManager.ReadFile(dailyFile)
 	if err != nil {
 		existingContent = []byte("# Daily Log\n\n")
 	}
@@ -674,9 +664,8 @@ func (s *Server) handleDaily(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Write back to file
 	updatedContent := strings.Join(result, "\n")
-	if err := os.WriteFile(dailyPath, []byte(updatedContent), 0644); err != nil {
+	if err := s.dirManager.WriteString(dailyFile, updatedContent); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -773,17 +762,17 @@ func main() {
 	var addr string
 	var dataFlag string
 
-	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	fs.StringVar(&dataFlag, "data", "", "Directory to store markdown files.")
-	fs.IntVar(&port, "port", 8080, "Port to run the server on.")
-	fs.StringVar(&addr, "addr", "localhost", "Address to bind the server to.")
+	flagSet := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	flagSet.StringVar(&dataFlag, "data", "", "Directory to store markdown files.")
+	flagSet.IntVar(&port, "port", 8080, "Port to run the server on.")
+	flagSet.StringVar(&addr, "addr", "localhost", "Address to bind the server to.")
 
-	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "PADD - Personal Assistant for Daily Documentation\n\n")
-		fs.PrintDefaults()
+	flagSet.Usage = func() {
+		_, _ = fmt.Fprintf(flagSet.Output(), "PADD - Personal Assistant for Daily Documentation\n\n")
+		flagSet.PrintDefaults()
 	}
 
-	err := fs.Parse(os.Args[1:])
+	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
 		log.Fatal(fmt.Errorf("error parsing flags: %v", err))
 	}
