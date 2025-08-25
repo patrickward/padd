@@ -1,0 +1,48 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <article class="margin-end-6xl">
+        <header class="margin-start-5xl">
+            <div class="split align-center">
+                <h1>Resources</h1>
+            </div>
+        </header>
+
+        <hr>
+
+        <!-- List all Resource Files hierarchically -->
+        <section class="margin-start-5xl">
+            <p class="callout">
+                Below is a hierarchical listing of all resource files available in the system.
+                Click on any file to view its contents.
+            </p>
+
+            {{if .ResourceTree}}
+                {{template "directoryTree" .ResourceTree}}
+            {{else}}
+                <p>No resource files available.</p>
+            {{end}}
+        </section>
+
+    </article>
+{{end}}
+
+{{define "directoryTree"}}
+    <div class="resource-listing">
+    <ul class="">
+        {{/* First, display files in this directory */}}
+        {{range .Files}}
+            <li>
+                <a href="/{{.ID}}">{{.DisplayBase}}</a>
+            </li>
+        {{end}}
+
+        {{/* Then, display subdirectories */}}
+        {{range $dirName, $dirNode := .Directories}}
+            <li>
+                <strong>{{$dirName}}/</strong>
+                {{template "directoryTree" $dirNode}}
+            </li>
+        {{end}}
+    </ul>
+{{end}}

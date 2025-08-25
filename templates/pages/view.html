@@ -1,0 +1,39 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <article class="margin-end-6xl">
+        <header class="margin-start-5xl">
+            <div class="split align-center">
+                <h1>{{.CurrentFile.Display}}</h1>
+                {{if .CanEdit}}
+                    <a href="/edit/{{.CurrentFile.ID}}" class="btn outline size-2xs">Edit</a>
+                {{end}}
+            </div>
+        </header>
+
+        <hr>
+
+        <!-- Daily Entry Form (above content for daily.md) -->
+        {{if eq .CurrentFile.Name "daily.md"}}
+            <details>
+                <summary>
+                    <strong>Add Daily Entry</strong>
+                </summary>
+                <form action="/daily" method="post">
+                    <label for="entry" class="visually-hidden">Add Daily Entry</label>
+                    <kelp-autogrow>
+                        <textarea id="entry" name="entry" rows="3" placeholder="What did you do?" required
+                                  autofocus></textarea>
+                    </kelp-autogrow>
+                    <button type="submit" class="margin-start-2xs">Add Entry</button>
+                </form>
+            </details>
+        {{end}}
+
+        <kelp-toc target="#content-display"></kelp-toc>
+
+        <div id="content-display" class="content-display">
+            {{.Content}}
+        </div>
+    </article>
+{{end}}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+
+    <link rel="icon" type="image/png" href="/static/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="shortcut icon" href="/static/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="PADD" />
+    <link rel="manifest" href="/static/site.webmanifest" />
+
+    <link rel="stylesheet" href="/static/kelp.css">
+    <link rel="stylesheet" href="/static/app.css">
+
+    <script src="/static/dark-mode-auto.js"></script>
+</head>
+<body>
+    {{template "navbar.html" .}}
+
+    <main class="container-l">
+        {{template "message.html" .}}
+        {{block "content" .}}{{end}}
+    </main>
+
+    {{template "footer.html" .}}
+
+    <!-- Optional: Add Alpine.js for interactivity -->
+    <!-- <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script> -->
+
+    <script src="/static/kelp.js"></script>
+
+    <!-- Optional: Minimal JS for keyboard shortcuts and line highlighting -->
+    <script>
+      document.addEventListener('keydown', function (e) {
+        // Ctrl+K to focus search
+        if (e.ctrlKey && e.key === 'k') {
+          e.preventDefault()
+          document.querySelector('input[name="q"]').focus()
+        }
+        // Ctrl+E to edit (when viewing)
+        if (e.ctrlKey && e.key === 'e' && !document.querySelector('.editor')) {
+          const editBtn = document.querySelector('a[href*="/edit"]')
+          if (editBtn) {
+            e.preventDefault()
+            editBtn.click()
+          }
+        }
+      })
+
+      // Auto-scroll to search match if present
+      document.addEventListener('DOMContentLoaded', function () {
+        const searchMatch = {{.SearchMatch}};
+        if (searchMatch > 0) {
+          const targetElement = document.getElementById('search-match-' + searchMatch)
+          if (targetElement) {
+            // Scroll to the element
+            setTimeout(() => {
+              targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+              })
+            }, 200) // Delay to ensure rendering is complete
+          }
+        }
+      })
+    </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+/**
+ * Kelp UI - Custom Theme
+ * https://kelpui.com/docs/tools/theme-builder/?palette_gray=%236b7280_264.36_0.11680448469450902&color_primary=indigo&color_secondary=pink&element_links=primary&element_focus=primary
+ */
+@layer kelp.theme {
+
+    :where(:root) {
+
+        /* Color Palette */
+        --color-gray-base: #6b7280;
+        --color-gray-hue: 264.36;
+        --color-gray-chroma: 0.11680448469450902;
+
+    }
+
+    /* Light Theme (default) */
+    :where(:root),
+    .kelp-theme-light {
+
+        /* Fills & Borders */
+        --color-primary-fill-muted: var(--color-indigo-95);
+        --color-primary-fill-accent: var(--color-indigo-90);
+        --color-primary-fill-vivid: var(--color-indigo-50);
+        --color-primary-border-muted: var(--color-indigo-90);
+        --color-primary-border-accent: var(--color-indigo-80);
+        --color-primary-border-vivid: var(--color-indigo-60);
+        --color-primary-on-muted: var(--color-indigo-30);
+        --color-primary-on-accent: var(--color-indigo-20);
+        --color-primary-on-vivid: white;
+        --color-primary-outline: var(--color-indigo-50);
+        --color-secondary-fill-muted: var(--color-pink-95);
+        --color-secondary-fill-accent: var(--color-pink-90);
+        --color-secondary-fill-vivid: var(--color-pink-50);
+        --color-secondary-border-muted: var(--color-pink-90);
+        --color-secondary-border-accent: var(--color-pink-80);
+        --color-secondary-border-vivid: var(--color-pink-60);
+        --color-secondary-on-muted: var(--color-pink-30);
+        --color-secondary-on-accent: var(--color-pink-20);
+        --color-secondary-on-vivid: white;
+        --color-secondary-outline: var(--color-pink-50);
+
+        /* Links & Focus */
+        --color-text-link: var(--color-indigo-50);
+        --color-text-link-hover: var(--color-indigo-40);
+        --color-checked: var(--color-indigo-50);
+        --focus-ring-color: var(--color-indigo-50);
+
+    }
+
+    /* Dark Theme */
+    .kelp-theme-dark {
+
+        /* Fills & Borders */
+        --color-primary-fill-muted: var(--color-indigo-20);
+        --color-primary-fill-accent: var(--color-indigo-30);
+        --color-primary-border-muted: var(--color-indigo-30);
+        --color-primary-border-accent: var(--color-indigo-40);
+        --color-primary-on-muted: var(--color-indigo-95);
+        --color-primary-on-accent: var(--color-indigo-95);
+        --color-primary-outline: var(--color-indigo-70);
+        --color-secondary-fill-muted: var(--color-pink-20);
+        --color-secondary-fill-accent: var(--color-pink-30);
+        --color-secondary-border-muted: var(--color-pink-30);
+        --color-secondary-border-accent: var(--color-pink-40);
+        --color-secondary-on-muted: var(--color-pink-95);
+        --color-secondary-on-accent: var(--color-pink-95);
+        --color-secondary-outline: var(--color-pink-70);
+
+        /* Links & Focus */
+        --color-text-link: var(--color-indigo-70);
+        --color-text-link-hover: var(--color-indigo-80);
+        --color-checked: var(--color-indigo-60);
+        --focus-ring-color: var(--color-indigo-60);
+
+    }
+
+}
+
+@layer kelp.extend {
+    .navbar a.active {
+        --decoration-hover: none;
+        --color: var(--color-primary-on-muted);
+        --color-hover: var(--color-primary-on-muted);
+        background-color: #ffffff;
+        padding: var(--size-6xs) var(--size-4xs);
+        border-radius: var(--border-radius-s);
+        &:hover {
+            background-color: var(--color-primary-fill-muted);
+        }
+    }
+
+    .navbar details[name="subnav"] ul {
+        --color-background: var(--color-primary-fill-vivid);
+        --border-color: var(--color-primary-border-vivid);
+    }
+
+    .search-match {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        border-left: 3px solid var(--color-primary-border-vivid);
+    }
+
+    .search-match p {
+        display: inline;
+        margin: 0;
+        padding: 0;
+        white-space: pre-wrap;
+    }
+
+    .content-display {
+        min-height: 400px;
+    }
+
+    /* Task list styling */
+    input[type="checkbox"][disabled] {
+        cursor: default;
+    }
+
+    .navbar-form {
+        flex-grow: 1;
+    }
+
+    .navbar-form-item {
+        flex-grow: 1;
+        max-width: 500px;
+    }
+
+    .search-highlight {
+        background-color: var(--highlight-bg, var(--color-primary-fill-muted));
+        color: var(--highlight-color, var(--color-primary-on-muted));
+        padding: var(--size-6xs) var(--size-5xs);
+        border-radius: var(--border-radius-s);
+        animation: var(--highlight-animation, highlight-pulse 2s ease-in-out);
+    }
+
+    .search-target {
+        --highlight-bg: var(--color-secondary-fill-muted);
+        --highlight-color: var(--color-secondary-on-muted);
+        --highlight-animation: highlight-pulse-target 2s ease-in-out;
+    }
+
+    @keyframes highlight-pulse {
+        0% {
+            background-color: var(--color-primary-fill-muted);
+        }
+        50% {
+            background-color: var(--color-primary-fill-accent);
+        }
+    }
+
+    @keyframes highlight-pulse-target {
+        0% {
+            background-color: var(--color-secondary-fill-muted);
+        }
+        50% {
+            background-color: var(--color-secondary-fill-accent);
+        }
+    }
+}

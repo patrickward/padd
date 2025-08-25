@@ -1,0 +1,27 @@
+<div class="fill primary vivid">
+    <header class="container-xl margin-end-m">
+        <nav class="navbar" aria-label="Main navigation">
+            <a href="/" class="logo xflexbox xalign-center">PADD</a>
+            <ul>
+                {{range .CoreFiles}}
+                    <li>
+                        <a href="/{{.ID}}" {{if .IsCurrent}}class="active"{{end}}>{{.Display}}</a>
+                    </li>
+                {{end}}
+                <li>
+                    <a href="/resources" {{if .IsResources}}class="active"{{end}}>Resources</a>
+                </li>
+            </ul>
+            <ul class="navbar-form">
+                <li class="navbar-form-item">
+                    <form action="/search" method="get" class="foo justify-start">
+                        <label for="q" class="visually-hidden">Search</label>
+                        <input type="text" id="q" name="q" placeholder="Search across all files..."
+                               value="{{.SearchQuery}}"
+                               autofocus>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </header>
+</div>
