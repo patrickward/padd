@@ -45,7 +45,6 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 		RawContent:    string(content),
 		CoreFiles:     s.getCoreFiles(file.Name),
 		ResourceFiles: s.getResourceFiles(file.Name),
-		CanEdit:       file.Name != "daily.md",
 		SearchQuery:   searchQuery,
 		SearchMatch:   searchMatch,
 	}
@@ -72,7 +71,7 @@ func (s *Server) handleRefreshCache(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 	file := s.getFileInfo(r.PathValue("id"))
 
-	if !s.isValidFile(file.Name) || file.Name == "daily.md" {
+	if !s.isValidFile(file.Name) {
 		http.Redirect(w, r, "/"+file.ID, http.StatusSeeOther)
 		return
 	}
@@ -100,7 +99,7 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	file := s.getFileInfo(r.PathValue("id"))
 
-	if !s.isValidFile(file.Name) || file.Name == "daily.md" {
+	if !s.isValidFile(file.Name) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}

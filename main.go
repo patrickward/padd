@@ -68,7 +68,6 @@ type PageData struct {
 	IsEditing     bool
 	IsSearching   bool
 	IsResources   bool
-	CanEdit       bool
 	CoreFiles     []FileInfo
 	ResourceFiles []FileInfo
 	ResourceTree  *DirectoryNode
