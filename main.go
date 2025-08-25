@@ -119,7 +119,20 @@ func NewServer(dataDir string) (*Server, error) {
 	funcMap := template.FuncMap{
 		"contains": strings.Contains,
 		"toLower":  strings.ToLower,
-		"replace":  strings.ReplaceAll,
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+			if len(values)%2 != 0 {
+				return nil, fmt.Errorf("dict requires an even number of arguments")
+			}
+			dict := make(map[string]interface{}, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, fmt.Errorf("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
 	}
 
 	tmpl, err := template.New("").Funcs(funcMap).ParseFS(templateFS,
@@ -493,243 +506,6 @@ func (s *Server) searchFile(file FileInfo, query string) []SearchMatch {
 
 // Handlers
 
-func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
-	file := s.getFileInfo(r.PathValue("id"))
-
-	if !s.isValidFile(file.Name) {
-		http.Error(w, "Invalid file", http.StatusBadRequest)
-		return
-	}
-
-	content, err := s.dirManager.ReadFile(file.Name)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Get the search query and match parameters
-	searchQuery := strings.TrimSpace(r.URL.Query().Get("q"))
-	var searchMatch int
-	if matchStr := r.URL.Query().Get("match"); matchStr != "" {
-		_, _ = fmt.Sscanf(matchStr, "%d", &searchMatch)
-	}
-
-	// Render content with search highlighting if needed
-	var renderedContent template.HTML
-	if searchQuery != "" {
-		renderedContent = s.renderMarkdownWithHighlight(string(content), searchQuery, searchMatch)
-	} else {
-		renderedContent = s.renderMarkdown(string(content))
-	}
-
-	data := PageData{
-		Title:         file.Display + " - " + appName,
-		CurrentFile:   file,
-		Content:       renderedContent,
-		RawContent:    string(content),
-		CoreFiles:     s.getCoreFiles(file.Name),
-		ResourceFiles: s.getResourceFiles(file.Name),
-		CanEdit:       file.Name != "daily.md",
-		SearchQuery:   searchQuery,
-		SearchMatch:   searchMatch,
-	}
-
-	// Check for message in query params (after redirect from save/daily)
-	if msg := r.URL.Query().Get("msg"); msg != "" {
-		data.Message = msg
-		data.MessageType = r.URL.Query().Get("type")
-		if data.MessageType == "" {
-			data.MessageType = "success"
-		}
-	}
-
-	if err := s.executePage(w, "view.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (s *Server) handleRefreshCache(w http.ResponseWriter, r *http.Request) {
-	s.refreshResourceCache()
-	http.Redirect(w, r, "/resources", http.StatusSeeOther)
-}
-
-func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
-	file := s.getFileInfo(r.PathValue("id"))
-
-	if !s.isValidFile(file.Name) || file.Name == "daily.md" {
-		http.Redirect(w, r, "/"+file.ID, http.StatusSeeOther)
-		return
-	}
-
-	content, err := s.dirManager.ReadFile(file.Name)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	data := PageData{
-		Title:         "Edit - " + file.Display + " - " + appName,
-		CurrentFile:   file,
-		RawContent:    string(content),
-		IsEditing:     true,
-		CoreFiles:     s.getCoreFiles(file.Name),
-		ResourceFiles: s.getResourceFiles(file.Name),
-	}
-
-	if err := s.executePage(w, "edit.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
-	file := s.getFileInfo(r.PathValue("id"))
-
-	if !s.isValidFile(file.Name) || file.Name == "daily.md" {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-
-	content := r.FormValue("content")
-	if err := s.dirManager.WriteString(file.Name, content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/"+file.ID+"?msg=File saved successfully&type=success", http.StatusSeeOther)
-}
-
-func (s *Server) handleDaily(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/daily", http.StatusSeeOther)
-		return
-	}
-
-	entry := strings.TrimSpace(r.FormValue("entry"))
-	if entry == "" {
-		http.Redirect(w, r, "/daily?msg=Entry cannot be empty&type=danger", http.StatusSeeOther)
-		return
-	}
-
-	dailyFile := "daily.md"
-	existingContent, err := s.dirManager.ReadFile(dailyFile)
-	if err != nil {
-		existingContent = []byte("# Daily Log\n\n")
-	}
-
-	// Format new entry with seconds in timestamp
-	now := time.Now()
-	dateHeader := fmt.Sprintf("## %s", now.Format("2006-01-02"))
-	timeStamp := now.Format("15:04:05")
-	newEntry := fmt.Sprintf("- `%s` %s", timeStamp, entry)
-
-	// Parse existing content
-	lines := strings.Split(string(existingContent), "\n")
-	var result []string
-	dateFound := false
-
-	for _, line := range lines {
-		if line == dateHeader {
-			dateFound = true
-			result = append(result, line)
-			// Insert the new entry immediately after the date header
-			result = append(result, newEntry)
-		} else {
-			result = append(result, line)
-		}
-	}
-
-	// If date header wasn't found, add it at the top (after main header)
-	if !dateFound {
-		// Find where to insert (after the main header and any blank lines)
-		insertPos := 0
-		for i, line := range lines {
-			if strings.HasPrefix(line, "# ") {
-				insertPos = i + 1
-				// Skip blank lines after header
-				for insertPos < len(lines) && strings.TrimSpace(lines[insertPos]) == "" {
-					insertPos++
-				}
-				break
-			}
-		}
-
-		// Insert the new section
-		result = nil
-		result = append(result, lines[:insertPos]...)
-		result = append(result, dateHeader)
-		result = append(result, newEntry)
-		result = append(result, "") // blank line after section
-		if insertPos < len(lines) {
-			result = append(result, lines[insertPos:]...)
-		}
-	}
-
-	updatedContent := strings.Join(result, "\n")
-	if err := s.dirManager.WriteString(dailyFile, updatedContent); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	msg := fmt.Sprintf("Entry added at %s", now.Format("15:04:05"))
-	http.Redirect(w, r, "/daily?msg="+msg+"&type=success", http.StatusSeeOther)
-}
-
-func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
-	query := strings.TrimSpace(r.URL.Query().Get("q"))
-	if query == "" {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-
-	results := make(map[string][]SearchMatch)
-
-	// Search core files
-	for _, file := range filesMap {
-		if matches := s.searchFile(file, query); len(matches) > 0 {
-			results[file.ID] = matches
-		}
-	}
-
-	// Search resource files
-	resourceFiles := s.getResourceFiles("")
-	for _, file := range resourceFiles {
-		if matches := s.searchFile(file, query); len(matches) > 0 {
-			results[file.ID] = matches
-		}
-	}
-
-	data := PageData{
-		Title:         "Search Results - " + appName,
-		IsSearching:   true,
-		SearchQuery:   query,
-		SearchResults: results,
-		CoreFiles:     s.getCoreFiles(""),
-		ResourceFiles: s.getResourceFiles(""),
-	}
-
-	if err := s.executePage(w, "search.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-// handleResources shows a list of available resource files
-func (s *Server) handleResources(w http.ResponseWriter, r *http.Request) {
-	resourceFiles := s.getResourceFiles("")
-	resourceTree := s.buildDirectoryTree(resourceFiles)
-
-	data := PageData{
-		Title:         "Resources - " + appName,
-		CoreFiles:     s.getCoreFiles(""),
-		IsResources:   true,
-		ResourceFiles: resourceFiles,
-		ResourceTree:  resourceTree,
-	}
-
-	if err := s.executePage(w, "resources.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
 // Main function
 
 // getDataDirectory determines the data directory using a tiered approach:
@@ -800,6 +576,7 @@ func main() {
 	mux.HandleFunc("GET /edit/{id}", server.handleEdit)
 	mux.HandleFunc("POST /save/{id}", server.handleSave)
 	mux.HandleFunc("POST /daily", server.handleDaily)
+	mux.HandleFunc("POST /inbox/add", server.handleInboxAdd)
 	mux.HandleFunc("GET /search", server.handleSearch)
 	mux.HandleFunc("GET /resources", server.handleResources)
 	mux.HandleFunc("GET /{id}", server.handleView)

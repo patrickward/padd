@@ -13,27 +13,34 @@
 
         <hr>
 
-        <!-- Daily Entry Form (above content for daily.md) -->
-        {{if eq .CurrentFile.Name "daily.md"}}
-            <details>
-                <summary>
-                    <strong>Add Daily Entry</strong>
-                </summary>
-                <form action="/daily" method="post">
-                    <label for="entry" class="visually-hidden">Add Daily Entry</label>
-                    <kelp-autogrow>
-                        <textarea id="entry" name="entry" rows="3" placeholder="What did you do?" required
-                                  autofocus></textarea>
-                    </kelp-autogrow>
-                    <button type="submit" class="margin-start-2xs">Add Entry</button>
-                </form>
-            </details>
-        {{end}}
-
         <kelp-toc target="#content-display"></kelp-toc>
+
+        {{if eq .CurrentFile.Name "daily.md"}}
+            {{template "add-entry" (dict "Title" "Add Daily Entry" "Action" "/daily" "Placeholder" "What did you do?")}}
+        {{else if eq .CurrentFile.Name "inbox.md"}}
+            {{template "add-entry" (dict "Title" "Add to Inbox" "Action" "/inbox/add" "Placeholder" "What do you need to remember?")}}
+        {{end}}
 
         <div id="content-display" class="content-display">
             {{.Content}}
         </div>
     </article>
+{{end}}
+
+{{define "add-entry"}}
+    <div class="margin-start-xl">
+        <details>
+            <summary>
+                <strong>{{.Title}}</strong>
+            </summary>
+            <form action="{{.Action}}" method="post">
+                <label for="entry" class="visually-hidden">{{.Title}}</label>
+                <kelp-autogrow>
+                    <textarea id="entry" name="entry" rows="3" placeholder="{{.Placeholder}}" required
+                              autofocus></textarea>
+                </kelp-autogrow>
+                <button type="submit" class="margin-start-2xs">Add Entry</button>
+            </form>
+        </details>
+    </div>
 {{end}}
