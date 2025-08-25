@@ -69,3 +69,12 @@ run/live:
 		--misc.clean_on_exit "true"
 
 
+# ==================================================================================== #
+# INSTALLATION
+# ==================================================================================== #
+
+## install: install the padd application using go install
+.PHONY: install
+install:
+	go install ./...
+	@echo "padd installed to $(shell go env GOPATH)/bin/padd"

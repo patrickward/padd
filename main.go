@@ -24,6 +24,7 @@ import (
 
 const (
 	appName      = "PADD"
+	appVersion   = "0.1.0"
 	resourcesDir = "resources"
 )
 
@@ -547,11 +548,13 @@ func main() {
 	var port int
 	var addr string
 	var dataFlag string
+	var showVersion bool
 
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	flagSet.StringVar(&dataFlag, "data", "", "Directory to store markdown files.")
 	flagSet.IntVar(&port, "port", 8080, "Port to run the server on.")
 	flagSet.StringVar(&addr, "addr", "localhost", "Address to bind the server to.")
+	flagSet.BoolVar(&showVersion, "version", false, "Show application version.")
 
 	flagSet.Usage = func() {
 		_, _ = fmt.Fprintf(flagSet.Output(), "PADD - Personal Assistant for Daily Documentation\n\n")
@@ -561,6 +564,12 @@ func main() {
 	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
 		log.Fatal(fmt.Errorf("error parsing flags: %v", err))
+	}
+
+	if showVersion {
+		fmt.Printf("PADD version %s\n", appVersion)
+		os.Exit(0)
+		return
 	}
 
 	resolvedDataDir, err := getDataDirectory(dataFlag)
