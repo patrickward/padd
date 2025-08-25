@@ -4,7 +4,7 @@ A simple, local, markdown-based personal information system for capturing and or
 
 ### Why?
 
-I needed a simple, distraction-free way to capture and organize my notes, tasks, and ideas without relying on complex software or cloud services. Plus, I needed an excuse to practice with Go and the KelpUI css framework.
+I needed a simple, distraction-free way to capture and organize my notes, tasks, and ideas without relying on complex software or cloud services. Plus, I needed an excuse to practice with Go's new `os.OpenRoot` approach for safe file handling, and I wanted to try out the KelpUI framework for building a web-based interface.
 
 ## Core Concepts
 
