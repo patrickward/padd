@@ -450,16 +450,25 @@ func (s *Server) renderMarkdownWithHighlight(content, query string, targetIndex 
 	return template.HTML(buf.String())
 }
 
-// stripListMarkers removes leading list markers (-, *) and whitespace from a line
-func stripListMarkers(line string) string {
+func stripHeaders(line string) string {
+	trimmed := strings.TrimLeft(line, " \t")
+	// Strip header markers (anything starting with #, ##, ###, or ####)
+	trimmed = strings.TrimLeft(trimmed, "#")
+	trimmed = strings.TrimLeft(trimmed, " \t")
+	return trimmed
+}
+
+// stripMarkers removes leading list markers (-, *) and whitespace from a line
+func stripMarkers(line string) string {
 	trimmed := strings.TrimLeft(line, " \t")
 	if strings.HasPrefix(trimmed, "- ") {
-		return strings.TrimPrefix(trimmed, "- ")
+		return stripHeaders(strings.TrimPrefix(trimmed, "- "))
 	}
 	if strings.HasPrefix(trimmed, "* ") {
-		return strings.TrimPrefix(trimmed, "* ")
+		return stripHeaders(strings.TrimPrefix(trimmed, "* "))
 	}
-	return line
+
+	return stripHeaders(trimmed)
 }
 
 func (s *Server) getFileInfo(id string) FileInfo {
@@ -490,7 +499,8 @@ func (s *Server) searchFile(file FileInfo, query string) []SearchMatch {
 	queryLower := strings.ToLower(query)
 	for i, line := range lines {
 		if strings.Contains(strings.ToLower(line), queryLower) {
-			cleanedLine := stripListMarkers(line)
+
+			cleanedLine := stripMarkers(line)
 			matches = append(matches, SearchMatch{
 				LineNum:    i + 1,
 				Line:       line,
