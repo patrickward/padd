@@ -297,8 +297,9 @@ func (s *Server) scanResourceFiles(current string) []FileInfo {
 	var files []FileInfo
 	for _, result := range results {
 		// Create ID from relative path (replace separators)
-		id := strings.ReplaceAll(result.Path, string(filepath.Separator), "_")
-		id = strings.TrimSuffix(id, ".md")
+		//id := strings.ReplaceAll(result.Path, string(filepath.Separator), "_")
+		//id = strings.TrimSuffix(id, ".md")
+		id := s.createID(result.Path)
 
 		// Extract directory info
 		pathWithoutPrefix := strings.TrimPrefix(result.Path, resourcesDir+"/")
@@ -357,6 +358,13 @@ func (s *Server) scanResourceFiles(current string) []FileInfo {
 	})
 
 	return files
+}
+
+func (s *Server) createID(path string) string {
+	// Create ID from relative path (replace separators)
+	id := strings.ReplaceAll(path, string(filepath.Separator), "_")
+	id = strings.TrimSuffix(id, ".md")
+	return id
 }
 
 func (s *Server) createDisplayName(relPath string) string {
@@ -598,8 +606,9 @@ func main() {
 	mux.HandleFunc("POST /inbox/add", server.handleInboxAdd)
 	mux.HandleFunc("GET /search", server.handleSearch)
 	mux.HandleFunc("GET /resources", server.handleResources)
-	mux.HandleFunc("GET /{id}", server.handleView)
+	mux.HandleFunc("POST /resources/create", server.handleCreateResource)
 	mux.HandleFunc("POST /admin/refresh", server.handleRefreshCache)
+	mux.HandleFunc("GET /{id}", server.handleView)
 
 	fmt.Printf("Server starting on https://%s\n", serverAddr)
 	fmt.Printf("Data directory: %s\n", resolvedDataDir)
