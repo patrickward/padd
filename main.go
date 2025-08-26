@@ -406,7 +406,11 @@ func (s *Server) renderMarkdown(content string) template.HTML {
 	if err := s.md.Convert([]byte(content), &buf); err != nil {
 		return template.HTML(fmt.Sprintf("<pre>%s</pre>", template.HTMLEscapeString(content)))
 	}
-	return template.HTML(buf.String())
+
+	// Process inline svg images to ensure they are displayed correctly
+	processedContent := s.processInlineSVG(buf.String())
+
+	return template.HTML(processedContent)
 }
 
 func (s *Server) renderMarkdownWithHighlight(content, query string, targetIndex int) template.HTML {
@@ -596,6 +600,9 @@ func main() {
 	// Serve static files
 	fileServer := http.FileServer(http.FS(staticFS))
 	mux.Handle("GET /static/", fileServer)
+
+	// Serve images (both embedded defaults and user-provided)
+	mux.Handle("GET /images/", server.handleImages())
 
 	// Routes using new Go 1.22+ patterns
 	mux.HandleFunc("GET /", server.handleView)

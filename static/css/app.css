@@ -94,6 +94,25 @@
         --border-color: var(--color-primary-border-vivid);
     }
 
+    .icon {
+        display: inline-block;
+        fill: currentColor;
+        color: inherit;
+        vertical-align: middle;
+        width: 1.25em;
+        height: 1.25em;
+    }
+
+    .icon-sm {
+        width: 1em;
+        height: 1em;
+    }
+
+    .icon-lg {
+        width: 1.5em;
+        height: 1.5em;
+    }
+
     .search-match {
         display: flex;
         justify-content: space-between;

@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io"
+	"io/fs"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -278,4 +281,125 @@ func isValidFileName(fileName string) bool {
 		}
 	}
 	return true
+}
+
+// handleImages creates a file server that serves images from both static defaults and user directory
+func (s *Server) handleImages() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Extract the image path (remove "/images/" prefix)
+		imagePath := strings.TrimPrefix(r.URL.Path, "/images/")
+		if imagePath == "" {
+			http.NotFound(w, r)
+			return
+		}
+
+		// First, try to serve from the user's images directory
+		userImagePath := filepath.Join("images", imagePath)
+		if s.dirManager.Exists(userImagePath) {
+			content, err := s.dirManager.ReadFile(userImagePath)
+			if err == nil {
+				// Set an appropriate content type
+				if ext := filepath.Ext(imagePath); ext != "" {
+					contentType := getImageContentType(ext)
+					if contentType != "" {
+						w.Header().Set("Content-Type", contentType)
+					}
+				}
+				_, _ = w.Write(content)
+				return
+			}
+		}
+
+		// If not found in the user directory, try static embedded files
+		staticPath := "static/images/" + imagePath
+		if file, err := staticFS.Open(staticPath); err == nil {
+			defer func(file fs.File) {
+				_ = file.Close()
+			}(file)
+
+			if stat, err := file.Stat(); err == nil && !stat.IsDir() {
+				// Set an appropriate content type
+				if ext := filepath.Ext(imagePath); ext != "" {
+					contentType := getImageContentType(ext)
+					if contentType != "" {
+						w.Header().Set("Content-Type", contentType)
+					}
+				}
+				http.ServeContent(w, r, imagePath, stat.ModTime(), file.(io.ReadSeeker))
+				return
+			}
+		}
+
+		// Image wasn't found in either location
+		http.NotFound(w, r)
+	})
+}
+
+// getImageContentType returns the appropriate MIME type for image extensions
+func getImageContentType(ext string) string {
+	switch strings.ToLower(ext) {
+	case ".svg":
+		return "image/svg+xml"
+	case ".png":
+		return "image/png"
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".gif":
+		return "image/gif"
+	case ".webp":
+		return "image/webp"
+	case ".ico":
+		return "image/x-icon"
+	default:
+		return ""
+	}
+}
+
+func (s *Server) processInlineSVG(htmlContent string) string {
+	// Replace <img> tags with inline SVG content
+	re := regexp.MustCompile(`<img[^>]+src="([^">]+\.svg)"[^>]*>`)
+
+	return re.ReplaceAllStringFunc(htmlContent, func(imgTag string) string {
+		// Extract the icon path
+		srcMatch := regexp.MustCompile(`src="([^">]+\.svg)"`).FindStringSubmatch(imgTag)
+		if len(srcMatch) < 2 {
+			return imgTag // No src found, return original tag
+		}
+
+		iconPath := strings.TrimPrefix(srcMatch[1], "/images/")
+		svgContent := s.getInlineSVG(iconPath)
+		if svgContent != "" {
+			return svgContent
+		}
+
+		return imgTag // Return original tag if SVG not found
+	})
+}
+
+func (s *Server) getInlineSVG(iconPath string) string {
+	// Try user's path first
+	userSVGPath := filepath.Join("images", iconPath)
+	if s.dirManager.Exists(userSVGPath) {
+		content, err := s.dirManager.ReadFile(userSVGPath)
+		if err == nil {
+			return string(content)
+		}
+	}
+
+	// Fallback to static embedded files
+	staticPath := "static/images/" + iconPath
+	if file, err := staticFS.Open(staticPath); err == nil {
+		defer func(file fs.File) {
+			_ = file.Close()
+		}(file)
+
+		if stat, err := file.Stat(); err == nil && !stat.IsDir() {
+			content, err := io.ReadAll(file)
+			if err == nil {
+				return string(content)
+			}
+		}
+	}
+
+	return ""
 }
