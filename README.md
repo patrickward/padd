@@ -150,3 +150,9 @@ That will get converted to:
 - Synchronization options (e.g., Git integration, cloud backup)
 - Automated reminders for tasks in `active.md`
 - Collaboration features for shared notes
+
+## Credits 
+
+- CSS framework: [KelpUI](https://kelpui.com)
+- Markdown rendering: [Goldmark](https://github.com/yuin/goldmark) 
+- Embedded icons: [Remix Icon](https://remixicon.com/)
