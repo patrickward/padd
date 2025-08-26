@@ -402,9 +402,11 @@ func (s *Server) isValidFile(fileName string) bool {
 }
 
 func (s *Server) renderMarkdown(content string) template.HTML {
+	contentWithShortcodes := s.processIconShortcodes(content)
+
 	var buf bytes.Buffer
-	if err := s.md.Convert([]byte(content), &buf); err != nil {
-		return template.HTML(fmt.Sprintf("<pre>%s</pre>", template.HTMLEscapeString(content)))
+	if err := s.md.Convert([]byte(contentWithShortcodes), &buf); err != nil {
+		return template.HTML(fmt.Sprintf("<pre>%s</pre>", template.HTMLEscapeString(contentWithShortcodes)))
 	}
 
 	// Process inline svg images to ensure they are displayed correctly
@@ -418,7 +420,9 @@ func (s *Server) renderMarkdownWithHighlight(content, query string, targetIndex 
 		return s.renderMarkdown(content)
 	}
 
-	lines := strings.Split(content, "\n")
+	contentWithShortcodes := s.processIconShortcodes(content)
+
+	lines := strings.Split(contentWithShortcodes, "\n")
 	queryLower := strings.ToLower(query)
 	matchIndex := 1
 
@@ -459,7 +463,10 @@ func (s *Server) renderMarkdownWithHighlight(content, query string, targetIndex 
 	if err := s.md.Convert([]byte(modifiedContent), &buf); err != nil {
 		return template.HTML(fmt.Sprintf("<pre>%s</pre>", template.HTMLEscapeString(content)))
 	}
-	return template.HTML(buf.String())
+
+	// Process inline svg images to ensure they are displayed correctly
+	processedContent := s.processInlineSVG(buf.String())
+	return template.HTML(processedContent)
 }
 
 func stripHeaders(line string) string {

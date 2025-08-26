@@ -355,6 +355,49 @@ func getImageContentType(ext string) string {
 	}
 }
 
+func (s *Server) processIconShortcodes(content string) string {
+	// Pattern ::icon-name::
+	re := regexp.MustCompile(`::([a-zA-Z0-9\-_]+)::`)
+
+	return re.ReplaceAllStringFunc(content, func(match string) string {
+		iconName := strings.Trim(match, ":")
+
+		if s.iconExists(iconName) {
+			return fmt.Sprintf(`<span class="icon">![%s](/images/icons/%s.svg)</span>`, strings.TrimSuffix(iconName, ".svg"), iconName)
+		}
+
+		// If the icon doesn't exist, return the original text
+		return match
+	})
+}
+
+func (s *Server) iconExists(iconName string) bool {
+	// Add .svg if not present
+	if !strings.HasSuffix(iconName, ".svg") {
+		iconName = iconName + ".svg"
+	}
+
+	// Check user's path first
+	userSVGPath := filepath.Join("images", "icons", iconName)
+	if s.dirManager.Exists(userSVGPath) {
+		return true
+	}
+
+	// Fallback to static embedded files
+	staticPath := "static/images/icons/" + iconName
+	if file, err := staticFS.Open(staticPath); err == nil {
+		defer func(file fs.File) {
+			_ = file.Close()
+		}(file)
+
+		if stat, err := file.Stat(); err == nil && !stat.IsDir() {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s *Server) processInlineSVG(htmlContent string) string {
 	// Replace <img> tags with inline SVG content
 	re := regexp.MustCompile(`<img[^>]+src="([^">]+\.svg)"[^>]*>`)

@@ -84,3 +84,69 @@ export PADD_DATA_DIR=/path/to/my/notes
 -port int       Port to run the server on (default 8080)
 -addr string    Address to bind the server to (default "localhost")
 ```
+
+## Image and SVG Handling
+
+Images and SVGs can be placed in the "images/" directory within the data directory. Then, reference them in your markdown files like so:
+
+```markdown
+    ![Alt text](/images/my-image.png)
+```
+
+There are some default embedded images. See the source code for details. The embedded images can be overridden by placing files with the same name in the "images/" directory. You reference them the same way, with user-defined images taking precedence.
+
+For example, the `mastodon-fill.svg` icon is embedded by default.
+
+```markdown
+![Mastodon](/images/icons/mastodon-fill.svg)
+```
+
+To override it, place your own `mastodon-fill.svg` in the `images/` directory.
+
+### Icons 
+
+PADD includes a set of default icons located in the `images/icons/` directory of the source. You can use these icons in your markdown files by referencing them with the appropriate path. You can also place your own icons in the `images/icons/` directory within your data directory to override the defaults or add new ones.
+
+For example, to use the Mastodon icon, you can include it in your markdown like this:
+
+```markdown
+![Mastodon](/images/icons/mastodon-fill.svg)
+```
+
+### SVGs are Inlined 
+
+PADD inlines SVG files for better performance and styling flexibility. When you reference an SVG file in your markdown using markdown syntax, PADD will embed the SVG content directly into the HTML output instead of linking to it as an external file. This allows for easier customization with CSS and ensures that the SVG scales properly with your layout.
+
+For example, if you have an SVG file named `example.svg` in your `images/` directory, you can include it in your markdown like this:
+
+```markdown
+![Example](/images/example.svg)
+```
+
+PADD will inline the SVG content when rendering the markdown, allowing you to style it with CSS as needed.
+
+### Icon Shortcodes 
+
+Because icons often need some styling and used frequently, PADD supports a simple shortcode syntax for including icons in your markdown files. The shortcode format is as follows: `::icon-name::`. This will render the specified icon with default styling by looking for the corresponding SVG file in the `images/icons/` directory, either in the embedded resources or your data directory.
+
+For example, to include the Mastodon icon, you can use the following shortcode in your markdown:
+
+```markdown
+ This is an icon: ::mastodon-fill::
+```
+
+That will get converted to:
+
+```html
+ This is an icon: <span class="icon"><svg ...>...</svg></span>
+```
+
+## Possible Future Enhancements
+
+- Enhanced search functionality (currently uses a very simple "contains" search across all markdown files)
+- Tagging and linking between notes
+- Custom Theme support
+- Export to other formats (PDF, HTML)
+- Synchronization options (e.g., Git integration, cloud backup)
+- Automated reminders for tasks in `active.md`
+- Collaboration features for shared notes
