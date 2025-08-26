@@ -162,47 +162,78 @@ func (s *Server) createNewSection(lines []string, formattedEntry string, config 
 	return result
 }
 
-// insertDaily handles the date insertion logic
+// insertDaily handles the hierarchical date insertion logic
 func (s *Server) insertDaily(lines []string, entry string, timestamp time.Time) []string {
-	dateHeader := fmt.Sprintf("## %s", timestamp.Format("2006-01-02"))
+	monthHeader := fmt.Sprintf("## %s", timestamp.Format("January 2006"))
+	dayHeader := fmt.Sprintf("### %s", timestamp.Format("Monday, January 2, 2006"))
 	formattedEntry := fmt.Sprintf("- `%s` %s", timestamp.Format("15:04:05"), entry)
 
-	var result []string
-	dateFound := false
-
-	for _, line := range lines {
-		if line == dateHeader {
-			dateFound = true
-			result = append(result, line)
-			result = append(result, formattedEntry)
-		} else {
-			result = append(result, line)
-		}
-	}
-
-	// If date header wasn't found, add it at the top
-	if !dateFound {
-		insertPos := 0
-		for i, line := range lines {
-			if strings.HasPrefix(line, "# ") {
-				insertPos = i + 1
-				for insertPos < len(lines) && strings.TrimSpace(lines[insertPos]) == "" {
-					insertPos++
-				}
-				break
+	// Find insertion point after the main header
+	insertPos := 0
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "# ") {
+			insertPos = i + 1
+			// Skip blank lines after main header
+			for insertPos < len(lines) && strings.TrimSpace(lines[insertPos]) == "" {
+				insertPos++
 			}
-		}
-
-		result = nil
-		result = append(result, lines[:insertPos]...)
-		result = append(result, dateHeader)
-		result = append(result, formattedEntry)
-		result = append(result, "")
-		if insertPos < len(lines) {
-			result = append(result, lines[insertPos:]...)
+			break
 		}
 	}
 
+	// Look for an existing month/day combination starting from insertion point
+	for i := insertPos; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+
+		// If we find our exact month header
+		//if line == monthHeader {
+		if strings.HasPrefix(line, monthHeader) {
+			// Look for our day header in this month section
+			for j := i + 1; j < len(lines); j++ {
+				nextLine := strings.TrimSpace(lines[j])
+
+				// If we hit another month header, our day doesn't exist in this month
+				if strings.HasPrefix(nextLine, "## ") {
+					break
+				}
+
+				// If we find our day header, add entry right after it
+				//if nextLine == dayHeader {
+				if strings.HasPrefix(nextLine, dayHeader) {
+					result := make([]string, 0, len(lines)+1)
+					result = append(result, lines[:j+1]...)
+					result = append(result, formattedEntry)
+					result = append(result, lines[j+1:]...)
+					return result
+				}
+			}
+
+			// Month exists but not the day - add day header and entry at start of month
+			dayInsertPos := i + 1
+			// Skip blank lines after month header
+			for dayInsertPos < len(lines) && strings.TrimSpace(lines[dayInsertPos]) == "" {
+				dayInsertPos++
+			}
+
+			result := make([]string, 0, len(lines)+3)
+			result = append(result, lines[:dayInsertPos]...)
+			result = append(result, dayHeader)
+			result = append(result, formattedEntry)
+			result = append(result, "")
+			result = append(result, lines[dayInsertPos:]...)
+			return result
+		}
+	}
+
+	// Neither month nor day exists - add both at the top
+	result := make([]string, 0, len(lines)+5)
+	result = append(result, lines[:insertPos]...)
+	result = append(result, monthHeader)
+	result = append(result, "")
+	result = append(result, dayHeader)
+	result = append(result, formattedEntry)
+	result = append(result, "")
+	result = append(result, lines[insertPos:]...)
 	return result
 }
 
