@@ -1,7 +1,48 @@
+
 /*! Markdown Toolbar for kelp.js integration */
 "use strict";
 
 (() => {
+  // Template constants to avoid string concatenation in methods
+  const TOOLBAR_TEMPLATE = `
+    <div class="toolbar-group">
+        <button type="button" class="plain" data-action="link" title="Add Link">
+            <span class="toolbar-icon toolbar-icon-link"></span>
+            <span class="toolbar-label">Link</span>
+        </button>
+        <button type="button" class="plain" data-action="image" title="Add Image">
+            <span class="toolbar-icon toolbar-icon-image"></span>
+            <span class="toolbar-label">Image</span>
+        </button>
+        <button type="button" class="plain" data-action="icon" title="Add Icon">
+            <span class="toolbar-icon toolbar-icon-star"></span>
+            <span class="toolbar-label">Icon</span>
+        </button>
+        <button type="button" class="plain" data-action="bold" title="Bold Text (Ctrl+B)">
+            <span class="toolbar-icon toolbar-icon-bold"></span>
+            <span class="toolbar-label">Bold</span>
+        </button>
+        <button type="button" class="plain" data-action="italic" title="Italic Text (Ctrl+I)">
+            <span class="toolbar-icon toolbar-icon-italic"></span>
+            <span class="toolbar-label">Italic</span>
+        </button>
+        <button type="button" class="plain" data-action="code" title="Code">
+            <span class="toolbar-icon toolbar-icon-code"></span>
+            <span class="toolbar-label">Code</span>
+        </button>
+    </div>
+    <div class="toolbar-group">
+        <button type="button" class="plain primary" data-action="save" title="Save File (Ctrl+S)">
+            <span class="toolbar-icon toolbar-icon-save"></span>
+            <span class="toolbar-label">Save</span>
+        </button>
+        <button type="button" class="plain" data-action="cancel" title="Cancel">
+            <span class="toolbar-icon toolbar-icon-cancel"></span>
+            <span class="toolbar-label">Cancel</span>
+        </button>
+    </div>
+  `;
+
   customElements.define('markdown-toolbar', class extends HTMLElement {
     /** @type HTMLTextAreaElement | null */
     #textarea;
@@ -61,29 +102,19 @@
       this.#textarea.addEventListener('keydown', (e) => {
         // Handle Ctrl/Cmd shortcuts
         if (e.ctrlKey || e.metaKey) {
-          switch (e.key) {
-            case 'b':
-              e.preventDefault();
-              this.#wrapSelection('**', '**');
-              break;
-            case 'i':
-              e.preventDefault();
-              this.#wrapSelection('*', '*');
-              break;
-            case 'k':
-              // Only handle Ctrl+K if we're not in the global search context
-              if (!document.querySelector('input[name="q"]')) {
-                e.preventDefault();
-                this.#showLinkDialog();
-              }
-              break;
-            case 's':
-              e.preventDefault();
-              this.#handleSave();
-              break;
+          const actions = {
+            'b': () => this.#wrapSelection('**', '**'),
+            'i': () => this.#wrapSelection('*', '*'),
+            'k': () => this.#showLinkDialog(),
+            's': () => this.#handleSave()
+          };
+
+          const action = actions[e.key];
+          if (action && (e.key !== 'k' || !document.querySelector('input[name="q"]'))) {
+            e.preventDefault();
+            action();
           }
         } else if (e.key === 'Tab') {
-          // Handle tab indentation
           e.preventDefault();
           this.#insertAtCursor('  '); // 2 spaces for indentation
         }
@@ -109,44 +140,7 @@
     render() {
       this.#toolbar = document.createElement('div');
       this.#toolbar.className = 'markdown-toolbar';
-      this.#toolbar.innerHTML = `
-                <div class="toolbar-group">
-                    <button type="button" class="toolbar-btn" data-action="link" title="Add Link">
-                        <span class="toolbar-icon icon-link"></span>
-                        <span class="toolbar-label">Link</span>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-action="image" title="Add Image">
-                        <span class="toolbar-icon icon-image"></span>
-                        <span class="toolbar-label">Image</span>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-action="icon" title="Add Icon">
-                        <span class="toolbar-icon icon-star"></span>
-                        <span class="toolbar-label">Icon</span>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-action="bold" title="Bold Text (Ctrl+B)">
-                        <span class="toolbar-icon icon-bold"></span>
-                        <span class="toolbar-label">Bold</span>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-action="italic" title="Italic Text (Ctrl+I)">
-                        <span class="toolbar-icon icon-italic"></span>
-                        <span class="toolbar-label">Italic</span>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-action="code" title="Code">
-                        <span class="toolbar-icon icon-code"></span>
-                        <span class="toolbar-label">Code</span>
-                    </button>
-                </div>
-                <div class="toolbar-group toolbar-actions">
-                    <button type="button" class="toolbar-btn" data-action="save" title="Save File (Ctrl+S)">
-                        <span class="toolbar-icon icon-save"></span>
-                        <span class="toolbar-label">Save</span>
-                    </button>
-                    <button type="button" class="toolbar-btn" data-action="cancel" title="Cancel">
-                        <span class="toolbar-icon icon-cancel"></span>
-                        <span class="toolbar-label">Cancel</span>
-                    </button>
-                </div>
-            `;
+      this.#toolbar.innerHTML = TOOLBAR_TEMPLATE;
 
       // Insert toolbar before the kelp-autogrow element
       this.insertBefore(this.#toolbar, this.#autogrowElement);
@@ -179,7 +173,7 @@
     }
 
     /**
-     * Handle events
+     * Handle events using event delegation
      * @param {Event} event The event object
      */
     handleEvent(event) {
@@ -193,14 +187,12 @@
      * @param {Event} event The event object
      */
     #onClick(event) {
-      const btn = event.target.closest('.toolbar-btn');
-      if (!btn) return;
+      const toolbarBtn = event.target.closest('[data-action]');
 
-      const action = btn.getAttribute('data-action');
-      if (!action) return;
-
-      event.preventDefault();
-      this.#executeAction(action);
+      if (toolbarBtn) {
+        event.preventDefault();
+        this.#executeAction(toolbarBtn.getAttribute('data-action'));
+      }
     }
 
     /**
@@ -208,31 +200,20 @@
      * @param {string} action The action to execute
      */
     #executeAction(action) {
-      switch (action) {
-        case 'link':
-          this.#showLinkDialog();
-          break;
-        case 'image':
-          this.#showImageDialog();
-          break;
-        case 'icon':
-          this.#showIconDialog();
-          break;
-        case 'bold':
-          this.#wrapSelection('**', '**');
-          break;
-        case 'italic':
-          this.#wrapSelection('*', '*');
-          break;
-        case 'code':
-          this.#wrapSelection('`', '`');
-          break;
-        case 'save':
-          this.#handleSave();
-          break;
-        case 'cancel':
-          this.#handleCancel();
-          break;
+      const actions = {
+        'link': () => this.#showLinkDialog(),
+        'image': () => this.#showImageDialog(),
+        'icon': () => this.#showIconDialog(),
+        'bold': () => this.#wrapSelection('**', '**'),
+        'italic': () => this.#wrapSelection('*', '*'),
+        'code': () => this.#wrapSelection('`', '`'),
+        'save': () => this.#handleSave(),
+        'cancel': () => this.#handleCancel()
+      };
+
+      const actionFn = actions[action];
+      if (actionFn) {
+        actionFn();
       }
     }
 
@@ -258,20 +239,21 @@
      */
     #showLinkDialog() {
       const dialog = this.#createDialog('link-dialog', 'Add Link', `
-                <div class="field">
-                    <label for="link-text">Link Text:</label>
-                    <input type="text" id="link-text" placeholder="Enter link text" autofocus>
-                </div>
-                <div class="field">
-                    <label for="link-url">URL:</label>
-                    <input type="url" id="link-url" placeholder="https://example.com">
-                </div>
-                <div class="cluster gap-xs">
-                    <button type="button" class="primary" id="insert-link">Insert</button>
-                    <button type="button" class="outline" command="close" commandfor="link-dialog">Cancel</button>
-                </div>
-            `);
+        <div class="field">
+            <label for="link-text">Link Text:</label>
+            <input type="text" id="link-text" placeholder="Enter link text" autofocus>
+        </div>
+        <div class="field">
+            <label for="link-url">URL:</label>
+            <input type="url" id="link-url" placeholder="https://example.com">
+        </div>
+        <div class="cluster gap-xs">
+            <button type="button" class="btn primary" id="insert-link">Insert</button>
+            <button type="button" class="btn outline" command="close" commandfor="link-dialog">Cancel</button>
+        </div>
+      `);
 
+      // Add event listener for the insert button - this is what was missing!
       document.getElementById('insert-link').addEventListener('click', () => {
         const text = document.getElementById('link-text').value || 'Link';
         const url = document.getElementById('link-url').value || '#';
@@ -287,20 +269,21 @@
      */
     #showImageDialog() {
       const dialog = this.#createDialog('image-dialog', 'Add Image', `
-                <div class="field">
-                    <label for="image-alt">Alt Text:</label>
-                    <input type="text" id="image-alt" placeholder="Describe the image" autofocus>
-                </div>
-                <div class="field">
-                    <label for="image-url">Image URL:</label>
-                    <input type="url" id="image-url" placeholder="/images/example.jpg">
-                </div>
-                <div class="cluster gap-xs">
-                    <button type="button" class="primary" id="insert-image">Insert</button>
-                    <button type="button" class="outline" command="close" commandfor="image-dialog">Cancel</button>
-                </div>
-            `);
+        <div class="field">
+            <label for="image-alt">Alt Text:</label>
+            <input type="text" id="image-alt" placeholder="Describe the image" autofocus>
+        </div>
+        <div class="field">
+            <label for="image-url">Image URL:</label>
+            <input type="url" id="image-url" placeholder="/images/example.jpg">
+        </div>
+        <div class="cluster gap-xs">
+            <button type="button" class="btn primary" id="insert-image">Insert</button>
+            <button type="button" class="btn outline" command="close" commandfor="image-dialog">Cancel</button>
+        </div>
+      `);
 
+      // Add event listener for the insert button - this is what was missing!
       document.getElementById('insert-image').addEventListener('click', () => {
         const alt = document.getElementById('image-alt').value || 'Image';
         const url = document.getElementById('image-url').value || '/images/example.jpg';
@@ -321,28 +304,28 @@
       }
 
       const iconGrid = this.#availableIcons.map(icon =>
-        `<button type="button" class="icon-option" data-icon="${icon}" title="${icon}">
-                    <img src="/images/icons/${icon}.svg" alt="${icon}" width="20" height="20">
-                    <span>${icon}</span>
-                </button>`
+        `<button type="button" class="markdown-icon-option" data-icon="${icon}" title="${icon}">
+          <img src="/images/icons/${icon}.svg" alt="${icon}" width="20" height="20">
+          <span>${icon}</span>
+        </button>`
       ).join('');
 
       const dialog = this.#createDialog('icon-dialog', 'Add Icon', `
-                <div class="field">
-                    <label for="icon-search">Search Icons:</label>
-                    <input type="text" id="icon-search" placeholder="Type to filter icons..." autofocus>
-                </div>
-                <div class="icon-grid" style="max-height: 300px; overflow-y: auto;">
-                    ${iconGrid}
-                </div>
-                <div class="cluster gap-xs">
-                    <button type="button" class="outline" command="close" commandfor="icon-dialog">Cancel</button>
-                </div>
-            `);
+        <div class="field">
+            <label for="icon-search">Search Icons:</label>
+            <input type="text" id="icon-search" placeholder="Type to filter icons..." autofocus>
+        </div>
+        <div class="markdown-icon-grid">
+            ${iconGrid}
+        </div>
+        <div class="cluster gap-xs">
+            <button type="button" class="btn outline" command="close" commandfor="icon-dialog">Cancel</button>
+        </div>
+      `);
 
       // Add search functionality
       const searchInput = document.getElementById('icon-search');
-      const iconOptions = dialog.querySelectorAll('.icon-option');
+      const iconOptions = dialog.querySelectorAll('.markdown-icon-option');
 
       searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
@@ -378,15 +361,16 @@
 
       const dialog = document.createElement('dialog');
       dialog.id = id;
+      dialog.className = 'markdown-toolbar-dialog';
       dialog.setAttribute('closedby', 'any');
       dialog.innerHTML = `
-                <header>
-                    <h3>${title}</h3>
-                </header>
-                <div class="dialog-content">
-                    ${content}
-                </div>
-            `;
+        <header>
+            <h3>${title}</h3>
+        </header>
+        <div class="dialog-content">
+            ${content}
+        </div>
+      `;
 
       document.body.appendChild(dialog);
       return dialog;
