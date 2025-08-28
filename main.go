@@ -75,6 +75,7 @@ type PageData struct {
 	SearchResults map[string][]SearchMatch
 	Message       string
 	MessageType   string
+	ErrorMessage  string
 	SearchMatch   int // To indicate which match in the line to highlight
 }
 
@@ -359,11 +360,57 @@ func (s *Server) scanResourceFiles(current string) []FileInfo {
 	return files
 }
 
+// normalizeFileName creates a URL-safe, consistent filename/path
+func (s *Server) normalizeFileName(path string) string {
+	// Convert to lowercase for consistency
+	normalized := strings.ToLower(path)
+
+	// Always use forward slashes for URLs
+	normalized = strings.ReplaceAll(normalized, string(filepath.Separator), "/")
+
+	// Replace spaces and underscores with hyphens
+	normalized = strings.ReplaceAll(normalized, " ", "-")
+	normalized = strings.ReplaceAll(normalized, "_", "-")
+
+	// Remove or replace other problematic characters
+	// Keep only: letters, numbers, hyphens, periods, and forward slashes
+	var result strings.Builder
+	for _, char := range normalized {
+		switch {
+		case (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9'):
+			result.WriteRune(char)
+		case char == '-' || char == '.' || char == '/':
+			result.WriteRune(char)
+		default:
+			// Replace other characters with hyphens, but avoid consecutive hyphens
+			if result.Len() > 0 && result.String()[result.Len()-1] != '-' {
+				result.WriteRune('-')
+			}
+		}
+	}
+
+	// Clean up any trailing hyphens or multiple consecutive hyphens
+	cleaned := result.String()
+	cleaned = strings.Trim(cleaned, "-")
+
+	// Replace multiple consecutive hyphens with single hyphen
+	for strings.Contains(cleaned, "--") {
+		cleaned = strings.ReplaceAll(cleaned, "--", "-")
+	}
+
+	return cleaned
+}
+
+// createID generates a consistent URL-safe ID from a file path
 func (s *Server) createID(path string) string {
-	// Create ID from relative path (replace separators)
-	id := strings.ReplaceAll(path, string(filepath.Separator), "_")
-	id = strings.TrimSuffix(id, ".md")
-	return id
+	// Remove the .md extension and normalize
+	pathWithoutExt := strings.TrimSuffix(path, ".md")
+	normalized := s.normalizeFileName(pathWithoutExt)
+
+	//Remove resources/ prefix if present
+	//normalized = strings.TrimPrefix(normalized, "resources/")
+
+	return normalized
 }
 
 func (s *Server) createDisplayName(relPath string) string {
@@ -490,20 +537,25 @@ func stripMarkers(line string) string {
 	return stripHeaders(trimmed)
 }
 
-func (s *Server) getFileInfo(id string) FileInfo {
+func (s *Server) getFileInfo(id string) (FileInfo, error) {
+	log.Printf("Looking for file ID: %s", id)
 	if file, ok := filesMap[id]; ok {
-		return file
+		return file, nil
 	}
 
 	// Check resource files
 	resourceFiles := s.getResourceFiles(id)
 	for _, file := range resourceFiles {
 		if file.ID == id {
-			return file
+			return file, nil
 		}
 	}
 
-	return filesMap["inbox"]
+	if id == "" {
+		return filesMap["inbox"], nil
+	}
+
+	return FileInfo{}, fmt.Errorf("file with ID %s not found", id)
 }
 
 func (s *Server) searchFile(file FileInfo, query string) []SearchMatch {
@@ -613,18 +665,19 @@ func main() {
 
 	// API routes
 	mux.HandleFunc("GET /api/icons", server.handleIconsAPI)
+	mux.HandleFunc("GET /api/resources", server.handleResourcesAPI)
 
 	// Routes using new Go 1.22+ patterns
-	mux.HandleFunc("GET /", server.handleView)
-	mux.HandleFunc("GET /edit/{id}", server.handleEdit)
-	mux.HandleFunc("POST /save/{id}", server.handleSave)
+	//mux.HandleFunc("GET /", server.handleView)
+	mux.HandleFunc("GET /edit/{id...}", server.handleEdit)
+	mux.HandleFunc("POST /save/{id...}", server.handleSave)
 	mux.HandleFunc("POST /daily", server.handleDaily)
 	mux.HandleFunc("POST /inbox/add", server.handleInboxAdd)
 	mux.HandleFunc("GET /search", server.handleSearch)
 	mux.HandleFunc("GET /resources", server.handleResources)
 	mux.HandleFunc("POST /resources/create", server.handleCreateResource)
 	mux.HandleFunc("POST /admin/refresh", server.handleRefreshCache)
-	mux.HandleFunc("GET /{id}", server.handleView)
+	mux.HandleFunc("GET /{id...}", server.handleView)
 
 	fmt.Printf("Server starting on https://%s\n", serverAddr)
 	fmt.Printf("Data directory: %s\n", resolvedDataDir)

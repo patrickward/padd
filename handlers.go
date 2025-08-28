@@ -14,17 +14,42 @@ import (
 	"time"
 )
 
+func (s *Server) showPageNotFound(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	if err := s.executePage(w, "404.html", PageData{
+		Title:     "Page Not Found - " + appName,
+		CoreFiles: s.getCoreFiles(""),
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) showServerError(w http.ResponseWriter, _ *http.Request, err error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	if err := s.executePage(w, "500.html", PageData{
+		Title:        "Server Error - " + appName,
+		CoreFiles:    s.getCoreFiles(""),
+		ErrorMessage: err.Error(),
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
-	file := s.getFileInfo(r.PathValue("id"))
+	file, err := s.getFileInfo(r.PathValue("id"))
+	if err != nil {
+		s.showPageNotFound(w, r)
+		return
+	}
 
 	if !s.isValidFile(file.Name) {
-		http.Error(w, "Invalid file", http.StatusBadRequest)
+		s.showServerError(w, r, fmt.Errorf("invalid file"))
 		return
 	}
 
 	content, err := s.dirManager.ReadFile(file.Name)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.showServerError(w, r, err)
 		return
 	}
 
@@ -64,7 +89,7 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.executePage(w, "view.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.showServerError(w, r, err)
 	}
 }
 
@@ -74,7 +99,11 @@ func (s *Server) handleRefreshCache(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
-	file := s.getFileInfo(r.PathValue("id"))
+	file, err := s.getFileInfo(r.PathValue("id"))
+	if err != nil {
+		s.showPageNotFound(w, r)
+		return
+	}
 
 	if !s.isValidFile(file.Name) {
 		http.Redirect(w, r, "/"+file.ID, http.StatusSeeOther)
@@ -83,7 +112,7 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 
 	content, err := s.dirManager.ReadFile(file.Name)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.showServerError(w, r, err)
 		return
 	}
 
@@ -97,12 +126,16 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.executePage(w, "edit.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.showServerError(w, r, err)
 	}
 }
 
 func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
-	file := s.getFileInfo(r.PathValue("id"))
+	file, err := s.getFileInfo(r.PathValue("id"))
+	if err != nil {
+		s.showPageNotFound(w, r)
+		return
+	}
 
 	if !s.isValidFile(file.Name) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -111,7 +144,7 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 
 	content := r.FormValue("content")
 	if err := s.dirManager.WriteString(file.Name, content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.showServerError(w, r, err)
 		return
 	}
 
@@ -187,7 +220,7 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.executePage(w, "search.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.showServerError(w, r, err)
 	}
 }
 
@@ -214,7 +247,7 @@ func (s *Server) handleResources(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.executePage(w, "resources.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.showServerError(w, r, err)
 	}
 }
 
@@ -268,7 +301,7 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	s.refreshResourceCache()
 
 	// Redirect to the new file
-	fileID := "resources_" + s.createID(fileName)
+	fileID := "resources/" + s.createID(fileName)
 	http.Redirect(w, r, "/"+fileID+"?msg=File created successfully&type=success", http.StatusSeeOther)
 }
 
@@ -337,10 +370,7 @@ func (s *Server) handleImages() http.Handler {
 	})
 }
 
-// ... existing code ...
-
-// ... existing code ...
-
+// handleIconsAPI serves a JSON list of available icon names from both static and user directories
 func (s *Server) handleIconsAPI(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -381,7 +411,19 @@ func (s *Server) handleIconsAPI(w http.ResponseWriter, r *http.Request) {
 	sort.Strings(iconNames)
 
 	if err := json.NewEncoder(w).Encode(iconNames); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.showServerError(w, r, err)
+	}
+}
+
+// handleResourcesAPI serves a JSON list of available resource files in their hierarchical structure
+func (s *Server) handleResourcesAPI(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	resourceFiles := s.getResourceFiles("")
+	resourceTree := s.buildDirectoryTree(resourceFiles)
+
+	if err := json.NewEncoder(w).Encode(resourceTree); err != nil {
+		s.showServerError(w, nil, err)
 	}
 }
 
