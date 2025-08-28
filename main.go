@@ -449,7 +449,7 @@ func (s *Server) isValidFile(fileName string) bool {
 }
 
 func (s *Server) renderMarkdown(content string) template.HTML {
-	contentWithShortcodes := s.processIconShortcodes(content)
+	contentWithShortcodes := s.processShortcodes(content)
 
 	var buf bytes.Buffer
 	if err := s.md.Convert([]byte(contentWithShortcodes), &buf); err != nil {
@@ -467,7 +467,7 @@ func (s *Server) renderMarkdownWithHighlight(content, query string, targetIndex 
 		return s.renderMarkdown(content)
 	}
 
-	contentWithShortcodes := s.processIconShortcodes(content)
+	contentWithShortcodes := s.processShortcodes(content)
 
 	lines := strings.Split(contentWithShortcodes, "\n")
 	queryLower := strings.ToLower(query)
@@ -538,7 +538,6 @@ func stripMarkers(line string) string {
 }
 
 func (s *Server) getFileInfo(id string) (FileInfo, error) {
-	log.Printf("Looking for file ID: %s", id)
 	if file, ok := filesMap[id]; ok {
 		return file, nil
 	}
