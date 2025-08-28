@@ -1,0 +1,350 @@
+/* Markdown Toolbar Styling that integrates with kelp.css */
+@layer kelp.extend {
+
+    /* Toolbar sentinel for sticky positioning */
+    .toolbar-sentinel {
+        height: 1px;
+        visibility: hidden;
+    }
+
+    /* Toolbar container */
+    .markdown-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: var(--size-3xs);
+        padding: var(--size-2xs) var(--size-xs);
+        background-color: var(--color-background);
+        border: 1px solid var(--border-color);
+        border-bottom: none;
+        border-radius: var(--border-radius-m) var(--border-radius-m) 0 0;
+        margin-bottom: 0;
+        z-index: 10;
+        transition: all 0.2s ease;
+    }
+
+    /* Sticky toolbar positioning */
+    .markdown-toolbar.toolbar-sticky {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--color) 10%, transparent);
+        z-index: 100;
+    }
+
+    /* Toolbar groups */
+    .toolbar-group {
+        display: flex;
+        gap: var(--size-4xs);
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Actions group (Save/Cancel) gets pushed to the right */
+    .toolbar-actions {
+        margin-left: auto;
+    }
+
+    /* Toolbar buttons */
+    .toolbar-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--size-5xs);
+        padding: var(--size-3xs) var(--size-2xs);
+        background: var(--color-background);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-s);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--color);
+        text-decoration: none;
+        min-width: 2.75rem;
+        font-size: 0.8rem;
+    }
+
+    .toolbar-btn:hover {
+        background-color: var(--color-primary-fill-muted);
+        border-color: var(--color-primary-border-accent);
+        color: var(--color-primary-on-muted);
+    }
+
+    .toolbar-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--focus-ring-color);
+        border-color: var(--color-primary-border-vivid);
+    }
+
+    .toolbar-btn:active {
+        background-color: var(--color-primary-fill-accent);
+        color: var(--color-primary-on-accent);
+        transform: translateY(1px);
+    }
+
+    /*!* Primary button styling (Save) *!*/
+    /*.toolbar-btn-primary {*/
+    /*    background-color: var(--color-primary-fill-vivid);*/
+    /*    border-color: var(--color-primary-border-vivid);*/
+    /*    color: var(--color-primary-on-vivid);*/
+    /*}*/
+
+    /*.toolbar-btn-primary:hover {*/
+    /*    background-color: var(--color-primary-fill-accent);*/
+    /*    border-color: var(--color-primary-border-accent);*/
+    /*    color: var(--color-primary-on-accent);*/
+    /*}*/
+
+    /*!* Outline button styling (Cancel) *!*/
+    /*.toolbar-btn-outline {*/
+    /*    background-color: transparent;*/
+    /*    border-color: var(--border-color);*/
+    /*    color: var(--color-text-muted);*/
+    /*}*/
+
+    /*.toolbar-btn-outline:hover {*/
+    /*    background-color: var(--color-fill-muted);*/
+    /*    border-color: var(--border-color);*/
+    /*    color: var(--color-on-muted);*/
+    /*}*/
+
+    /* Toolbar button icons using background images */
+    .toolbar-icon {
+        width: 14px;
+        height: 14px;
+        display: block;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        opacity: 0.8;
+        transition: opacity 0.2s ease;
+    }
+
+    .toolbar-btn:hover .toolbar-icon {
+        opacity: 1;
+    }
+
+    /* Monochrome icon definitions */
+    .icon-link {
+        background-image: url('data:image/svg+xml,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.71 1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    }
+
+    .icon-image {
+        background-image: url('data:image/svg+xml,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    }
+
+    .icon-star {
+        background-image: url('data:image/svg+xml,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    }
+
+    .icon-bold {
+        background-image: url('data:image/svg+xml,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" stroke="currentColor" stroke-width="2"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" stroke="currentColor" stroke-width="2"/></svg>');
+    }
+
+    .icon-italic {
+        background-image: url('data:image/svg+xml,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="19" y1="4" x2="10" y2="4" stroke="currentColor" stroke-width="2"/><line x1="14" y1="20" x2="5" y2="20" stroke="currentColor" stroke-width="2"/><line x1="15" y1="4" x2="9" y2="20" stroke="currentColor" stroke-width="2"/></svg>');
+    }
+
+    .icon-code {
+        background-image: url('data:image/svg+xml,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="16,18 22,12 16,6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="8,6 2,12 8,18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    }
+
+    .icon-save {
+        background-image: url('data:image/svg+xml,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" stroke-width="2"/><polyline points="17,21 17,13 7,13 7,21" stroke="currentColor" stroke-width="2"/><polyline points="7,3 7,8 15,8" stroke="currentColor" stroke-width="2"/></svg>');
+    }
+
+    .icon-cancel {
+        background-image: url('data:image/svg+xml,<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="m15 9-6 6" stroke="currentColor" stroke-width="2"/><path d="m9 9 6 6" stroke="currentColor" stroke-width="2"/></svg>');
+    }
+
+    /* Toolbar button labels */
+    .toolbar-label {
+        font-size: 0.6rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-muted);
+        transition: color 0.2s ease;
+        line-height: 1;
+    }
+
+    .toolbar-btn:hover .toolbar-label {
+        color: var(--color-primary-on-muted);
+    }
+
+    /*.toolbar-btn-primary .toolbar-label {*/
+    /*    color: var(--color-primary-on-vivid);*/
+    /*}*/
+
+    /*.toolbar-btn-primary:hover .toolbar-label {*/
+    /*    color: var(--color-primary-on-accent);*/
+    /*}*/
+
+    /*!* Adjust textarea styling when toolbar is present *!*/
+    /*.markdown-editor .markdown-toolbar + kelp-autogrow textarea {*/
+    /*    border-radius: 0 0 var(--border-radius-m) var(--border-radius-m) !important;*/
+    /*    !*border-top: none !important;*!*/
+    /*}*/
+
+    /* When toolbar is sticky, add top padding to prevent content overlap */
+    .markdown-toolbar.toolbar-sticky + kelp-autogrow textarea {
+        padding-top: calc(var(--size-m) + 50px);
+    }
+
+    /* Dialog styling for toolbar modals */
+    dialog[id$="-dialog"] {
+        min-width: 20rem;
+        max-width: 90vw;
+        padding: var(--size-m);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-m);
+        background: var(--color-background);
+        color: var(--color);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--color) 20%, transparent);
+        z-index: 1000;
+    }
+
+    dialog[id$="-dialog"] header {
+        margin-bottom: var(--size-m);
+        padding-bottom: var(--size-xs);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    dialog[id$="-dialog"] header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color);
+    }
+
+    dialog[id$="-dialog"] .dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--size-m);
+    }
+
+    dialog[id$="-dialog"] .field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--size-2xs);
+    }
+
+    dialog[id$="-dialog"] .field label {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+    }
+
+    dialog[id$="-dialog"] .field input {
+        padding: var(--size-xs);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-s);
+        background: var(--color-background);
+        color: var(--color);
+        font-size: 0.9rem;
+    }
+
+    dialog[id$="-dialog"] .field input:focus {
+        outline: none;
+        border-color: var(--color-primary-border-vivid);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-ring-color) 20%, transparent);
+    }
+
+    /* Icon grid styling */
+    .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+        gap: var(--size-2xs);
+        padding: var(--size-xs) 0;
+    }
+
+    .icon-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--size-3xs);
+        padding: var(--size-xs);
+        background: var(--color-background);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-s);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+    }
+
+    .icon-option:hover {
+        background-color: var(--color-primary-fill-muted);
+        border-color: var(--color-primary-border-accent);
+        color: var(--color-primary-on-muted);
+    }
+
+    .icon-option:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--focus-ring-color);
+        border-color: var(--color-primary-border-vivid);
+    }
+
+    .icon-option img {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+    }
+
+    .icon-option span {
+        word-break: break-all;
+        line-height: 1.2;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .markdown-toolbar {
+            padding: var(--size-3xs) var(--size-2xs);
+            gap: var(--size-4xs);
+        }
+
+        .toolbar-group {
+            gap: var(--size-5xs);
+        }
+
+        .toolbar-btn {
+            min-width: 2.25rem;
+            padding: var(--size-4xs) var(--size-3xs);
+        }
+
+        .toolbar-icon {
+            width: 12px;
+            height: 12px;
+        }
+
+        .toolbar-label {
+            font-size: 0.55rem;
+        }
+
+        .icon-grid {
+            grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+        }
+
+        /* On mobile, stack the groups vertically if needed */
+        @media (max-width: 640px) {
+            .markdown-toolbar {
+                flex-direction: column;
+                gap: var(--size-3xs);
+            }
+
+            .toolbar-actions {
+                margin-left: 0;
+            }
+        }
+    }
+}

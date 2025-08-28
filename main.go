@@ -611,6 +611,9 @@ func main() {
 	// Serve images (both embedded defaults and user-provided)
 	mux.Handle("GET /images/", server.handleImages())
 
+	// API routes
+	mux.HandleFunc("GET /api/icons", server.handleIconsAPI)
+
 	// Routes using new Go 1.22+ patterns
 	mux.HandleFunc("GET /", server.handleView)
 	mux.HandleFunc("GET /edit/{id}", server.handleEdit)

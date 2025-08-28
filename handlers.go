@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -333,6 +335,54 @@ func (s *Server) handleImages() http.Handler {
 		// Image wasn't found in either location
 		http.NotFound(w, r)
 	})
+}
+
+// ... existing code ...
+
+// ... existing code ...
+
+func (s *Server) handleIconsAPI(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	iconNames := make([]string, 0)
+	seen := make(map[string]bool)
+
+	// Check user's icons directory first
+	userIconsDir := filepath.Join("images", "icons")
+	_ = s.dirManager.WalkDir(userIconsDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil // Continue walking despite errors
+		}
+
+		if !d.IsDir() && strings.HasSuffix(d.Name(), ".svg") {
+			iconName := strings.TrimSuffix(d.Name(), ".svg")
+			if !seen[iconName] {
+				iconNames = append(iconNames, iconName)
+				seen[iconName] = true
+			}
+		}
+		return nil
+	})
+
+	// Then check static embedded icons
+	if entries, err := staticFS.ReadDir("static/images/icons"); err == nil {
+		for _, entry := range entries {
+			if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".svg") {
+				iconName := strings.TrimSuffix(entry.Name(), ".svg")
+				if !seen[iconName] {
+					iconNames = append(iconNames, iconName)
+					seen[iconName] = true
+				}
+			}
+		}
+	}
+
+	// Sort the icon names for consistent ordering
+	sort.Strings(iconNames)
+
+	if err := json.NewEncoder(w).Encode(iconNames); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // getImageContentType returns the appropriate MIME type for image extensions

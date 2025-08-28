@@ -14,9 +14,11 @@
         <form action="/save/{{.CurrentFile.ID}}" method="post">
             <label for="content" class="visually-hidden">Content</label>
             <div class="markdown-editor">
-                <kelp-autogrow>
-                    <textarea id="content" name="content" autofocus>{{.RawContent}}</textarea>
-                </kelp-autogrow>
+                <markdown-toolbar cancel-url="/{{.CurrentFile.ID}}" icons-api="/api/icons">
+                    <kelp-autogrow>
+                        <textarea id="content" name="content" autofocus>{{.RawContent}}</textarea>
+                    </kelp-autogrow>
+                </markdown-toolbar>
             </div>
 
             <div class="cluster margin-start-m gap-2xs">
