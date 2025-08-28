@@ -1,4 +1,4 @@
-/*! kelpui v1.3.0 | (c) Chris Ferdinandi | http://github.com/cferdinandi/kelp */
+/*! kelpui v1.5.0 | (c) Chris Ferdinandi | http://github.com/cferdinandi/kelp */
 "use strict";
 (() => {
   // modules/js/utilities/debug.js
@@ -321,7 +321,7 @@
     }
     // Render the anchor links
     render() {
-      const selector = getFilteredSelector(`:is(${this.#levels})`);
+      const selector = getFilteredSelector(`:is(${this.#levels}):not(:has(a)`);
       const headings = this.querySelectorAll(selector);
       if (!headings.length) return;
       for (const heading of headings) {
@@ -467,8 +467,8 @@
     }
     // Cleanup global events on disconnect
     disconnectedCallback() {
-      document.removeEventListener("click", this);
       document.removeEventListener("keydown", this);
+      this.removeEventListener("blur", this, { capture: true });
       this.setAttribute("is-paused", "");
     }
     // Initialize the component
@@ -485,23 +485,23 @@
     }
     // Setup event listeners
     #listen() {
-      document.addEventListener("click", this);
       document.addEventListener("keydown", this);
+      this.addEventListener("blur", this, { capture: true });
     }
     /**
      * Handle events
      * @param  {Event} event The event object
      */
     handleEvent(event) {
-      if (event.type === "click") {
-        return this.#onClick();
+      if (event.type === "blur") {
+        return this.#onBlur();
       }
       this.#onKeydown(event);
     }
     /**
      * Handle click events
      */
-    #onClick() {
+    #onBlur() {
       const navs = this.querySelectorAll("details[open]:not(:focus-within)");
       for (const nav of navs) {
         nav.removeAttribute("open");
@@ -527,7 +527,7 @@
   });
 
   // modules/js/components/invoker.polyfill.js
-  //! Invoker Command API Polyfill by Keith Cirkel - https://github.com/keithamus/invokers-polyfill/tree/main
+  //! Invoker Command API Polyfill by Keith Cirkel - https://github.com/keithamus/invokers-polyfill/tree/main - MIT License
   function isSupported() {
     return typeof HTMLButtonElement !== "undefined" && "command" in HTMLButtonElement.prototype && "source" in ((globalThis.CommandEvent || {}).prototype || {});
   }
@@ -841,12 +841,6 @@
           invokee.hidePopover();
         }
       } else if (invokee.localName === "dialog") {
-        let setCollapsedState2 = function() {
-          source.setAttribute("aria-expanded", "false");
-          invokee.removeEventListener("close", setCollapsedState2);
-          invokee.removeEventListener("cancel", setCollapsedState2);
-        };
-        var setCollapsedState = setCollapsedState2;
         const canShow = !invokee.hasAttribute("open");
         const shouldShow = canShow && command === "show-modal";
         const shouldHide = !canShow && command === "close";
@@ -854,8 +848,10 @@
           invokee.showModal();
           source.setAttribute("aria-expanded", "true");
           source.setAttribute("aria-controls", invokee.id);
-          invokee.addEventListener("close", setCollapsedState2);
-          invokee.addEventListener("cancel", setCollapsedState2);
+          invokee.addEventListener("close", () => {
+            source.setAttribute("aria-expanded", "false");
+            source.focus();
+          }, { once: true });
         } else if (shouldHide) {
           invokee.close();
         }

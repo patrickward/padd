@@ -1,4 +1,4 @@
-/*! kelpui v1.3.0 | (c) Chris Ferdinandi | http://github.com/cferdinandi/kelp */
+/*! kelpui v1.5.0 | (c) Chris Ferdinandi | http://github.com/cferdinandi/kelp */
 /* modules/css/layers/layers.css */
 @layer kelp;
 @layer kelp.base, kelp.theme, kelp.core, kelp.extend, kelp.utilities, kelp.helpers, kelp.tokens, kelp.state, kelp.effects;
@@ -374,7 +374,7 @@
     html {
         font-size: var(--font-size-base);
         scroll-behavior: smooth;
-        overflow-y: scroll;
+        scrollbar-gutter: stable;
         -moz-text-size-adjust: none;
         -webkit-text-size-adjust: none;
         text-size-adjust: none;
@@ -712,6 +712,8 @@
         --border-color-hover: transparent;
         --border-color-active: transparent;
         --gap: var(--size-4xs);
+        --padding-block: var(--size-4xs);
+        --padding-inline: var(--size-m);
         --decoration: none;
         --decoration-hover: none;
         background-color: var(--background-color);
@@ -726,16 +728,13 @@
         font-size: var(--size-s);
         font-weight: 400;
         line-height: var(--line-height-xs);
-        padding-block: var(--size-4xs);
-        padding-inline: var(--size-m);
+        padding-block: var(--padding-block);
+        padding-inline: var(--padding-inline);
         text-align: center;
         vertical-align: middle;
     }
-    .btn-block {
-        display: block;
-        width: 100%;
-    }
-    .btn-link {
+    .btn-link,
+    .link {
         --background-color: transparent;
         --background-color-hover: transparent;
         --background-color-active: transparent;
@@ -773,7 +772,8 @@
         opacity: var(--opacity);
         pointer-events: none;
     }
-    .btn-link:hover {
+    .btn-link:hover,
+    .link:hover {
         --decoration: var(--decoration-text-link-hover);
     }
 }
@@ -872,7 +872,8 @@
         max-width: 100%;
         margin: 0;
     }
-    .drawer {
+    .drawer,
+    .drawer-end {
         inset-inline-end: 0;
         inset-inline-start: auto;
     }
@@ -1063,9 +1064,6 @@
 
 /* modules/css/layout/stack.css */
 @layer kelp.core {
-    .stack > * {
-        margin: 0;
-    }
     .stack {
         --gap: var(--size-m);
         display: flex;
@@ -1073,12 +1071,14 @@
         gap: var(--gap);
     }
 }
+@layer kelp.utilities {
+    .stack > * {
+        margin: 0;
+    }
+}
 
 /* modules/css/layout/split.css */
 @layer kelp.core {
-    .split > * {
-        margin: 0;
-    }
     .split {
         --gap: var(--size-m);
         display: flex;
@@ -1087,12 +1087,14 @@
         flex-wrap: wrap;
     }
 }
+@layer kelp.utilities {
+    .split > * {
+        margin: 0;
+    }
+}
 
 /* modules/css/layout/cluster.css */
 @layer kelp.core {
-    .cluster > * {
-        margin: 0;
-    }
     .cluster {
         --gap: var(--size-m);
         display: flex;
@@ -1100,12 +1102,14 @@
         gap: var(--gap);
     }
 }
+@layer kelp.utilities {
+    .cluster > * {
+        margin: 0;
+    }
+}
 
 /* modules/css/layout/sidecar.css */
 @layer kelp.core {
-    [class*=sidecar] > * {
-        margin: 0;
-    }
     [class*=sidecar] {
         --gap: var(--size-m);
         --main-size: initial;
@@ -1114,24 +1118,26 @@
         flex-wrap: wrap;
         gap: var(--gap);
     }
-    .sidecar > :first-child,
+    :is(.sidecar, .sidecar-start) > :first-child,
     .sidecar-end > :last-child {
         flex-basis: var(--secondary-size, auto);
         flex-grow: 1;
     }
-    .sidecar > :last-child,
+    :is(.sidecar, .sidecar-start) > :last-child,
     .sidecar-end > :first-child {
         flex-basis: 0;
         flex-grow: 999;
         min-inline-size: var(--main-size, 50%);
     }
 }
+@layer kelp.utilities {
+    [class*=sidecar] > * {
+        margin: 0;
+    }
+}
 
 /* modules/css/layout/action-header.css */
 @layer kelp.core {
-    .action-header > * {
-        margin: 0;
-    }
     .action-header {
         --gap: var(--size-m);
         --main-size: initial;
@@ -1150,12 +1156,17 @@
         min-inline-size: var(--main-size, 50%);
     }
     .action-header > :last-child button {
-        --padding: var(--size-4xs);
-        padding: var(--padding);
+        --padding-block: var(--size-4xs);
+        --padding-inline: var(--size-4xs);
     }
     .action-header > :last-child button:last-child {
-        margin-block-start: calc(-1 * var(--padding));
-        margin-inline-end: calc(-1 * var(--padding));
+        margin-block-start: calc(-1 * var(--padding-block));
+        margin-inline-end: calc(-1 * var(--padding-inline));
+    }
+}
+@layer kelp.utilities {
+    .action-header > * {
+        margin: 0;
     }
 }
 
@@ -1199,8 +1210,12 @@
     :not(.no-wrap) :is(.menu, .navbar > ul, .menu > ul) {
         flex-wrap: wrap;
     }
-    .navbar a {
+    .navbar a,
+    .nav-collapse a {
         --decoration: none;
+    }
+    :is(.navbar, .menu) li:last-child .plain {
+        margin-inline-end: calc(-1 * var(--padding-inline));
     }
     @media (max-width: 52em) {
         .navbar:not(.no-wrap) > * {
@@ -1739,6 +1754,22 @@
     }
     .padding-space {
         padding: var(--space);
+    }
+}
+
+/* modules/css/utilities/display.css */
+@layer kelp.utilities {
+    .btn-block,
+    .block {
+        display: block;
+        width: 100%;
+    }
+    .inline {
+        display: inline;
+        width: auto;
+    }
+    .inline-block {
+        display: inline-block;
     }
 }
 
