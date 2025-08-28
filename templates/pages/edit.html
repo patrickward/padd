@@ -13,9 +13,11 @@
 
         <form action="/save/{{.CurrentFile.ID}}" method="post">
             <label for="content" class="visually-hidden">Content</label>
-            <kelp-autogrow>
-                <textarea id="content" name="content" autofocus>{{.RawContent}}</textarea>
-            </kelp-autogrow>
+            <div class="markdown-editor">
+                <kelp-autogrow>
+                    <textarea id="content" name="content" autofocus>{{.RawContent}}</textarea>
+                </kelp-autogrow>
+            </div>
 
             <div class="cluster margin-start-m gap-2xs">
                 <button type="submit" class="primary">Save</button>
