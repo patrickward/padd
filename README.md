@@ -156,10 +156,10 @@ For example, to link to a page named "Project Ideas" in resources, you can use t
     See more details in [[project-ides]].
 ```
 
-Which will get converted to:
+Which will get converted to the following before rendering:
 
 ```markdown
-    See more details in [Project Ideas](/resources/project-ideas) before the markdown is rendered.
+    See more details in [Project Ideas](/resources/project-ideas).
 ```
 
 To link to a nested directory, just add the path in the link:
@@ -168,10 +168,10 @@ To link to a nested directory, just add the path in the link:
     See more details in [[projects/website-redesign]].
 ```
 
-This will get converted to:
+This will get converted to the following before rendering:
 
 ```markdown
-    See more details in [Projects/Website Redesign](/resources/projects/website-redesign) before the markdown is rendered.
+    See more details in [Projects/Website Redesign](/resources/projects/website-redesign).
 ```
 
 To link to a core file, just use the name:
@@ -180,10 +180,10 @@ To link to a core file, just use the name:
     See my current tasks in [[active]].
 ```
 
-Which will get converted to:
+Which will get converted to the following before rendering:
 
 ```markdown
-    See my current tasks in [Active](/active) before the markdown is rendered.
+    See my current tasks in [Active](/active). 
 ```
 
 ## Possible Future Enhancements
