@@ -141,6 +141,51 @@ That will get converted to:
  This is an icon: <span class="icon"><svg ...>...</svg></span>
 ```
 
+## WikiLink Shortcodes
+
+PADD supports a simple wiki-style link syntax for linking between markdown files. The shortcode format is as follows: `[[page-name]]`. This will create a link to the corresponding markdown file in your data directory, converting spaces to hyphens and making the link lowercase.
+
+It currently assumes the target file exists as a core file (inbox.md, active.md, daily.md) or in the resources directory. Future enhancements may include more robust handling of nested directories and non-existent files, but this works for now. It also assumes 
+you are using the normalized naming convention (lowercase, letters and numbers, with hyphens) for your markdown files. You do not have to add the `.md` extension in the link. It will be added automatically. You also do not need to add the `resources/` prefix for files in that directory. It will first search the core files, then the resources directory.
+
+If a file does not exist, it will show a red error message where the link would be, but it will not break the rest of the markdown rendering.
+
+For example, to link to a page named "Project Ideas" in resources, you can use the following shortcode in your markdown:
+
+```markdown 
+    See more details in [[project-ides]].
+```
+
+Which will get converted to:
+
+```html
+    See more details in [Project Ideas](/resources/project-ideas) before the markdown is rendered.
+```
+
+To link to a nested directory, just add the path in the link:
+
+```markdown
+    See more details in [[projects/website-redesign]].
+```
+
+This will get converted to:
+
+```html
+    See more details in [Projects/Website Redesign](/resources/projects/website-redesign) before the markdown is rendered.
+```
+
+To link to a core file, just use the name:
+
+```markdown
+    See my current tasks in [[active]].
+```
+
+Which will get converted to:
+
+```html
+    See my current tasks in [Active](/active) before the markdown is rendered.
+```
+
 ## Possible Future Enhancements
 
 - Enhanced search functionality (currently uses a very simple "contains" search across all markdown files)
