@@ -72,7 +72,7 @@ func (s *Server) processWikiLinkShortcodes(line string, wikiRe *regexp.Regexp) s
 			return fmt.Sprintf(`[%s](/%s)`, file.Display, file.ID)
 		}
 
-		return fmt.Sprintf(`<span class="text-color danger">!! The link for '[[%s]]' does not exist. !!</span>`, pageName)
+		return fmt.Sprintf(`<span class="text-color danger">!! [[%s]] not found !!</span>`, pageName)
 	})
 	return line
 }
