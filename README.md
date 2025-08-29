@@ -158,7 +158,7 @@ For example, to link to a page named "Project Ideas" in resources, you can use t
 
 Which will get converted to:
 
-```html
+```markdown
     See more details in [Project Ideas](/resources/project-ideas) before the markdown is rendered.
 ```
 
@@ -170,7 +170,7 @@ To link to a nested directory, just add the path in the link:
 
 This will get converted to:
 
-```html
+```markdown
     See more details in [Projects/Website Redesign](/resources/projects/website-redesign) before the markdown is rendered.
 ```
 
@@ -182,7 +182,7 @@ To link to a core file, just use the name:
 
 Which will get converted to:
 
-```html
+```markdown
     See my current tasks in [Active](/active) before the markdown is rendered.
 ```
 
