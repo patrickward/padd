@@ -622,11 +622,21 @@ func main() {
 	var dataFlag string
 	var showVersion bool
 
+	// Note to self about Flag aliases: Go's flag package allows multiple flag names to point to the same variable.
+	// When you call BoolVar/StringVar/etc. multiple times with the same variable pointer,
+	// you create aliases that all modify the same memory location. This enables both short
+	// and long flag versions (e.g., -v and -version) without needing separate variables.
+	// The default value is only applied once, not overridden - both flags share the same
+	// default and will set the same variable when used by the user.
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	flagSet.StringVar(&dataFlag, "data", "", "Directory to store markdown files.")
+	flagSet.StringVar(&dataFlag, "d", "", "Directory to store markdown files.")
 	flagSet.IntVar(&port, "port", 8080, "Port to run the server on.")
+	flagSet.IntVar(&port, "p", 8080, "Port to run the server on.")
 	flagSet.StringVar(&addr, "addr", "localhost", "Address to bind the server to.")
+	flagSet.StringVar(&addr, "a", "localhost", "Address to bind the server to.")
 	flagSet.BoolVar(&showVersion, "version", false, "Show application version.")
+	flagSet.BoolVar(&showVersion, "v", false, "Show application version.")
 
 	flagSet.Usage = func() {
 		_, _ = fmt.Fprintf(flagSet.Output(), "PADD - Personal Assistant for Daily Documentation\n\n")
