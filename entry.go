@@ -32,7 +32,8 @@ func (s *Server) handleAddEntry(w http.ResponseWriter, r *http.Request, config E
 
 	entry := strings.TrimSpace(r.FormValue("entry"))
 	if entry == "" {
-		http.Redirect(w, r, config.RedirectPath+"?msg=Entry cannot be empty&type=danger", http.StatusSeeOther)
+		s.flashManager.SetError(w, "Entry cannot be empty")
+		http.Redirect(w, r, config.RedirectPath, http.StatusSeeOther)
 		return
 	}
 
@@ -63,8 +64,8 @@ func (s *Server) handleAddEntry(w http.ResponseWriter, r *http.Request, config E
 		return
 	}
 
-	msg := fmt.Sprintf("Entry added at %s", now.Format("15:04:05"))
-	http.Redirect(w, r, config.RedirectPath+"?msg="+msg+"&type=success", http.StatusSeeOther)
+	s.flashManager.SetSuccess(w, "Entry added successfully")
+	http.Redirect(w, r, config.RedirectPath, http.StatusSeeOther)
 }
 
 // insertIntoSection handles insertion under specific ## headers

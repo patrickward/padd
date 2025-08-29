@@ -78,13 +78,10 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 		SearchMatch:   searchMatch,
 	}
 
-	// Check for message in query params (after redirect from save/daily)
-	if msg := r.URL.Query().Get("msg"); msg != "" {
-		data.Message = msg
-		data.MessageType = r.URL.Query().Get("type")
-		if data.MessageType == "" {
-			data.MessageType = "success"
-		}
+	// Check for a flash message
+	if flash := s.flashManager.Get(w, r); flash != nil {
+		data.FlashMessage = flash.Message
+		data.FlashMessageType = flash.Type
 	}
 
 	if err := s.executePage(w, "view.html", data); err != nil {
@@ -147,7 +144,8 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/"+file.ID+"?msg=File saved successfully&type=success", http.StatusSeeOther)
+	s.flashManager.SetSuccess(w, "File saved successfully")
+	http.Redirect(w, r, "/"+file.ID, http.StatusSeeOther)
 }
 
 func (s *Server) handleDaily(w http.ResponseWriter, r *http.Request) {
@@ -236,13 +234,10 @@ func (s *Server) handleResources(w http.ResponseWriter, r *http.Request) {
 		ResourceTree:  resourceTree,
 	}
 
-	// Check for message in query params (after redirect from add/delete)
-	if msg := r.URL.Query().Get("msg"); msg != "" {
-		data.Message = msg
-		data.MessageType = r.URL.Query().Get("type")
-		if data.MessageType == "" {
-			data.MessageType = "success"
-		}
+	// Check for a flash message
+	if flash := s.flashManager.Get(w, r); flash != nil {
+		data.FlashMessage = flash.Message
+		data.FlashMessageType = flash.Type
 	}
 
 	if err := s.executePage(w, "resources.html", data); err != nil {
@@ -253,13 +248,15 @@ func (s *Server) handleResources(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	fileName := strings.TrimSpace(r.FormValue("filename"))
 	if fileName == "" {
-		http.Redirect(w, r, "/resources?msg=Filename cannot be empty&type=danger", http.StatusSeeOther)
+		s.flashManager.SetError(w, "Filename cannot be empty")
+		http.Redirect(w, r, "/resources", http.StatusSeeOther)
 		return
 	}
 
 	// Validate filename contains only allowed characters
 	if !isValidFileName(fileName) {
-		http.Redirect(w, r, "/resources?msg=Filename must contain only letters, numbers, dashes, periods, underscores, and forward slashes&type=danger", http.StatusSeeOther)
+		s.flashManager.SetError(w, "Filename must contain only letters, numbers, dashes, periods, underscores, and forward slashes")
+		http.Redirect(w, r, "/resources", http.StatusSeeOther)
 		return
 	}
 
@@ -275,14 +272,16 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	if strings.Contains(fileName, "/") {
 		dir := filepath.Dir(fullPath)
 		if err := s.dirManager.MkdirAll(dir, 0755); err != nil {
-			http.Redirect(w, r, "/resources?msg=Failed to create directories&type=danger", http.StatusSeeOther)
+			s.flashManager.SetError(w, "Failed to create directories")
+			http.Redirect(w, r, "/resources", http.StatusSeeOther)
 			return
 		}
 	}
 
 	// Check if file already exists
 	if s.dirManager.Exists(fullPath) {
-		http.Redirect(w, r, "/resources?msg=File already exists&type=danger", http.StatusSeeOther)
+		s.flashManager.SetError(w, "File already exists")
+		http.Redirect(w, r, "/resources", http.StatusSeeOther)
 		return
 	}
 
@@ -292,7 +291,8 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 		time.Now().Format("2006-01-02"))
 
 	if err := s.dirManager.WriteString(fullPath, defaultContent); err != nil {
-		http.Redirect(w, r, "/resources?msg=Failed to create file&type=danger", http.StatusSeeOther)
+		s.flashManager.SetError(w, "Failed to create file")
+		http.Redirect(w, r, "/resources", http.StatusSeeOther)
 		return
 	}
 
@@ -301,7 +301,8 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to the new file
 	fileID := "resources/" + s.createID(fileName)
-	http.Redirect(w, r, "/"+fileID+"?msg=File created successfully&type=success", http.StatusSeeOther)
+	s.flashManager.SetSuccess(w, "File created successfully")
+	http.Redirect(w, r, "/"+fileID, http.StatusSeeOther)
 }
 
 // isValidFileName checks if a filename contains only allowed characters

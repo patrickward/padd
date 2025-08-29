@@ -42,6 +42,7 @@ type Server struct {
 	resourceCache []FileInfo
 	cacheMux      sync.RWMutex
 	lastCacheTime time.Time
+	flashManager  *FlashManager
 }
 
 type FileInfo struct {
@@ -61,22 +62,22 @@ type DirectoryNode struct {
 }
 
 type PageData struct {
-	Title         string
-	CurrentFile   FileInfo
-	Content       template.HTML
-	RawContent    string
-	IsEditing     bool
-	IsSearching   bool
-	IsResources   bool
-	CoreFiles     []FileInfo
-	ResourceFiles []FileInfo
-	ResourceTree  *DirectoryNode
-	SearchQuery   string
-	SearchResults map[string][]SearchMatch
-	Message       string
-	MessageType   string
-	ErrorMessage  string
-	SearchMatch   int // To indicate which match in the line to highlight
+	Title            string
+	CurrentFile      FileInfo
+	Content          template.HTML
+	RawContent       string
+	IsEditing        bool
+	IsSearching      bool
+	IsResources      bool
+	CoreFiles        []FileInfo
+	ResourceFiles    []FileInfo
+	ResourceTree     *DirectoryNode
+	SearchQuery      string
+	SearchResults    map[string][]SearchMatch
+	FlashMessage     string
+	FlashMessageType string
+	ErrorMessage     string
+	SearchMatch      int // To indicate which match in the line to highlight
 }
 
 type SearchMatch struct {
@@ -145,10 +146,11 @@ func NewServer(dataDir string) (*Server, error) {
 	}
 
 	s := &Server{
-		dataDir:    dataDir,
-		dirManager: dirManager,
-		md:         md,
-		baseTempl:  tmpl,
+		dataDir:      dataDir,
+		dirManager:   dirManager,
+		md:           md,
+		baseTempl:    tmpl,
+		flashManager: NewFlashManager(),
 	}
 
 	s.initializeFiles()
