@@ -80,9 +80,11 @@ export PADD_DATA_DIR=/path/to/my/notes
 ## Command Line Options
 
 ```
--data string    Directory to store markdown files
--port int       Port to run the server on (default 8080)
--addr string    Address to bind the server to (default "localhost")
+-data, -d string    Directory to store markdown files
+-port, -p int       Port to run the server on (default 8080)
+-addr, -a string    Address to bind the server to (default "localhost")
+-version, -v       Show version information
+-help, -h          Show help message
 ```
 
 ## Image and SVG Handling
