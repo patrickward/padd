@@ -105,10 +105,11 @@ func NewServer(dataDir string) (*Server, error) {
 	md := goldmark.New(
 		goldmark.WithExtensions(
 			extension.GFM,
-			extension.TaskList,
+			extension.Typographer,
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
+			parser.WithAttribute(),
 		),
 		goldmark.WithRendererOptions(
 			html.WithHardWraps(),

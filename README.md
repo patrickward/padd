@@ -153,7 +153,7 @@ If a file does not exist, it will show a red error message where the link would 
 For example, to link to a page named "Project Ideas" in resources, you can use the following shortcode in your markdown:
 
 ```markdown 
-    See more details in [[project-ides]].
+    See more details in [[project-ideas]].
 ```
 
 Which will get converted to the following before rendering:
@@ -177,13 +177,13 @@ This will get converted to the following before rendering:
 To link to a core file, just use the name:
 
 ```markdown
-    See my current tasks in [[active]].
+    See tasks in [[active]].
 ```
 
 Which will get converted to the following before rendering:
 
 ```markdown
-    See my current tasks in [Active](/active). 
+    See tasks in [Active](/active). 
 ```
 
 ## Possible Future Enhancements
