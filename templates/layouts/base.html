@@ -39,7 +39,7 @@
     <script>
       document.addEventListener('keydown', function (e) {
         // Ctrl+K to focus search
-        if (e.ctrlKey && e.key === 'k') {
+        if (e.ctrlKey && e.key === 'k' || e.metaKey && e.key === 'k') {
           e.preventDefault()
           document.querySelector('input[name="q"]').focus()
         }
