@@ -11,9 +11,7 @@ handling, and I wanted to try out the KelpUI framework for building a web-based 
 
 > This is a personal project and not intended to be a full-featured application. It's designed to be simple,
 > lightweight, and easy to use for my needs. It works for me, but it probably won't work for you. I'm okay with all the
-> limitations and trade-offs. If you want something more robust, check
-> out [Obsidian](https://obsidian.md), [Notion](https://www.notion.so), or [Joplin](https://joplinapp.org). I didn't want
-> to go down those rabbit holes.
+> limitations and trade-offs.
 
 ## Core Concepts
 
@@ -169,7 +167,7 @@ resources/
 1. Clone or download the repository
 2. Build the application: `go build`
 3. Run the server: `./padd`
-4. Open http://localhost:8080 in your browser
+4. Open <http://localhost:8080> in your browser
 
 ## Data Directory Configuration
 
@@ -288,7 +286,7 @@ the markdown rendering.
 
 For example, to link to a page named "Project Ideas" in resources, you can use the following shortcode in your markdown:
 
-```markdown 
+```markdown
     See more details in [[project-ideas]].
 ```
 
@@ -357,7 +355,7 @@ The colors use the KelpUI color scheme. See [KelpUI](https://kelpui.com/) for de
 | on-hold     | warning muted   |
 | held        | warning muted   |
 | cancelled   | danger muted    |
-| canceled    | danger muted    | 
+| canceled    | danger muted    |
 
 | Priority | Color         |
 |----------|---------------|
