@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+    <!-- Outer frame -->
+    <rect x="4" y="2" width="24" height="28" rx="2" fill="#1a202c" stroke="#2d3748" stroke-width="0.5"/>
+
+    <!-- Inner bezel -->
+    <rect x="5" y="3" width="22" height="26" rx="1" fill="#2d3748"/>
+
+    <!-- Main screen -->
+    <rect x="6" y="4" width="20" height="20" rx="1" fill="#0f4c75" stroke="#1e6091" stroke-width="0.3"/>
+
+    <!-- LCARS-style top status bar -->
+    <rect x="7" y="5" width="18" height="2" rx="0.5" fill="#ff6b35"/>
+
+    <!-- Larger side panels for better visibility -->
+    <rect x="7" y="8" width="5" height="5" rx="0.5" fill="#ffd23f"/>
+    <rect x="7" y="14" width="5" height="4" rx="0.5" fill="#00bfa6"/>
+    <rect x="7" y="19" width="5" height="4" rx="0.5" fill="#ff6b35"/>
+
+    <!-- Main data area with grid lines (adjusted for larger panels) -->
+    <g stroke="#1e6091" stroke-width="0.4" opacity="0.7">
+        <line x1="14" y1="9" x2="24" y2="9"/>
+        <line x1="14" y1="12" x2="22" y2="12"/>
+        <line x1="14" y1="15" x2="25" y2="15"/>
+        <line x1="14" y1="18" x2="20" y2="18"/>
+        <line x1="14" y1="21" x2="24" y2="21"/>
+    </g>
+
+    <!-- Control button panel at bottom -->
+    <rect x="6" y="25" width="20" height="3" rx="0.5" fill="#2d3748" stroke="#4a5568" stroke-width="0.3"/>
+
+    <!-- Individual control buttons -->
+    <rect x="7" y="25.5" width="4" height="2" rx="0.3" fill="#1a202c"/>
+    <rect x="12" y="25.5" width="4" height="2" rx="0.3" fill="#1a202c"/>
+    <rect x="17" y="25.5" width="4" height="2" rx="0.3" fill="#1a202c"/>
+    <rect x="22" y="25.5" width="3" height="2" rx="0.3" fill="#1a202c"/>
+
+    <!-- Status indicators on buttons -->
+    <circle cx="9" cy="26.5" r="0.5" fill="#00bfa6"/>
+    <circle cx="14" cy="26.5" r="0.5" fill="#ffd23f"/>
+    <circle cx="19" cy="26.5" r="0.5" fill="#ff6b35"/>
+    <circle cx="23.5" cy="26.5" r="0.5" fill="#00bfa6"/>
+</svg>

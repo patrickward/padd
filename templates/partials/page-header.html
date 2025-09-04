@@ -1,0 +1,108 @@
+{{define "page-header"}}
+    <header class="margin-start-5xl">
+        <!-- Breadcrumb Navigation -->
+        {{if .CurrentFile.IsResource}}
+            <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
+                <a href="/resources">Resources</a>
+                <span class="text-muted">&raquo;</span>
+                <strong>{{.CurrentFile.RelativePath}}</strong>
+            </nav>
+        {{else if hasPrefix .CurrentFile.Path "daily/"}}
+            <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
+                <a href="/daily/archive">Daily Archive</a>
+                <span class="text-muted">&raquo;</span>
+                <strong>{{.CurrentFile.RelativePath}}</strong>
+            </nav>
+        {{else if hasPrefix .CurrentFile.Path "journal/"}}
+            <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
+                <a href="/journal/archive">Journal Archive</a>
+                <span class="text-muted">&raquo;</span>
+                <strong>{{.CurrentFile.RelativePath}}</strong>
+            </nav>
+        {{end}}
+
+        <!-- Title and Actions -->
+        <div class="split align-center margin-end-s">
+            <div class="stack gap-4xs">
+                <h1>{{.Title}}</h1>
+                {{if .Description}}
+                    <p class="text-muted size-s">{{.Description}}</p>
+                {{end}}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="cluster gap-2xs">
+                {{if hasPrefix .CurrentFile.Path "daily/"}}
+                    {{if .CurrentFile.IsCurrent}}
+                        <button command="show-modal" commandfor="entry-modal-daily" class="primary outline size-xs">
+                            Daily Entry
+                        </button>
+                    {{end}}
+                {{else if hasPrefix .CurrentFile.Path "journal/"}}
+                    {{if .CurrentFile.IsCurrent}}
+                        <button command="show-modal" commandfor="entry-modal-journal" class="primary outline size-xs">
+                            Journal Entry
+                        </button>
+                    {{end}}
+                {{else}}
+                    {{if .HasTasks}}
+                        <button hx-post="/api/tasks/complete/{{.CurrentFile.ID}}" hx-swap="none" class="btn outline size-2xs">
+                            Archive Completed Tasks
+                        </button>
+                    {{end}}
+                    <button command="show-modal" commandfor="entry-modal-quick" class="primary outline size-xs">
+                        Add an Entry
+                    </button>
+                {{end}}
+                <a href="/edit/{{.CurrentFile.ID}}" class="btn outline size-2xs">Edit</a>
+            </div>
+        </div>
+
+        <!-- Metadata Section -->
+        {{if or .Status .Priority .DueDate .Category .Tags .Contexts}}
+            <div class="metadata-section margin-end-s">
+                <!-- Status/Priority Badges -->
+                {{if or .Status .Priority .DueDate}}
+                    <div class="cluster gap-3xs margin-end-2xs">
+                        {{if .Status}}
+                            <span class="badge {{.StatusColor}}">Status: {{.Status}}</span>
+                        {{end}}
+                        {{if .Priority}}
+                            <span class="badge {{.PriorityColor}}">Priority: {{.Priority}}</span>
+                        {{end}}
+                        {{if .DueDate}}
+                            <span class="badge {{.DueColor}}">Due: {{.DueDate}}</span>
+                        {{end}}
+                    </div>
+                {{end}}
+
+                <!-- Organizational Metadata -->
+                {{if .Category}}
+                    <div class="cluster gap-m size-s margin-end-2xs">
+                        {{if .Category}}
+                            <div class="metadata-item">
+                                <span class="text-muted">Category:</span>
+                                <a href="/search?q={{.Category}}" class="link">{{.Category}}</a>
+                            </div>
+                        {{end}}
+                    </div>
+                {{end}}
+
+                <!-- Tags and Contexts -->
+                {{if or .Tags .Contexts}}
+                    <div class="cluster gap-2xs wrap">
+                        {{range .Tags}}
+                            <a href="/search?q={{.}}" class="badge {{$.TagColor}}">{{.}}</a>
+                        {{end}}
+                        {{range .Contexts}}
+                            <a href="/search?q={{.}}" class="badge {{$.ContextColor}}">{{.}}</a>
+                        {{end}}
+                    </div>
+                {{end}}
+            </div>
+        {{end}}
+    </header>
+
+    <hr>
+{{end}}
+

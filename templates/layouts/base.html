@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - PADD</title>
+
+    <!-- App-specific details -->
+    {{if .CurrentFile}}
+        <meta name="app:file-id" content="{{.CurrentFile.ID}}">
+    {{else}}
+        <meta name="app:file-id" content="">
+    {{end}}
+    <meta name="app:search-match" content="{{.SearchMatch}}">
+
+    <link rel="icon" type="image/png" href="/static/favicon-96x96.png" sizes="96x96"/>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg"/>
+    <link rel="shortcut icon" href="/static/favicon.ico"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png"/>
+    <meta name="apple-mobile-web-app-title" content="PADD"/>
+    <link rel="manifest" href="/static/site.webmanifest"/>
+
+    <link rel="stylesheet" href="/static/css/kelp.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/markdown-editor.css">
+    <link rel="stylesheet" href="/static/css/markdown-toolbar.css">
+
+    <script src="/static/js/dark-mode-auto.js"></script>
+</head>
+<body>
+{{template "navbar.html" .}}
+
+<main class="container-l">
+    {{template "message.html" .}}
+    {{block "content" .}}{{end}}
+</main>
+
+{{template "footer.html" .}}
+
+<!-- Optional: Add Alpine.js for interactivity -->
+<!-- <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script> -->
+
+<script src="/static/js/kelp.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/markdown-toolbar.js"></script>
+<script src="/static/js/htmx.2.0.6.min.js"></script>
+</body>
+</html>

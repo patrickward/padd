@@ -1,0 +1,74 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <article class="margin-end-6xl file-id-resources">
+        <header class="margin-start-5xl">
+            <div class="split align-center">
+                <h1>Resources</h1>
+                <button command="show-modal" commandfor="add-resource-modal" class="primary outline size-xs">
+                    Add Resource
+                </button>
+            </div>
+        </header>
+
+        <hr>
+
+        {{template "add-resource-modal" .}}
+
+        <!-- List all Resource Files hierarchically -->
+        <section class="margin-start-5xl">
+            <p class="callout margin-end-3xl">
+                Resource files are markdown files stored in the <code>resources/</code> directory. They can be used for
+                notes, documentation, or any other non-core content you want to manage separately from your main files.
+            </p>
+
+            {{if .ResourceTree}}
+                {{template "directoryTree" .ResourceTree}}
+            {{else}}
+                <p>No resource files available.</p>
+            {{end}}
+        </section>
+
+    </article>
+{{end}}
+
+{{define "directoryTree"}}
+    <div class="resource-listing">
+        <ul class="">
+            {{/* First, display files in this directory */}}
+            {{range .Files}}
+                <li>
+                    <a href="/{{.ID}}">{{.DisplayBase}}</a>
+                </li>
+            {{end}}
+
+            {{/* Then, display subdirectories */}}
+            {{range $dirName, $dirNode := .Directories}}
+                <li>
+                    <strong>{{$dirName}}/</strong>
+                    {{template "directoryTree" $dirNode}}
+                </li>
+            {{end}}
+        </ul>
+    </div>
+{{end}}
+
+{{define "add-resource-modal"}}
+    <dialog id="add-resource-modal" closedby="any">
+        <form action="/resources/create" method="post">
+            <label for="filename">New Resource Filename</label>
+            <input type="text"
+                   id="filename"
+                   name="filename"
+                   placeholder="Add a file path to create"
+                   required autofocus>
+            <button type="submit" class="primary">Create Resource</button>
+            <div class="text-muted size-2xs margin-start-3xs">
+                Files must contain only letters, numbers, dashes, underscores, periods, and slashes. They
+                will automatically be created within the <code>resources/</code> directory and have a ".md" extension.
+                You can add a file to a subdirectory by including slashes in the filename (e.g., <code>notes.md</code> or
+                <code>projects/foobar/notes.md</code>). Directories will be created automatically as needed.
+            </div>
+        </form>
+    </dialog>
+{{end}}

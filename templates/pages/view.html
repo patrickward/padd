@@ -1,0 +1,122 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <article
+            class="margin-end-6xl {{if .CurrentFile.IsTemporal}}temporal-file{{end}} file-id-{{.CurrentFile.CSSClass}}">
+{{/*        <header class="margin-start-5xl">*/}}
+{{/*            {{if .CurrentFile.IsResource}}*/}}
+{{/*                <!-- Build a siimple breadcrumb for resources, starting with "Resources" -->*/}}
+{{/*                <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">*/}}
+{{/*                    <a href="/resources">Resources</a>*/}}
+{{/*                    <span class="text-muted">&raquo;</span>*/}}
+{{/*                    <strong>{{.CurrentFile.RelativePath}}</strong>*/}}
+{{/*                </nav>*/}}
+{{/*            {{else if hasPrefix .CurrentFile.Path "daily/"}}*/}}
+{{/*                <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">*/}}
+{{/*                    <a href="/daily/archive">Daily Archive</a>*/}}
+{{/*                    <span class="text-muted">&raquo;</span>*/}}
+{{/*                    <strong>{{.CurrentFile.RelativePath}}</strong>*/}}
+{{/*                </nav>*/}}
+{{/*            {{else if hasPrefix .CurrentFile.Path "journal/"}}*/}}
+{{/*                <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">*/}}
+{{/*                    <a href="/journal/archive">Journal Archive</a>*/}}
+{{/*                    <span class="text-muted">&raquo;</span>*/}}
+{{/*                    <strong>{{.CurrentFile.RelativePath}}</strong>*/}}
+{{/*                </nav>*/}}
+{{/*            {{end}}*/}}
+{{/*            <div class="split align-start">*/}}
+{{/*                <div>*/}}
+{{/*                    <h1 class="margin-start-0 margin-end-0">{{.Title}}</h1>*/}}
+{{/*                    {{if .Description }}*/}}
+{{/*                        <p class="text-muted size-sm">{{.Description}}</p>*/}}
+{{/*                    {{end}}*/}}
+{{/*                </div>*/}}
+{{/*                <div class="cluster gap-2xs">*/}}
+{{/*                    {{if hasPrefix .CurrentFile.Path "daily/"}}*/}}
+{{/*                        {{if .CurrentFile.IsCurrent}}*/}}
+{{/*                            <button command="show-modal" commandfor="entry-modal-daily" class="primary outline size-xs">*/}}
+{{/*                                Daily Entry*/}}
+{{/*                            </button>*/}}
+{{/*                        {{end}}*/}}
+{{/*                    {{else if hasPrefix .CurrentFile.Path "journal/"}}*/}}
+{{/*                        {{if .CurrentFile.IsCurrent}}*/}}
+{{/*                            <button command="show-modal" commandfor="entry-modal-journal"*/}}
+{{/*                                    class="primary outline size-xs">*/}}
+{{/*                                Journal Entry*/}}
+{{/*                            </button>*/}}
+{{/*                        {{end}}*/}}
+{{/*                    {{else}}*/}}
+{{/*                        {{if .HasTasks}}*/}}
+{{/*                            <button hx-post="/api/tasks/complete/{{.CurrentFile.ID}}" hx-swap="none"*/}}
+{{/*                                    class="btn outline size-2xs">*/}}
+{{/*                                Archive Completed Tasks*/}}
+{{/*                            </button>*/}}
+{{/*                        {{end}}*/}}
+{{/*                        <button command="show-modal" commandfor="entry-modal-quick" class="primary outline size-xs">*/}}
+{{/*                            Add an Entry*/}}
+{{/*                        </button>*/}}
+{{/*                    {{end}}*/}}
+
+{{/*                    <a href="/edit/{{.CurrentFile.ID}}" class="btn outline size-2xs">Edit</a>*/}}
+{{/*                </div>*/}}
+{{/*            </div>*/}}
+{{/*        </header>*/}}
+
+{{/*        <hr>*/}}
+
+        {{template "page-header" .}}
+
+        <div class="margin-end-xl">
+            <kelp-toc target="#content-display"></kelp-toc>
+        </div>
+
+        {{if hasPrefix .CurrentFile.Path "daily/"}}
+            {{template "entry-modal" (dict "ID" "daily" "Title" "Add Daily Entry" "Action" "/daily" "Placeholder" "What did you do?")}}
+        {{else if hasPrefix .CurrentFile.Path "journal/"}}
+            {{template "entry-modal" (dict "ID" "journal" "Title" "Add Journal Entry" "Action" "/journal" "Placeholder" "Thoughts, ideas, reflections...")}}
+        {{else}}
+            {{$addAction := printf "/add/%s" .CurrentFile.ID}}
+            {{template "entry-modal" (dict "ID" "quick" "Title" "Add an Entry" "Action" $addAction "Placeholder" "What's on your mind?" "ShowAsTask" true "ShowHeader" true "SectionHeaders" .SectionHeaders)}}
+        {{end}}
+
+        <div id="content-display" class="content-display">
+            {{.Content}}
+        </div>
+    </article>
+{{end}}
+
+{{define "entry-modal"}}
+    <dialog id="entry-modal-{{.ID}}" closedby="any">
+        <form action="{{.Action}}" method="post">
+            {{if .ShowHeader}}
+                <label for="section_header" class="visually-hidden">Section Header</label>
+                <input type="text"
+                       autofocus
+                       list="section-headers" id="section_header"
+                       name="section_header" placeholder="Section Header"
+                       value="{{.Header}}"
+                       class="margin-end-6xs">
+                <p class="text-muted size-2xs">(Leave blank to add to the top of the file)</p>
+                <datalist id="section-headers">
+                    {{range .SectionHeaders}}
+                    <option value="{{.}}">
+                        {{end}}
+                </datalist>
+            {{end}}
+
+            <label for="entry" class="visually-hidden">{{.Title}}</label>
+            <kelp-autogrow>
+                <textarea id="entry" name="entry" rows="3" placeholder="{{.Placeholder}}" required></textarea>
+            </kelp-autogrow>
+
+            {{if .ShowAsTask}}
+                <label for="as_task" class="margin-start-2xs">
+                    <input type="checkbox" id="as_task" name="as_task" value="true">
+                    Add as a Task
+                </label>
+            {{end}}
+
+            <button type="submit" class="margin-start-3xs primary">{{.Title}}</button>
+        </form>
+    </dialog>
+{{end}}

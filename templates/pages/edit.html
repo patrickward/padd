@@ -1,0 +1,30 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <!-- Edit Mode -->
+    <article class="margin-end-6xl">
+        <header class="margin-start-5xl">
+            <div class="split align-center">
+                <h1>Editing: {{.CurrentFile.Display}}</h1>
+            </div>
+        </header>
+
+        <hr>
+
+        <form action="/save/{{.CurrentFile.ID}}" method="post">
+            <label for="content" class="visually-hidden">Content</label>
+            <div class="markdown-editor">
+                <markdown-toolbar cancel-url="/{{.CurrentFile.ID}}" icons-api="/api/icons">
+                    <kelp-autogrow>
+                        <textarea id="content" name="content" autofocus>{{.RawContent}}</textarea>
+                    </kelp-autogrow>
+                </markdown-toolbar>
+            </div>
+
+            <div class="cluster margin-start-m gap-2xs">
+                <button type="submit" class="primary">Save</button>
+                <a href="/{{.CurrentFile.ID}}" class="btn outline">Cancel</a>
+            </div>
+        </form>
+    </article>
+{{end}}

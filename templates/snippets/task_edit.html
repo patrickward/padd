@@ -1,0 +1,34 @@
+{{template "blank.html" .}}
+
+{{define "content"}}
+    <form class="task-edit-form flex align-center gap-5xs"
+          hx-patch="/api/tasks/{{.ID}}"
+          hx-swap="innerHTML"
+          hx-target="#tasklist-item-{{.ID}}">
+        <label for="tasklist-input-{{.ID}}" class="visually-hidden">Edit Task</label>
+        <div><input type="text" name="label" id="tasklist-input-{{.ID}}" value="{{.Value}}"/></div>
+        <!-- cancel button -->
+        <a href="#"
+           title="Cancel Edit"
+           class="btn plain"
+           hx-get="/api/tasks/show/{{.ID}}"
+           hx-swap="innerHTML"
+           hx-target="#tasklist-item-{{.ID}}"
+           aria-label="Cancel Edit">
+            <!-- a return or undo icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5.82843 6.99955L8.36396 9.53509L6.94975 10.9493L2 5.99955L6.94975 1.0498L8.36396 2.46402L5.82843 4.99955H13C17.4183 4.99955 21 8.58127 21 12.9996C21 17.4178 17.4183 20.9996 13 20.9996H4V18.9996H13C16.3137 18.9996 19 16.3133 19 12.9996C19 9.68584 16.3137 6.99955 13 6.99955H5.82843Z"></path>
+            </svg>
+        </a>
+        <!-- delete button -->
+        <a href="#"
+           title="Delete Task"
+           class="btn plain danger"
+           hx-confirm="Are you sure you want to delete this task? This action cannot be undone."
+           hx-delete="/api/tasks/{{.ID}}"
+           hx-swap="none"
+           aria-label="Delete Task">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z"></path></svg>
+        </a>
+    </form>
+{{end}}

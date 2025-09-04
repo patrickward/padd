@@ -1,0 +1,282 @@
+/**
+ * Kelp UI - Custom Theme
+ * https://kelpui.com/docs/tools/theme-builder/?palette_gray=%236b7280_264.36_0.11680448469450902&color_primary=indigo&color_secondary=pink&element_links=primary&element_focus=primary
+ */
+@layer kelp.theme {
+
+    :where(:root) {
+
+        /* Color Palette */
+        --color-gray-base: #6b7280;
+        --color-gray-hue: 264.36;
+        --color-gray-chroma: 0.11680448469450902;
+
+    }
+
+    /* Light Theme (default) */
+    :where(:root),
+    .kelp-theme-light {
+
+        /* Fills & Borders */
+        --color-primary-fill-muted: var(--color-indigo-95);
+        --color-primary-fill-accent: var(--color-indigo-90);
+        --color-primary-fill-vivid: var(--color-indigo-50);
+        --color-primary-border-muted: var(--color-indigo-90);
+        --color-primary-border-accent: var(--color-indigo-80);
+        --color-primary-border-vivid: var(--color-indigo-60);
+        --color-primary-on-muted: var(--color-indigo-30);
+        --color-primary-on-accent: var(--color-indigo-20);
+        --color-primary-on-vivid: white;
+        --color-primary-outline: var(--color-indigo-50);
+        --color-secondary-fill-muted: var(--color-pink-95);
+        --color-secondary-fill-accent: var(--color-pink-90);
+        --color-secondary-fill-vivid: var(--color-pink-50);
+        --color-secondary-border-muted: var(--color-pink-90);
+        --color-secondary-border-accent: var(--color-pink-80);
+        --color-secondary-border-vivid: var(--color-pink-60);
+        --color-secondary-on-muted: var(--color-pink-30);
+        --color-secondary-on-accent: var(--color-pink-20);
+        --color-secondary-on-vivid: white;
+        --color-secondary-outline: var(--color-pink-50);
+
+        /* Links & Focus */
+        --color-text-link: var(--color-indigo-50);
+        --color-text-link-hover: var(--color-indigo-40);
+        --color-checked: var(--color-indigo-50);
+        --focus-ring-color: var(--color-indigo-50);
+
+    }
+
+    /* Dark Theme */
+    .kelp-theme-dark {
+
+        /* Fills & Borders */
+        --color-primary-fill-muted: var(--color-indigo-20);
+        --color-primary-fill-accent: var(--color-indigo-30);
+        --color-primary-border-muted: var(--color-indigo-30);
+        --color-primary-border-accent: var(--color-indigo-40);
+        --color-primary-on-muted: var(--color-indigo-95);
+        --color-primary-on-accent: var(--color-indigo-95);
+        --color-primary-outline: var(--color-indigo-70);
+        --color-secondary-fill-muted: var(--color-pink-20);
+        --color-secondary-fill-accent: var(--color-pink-30);
+        --color-secondary-border-muted: var(--color-pink-30);
+        --color-secondary-border-accent: var(--color-pink-40);
+        --color-secondary-on-muted: var(--color-pink-95);
+        --color-secondary-on-accent: var(--color-pink-95);
+        --color-secondary-outline: var(--color-pink-70);
+
+        /* Links & Focus */
+        --color-text-link: var(--color-indigo-70);
+        --color-text-link-hover: var(--color-indigo-80);
+        --color-checked: var(--color-indigo-60);
+        --focus-ring-color: var(--color-indigo-60);
+
+    }
+
+}
+
+@layer kelp.extend {
+    .navbar a.active {
+        --decoration-hover: none;
+        --color: var(--color-primary-on-muted);
+        --color-hover: var(--color-primary-on-muted);
+        background-color: #ffffff;
+        padding: var(--size-6xs) var(--size-4xs);
+        border-radius: var(--border-radius-s);
+
+        &:hover {
+            background-color: var(--color-primary-fill-muted);
+        }
+    }
+
+    .navbar details[name="subnav"] ul {
+        --color-background: var(--color-primary-fill-vivid);
+        --border-color: var(--color-primary-border-vivid);
+    }
+
+    .icon {
+        display: inline-block;
+        fill: currentColor;
+        color: inherit;
+        vertical-align: middle;
+        width: 1.25em;
+        height: 1.25em;
+    }
+
+    .icon-sm {
+        width: 1em;
+        height: 1em;
+    }
+
+    .icon-lg {
+        width: 1.5em;
+        height: 1.5em;
+    }
+
+    .search-match {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        border-left: 3px solid var(--color-primary-border-vivid);
+    }
+
+    .search-match p {
+        display: inline;
+        margin: 0;
+        padding: 0;
+        white-space: pre-wrap;
+    }
+
+    .content-display {
+        min-height: 400px;
+
+        /** Make headers flex containers to align icons **/
+
+        h1, h2, h3, h4, h5, h6 {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: var(--size-4xs);
+        }
+    }
+
+    .tasklist-item {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--size-4xs);
+        width: 100%;
+
+        input[type="checkbox"] {
+            margin: 0;
+        }
+
+        /* Fixes issue with some browsers where the checkbox doesn't line up properly when not checked */
+        /* Adds a zero-width non-joiner (\200C) after the checkbox */
+
+        input[type="checkbox"]::after {
+            content: "\200C";
+            font-size: var(--size-xs);
+        }
+
+        .tasklist-label {
+            flex-grow: 1;
+            margin: 0;
+        }
+
+        &:has(input[type="checkbox"]:checked) {
+            .tasklist-label:not(:has(form)) {
+                text-decoration: line-through;
+                opacity: 0.6;
+            }
+        }
+
+        /*&:not(:has(input[type="checkbox"]:checked)):not(:has(form)) {*/
+
+        &:not(:has(form)) {
+            cursor: pointer;
+
+            &:hover .tasklist-label {
+                text-decoration: underline;
+                color: var(--color-text-link-hover);
+            }
+        }
+
+        /* Inputs for inline editing */
+
+        form {
+            width: 100%;
+            margin-block: var(--size-4xs);
+        }
+
+        form > div {
+            width: 100%;
+        }
+    }
+
+    /* Task list styling */
+    input[type="checkbox"][disabled] {
+        cursor: default;
+        margin-block-end: 0;
+    }
+
+    .navbar-form {
+        flex-grow: 1;
+    }
+
+    .navbar-form-item {
+        flex-grow: 1;
+        max-width: 500px;
+    }
+
+    .search-highlight {
+        background-color: var(--highlight-bg, var(--color-primary-fill-muted));
+        color: var(--highlight-color, var(--color-primary-on-muted));
+        padding: var(--size-6xs) var(--size-5xs);
+        border-radius: var(--border-radius-s);
+        animation: var(--highlight-animation, highlight-pulse 2s ease-in-out);
+    }
+
+    .search-target {
+        --highlight-bg: var(--color-secondary-fill-muted);
+        --highlight-color: var(--color-secondary-on-muted);
+        --highlight-animation: highlight-pulse-target 2s ease-in-out;
+    }
+
+    /** Temporal file header color **/
+    .temporal-file {
+        h3 {
+            --color-outline: var(--color-secondary-outline);
+            --color: var(--color-outline);
+            color: var(--color);
+        }
+    }
+
+    /** Metadata related CSS */
+
+    .metadata-section {
+        border: 1px solid var(--color-neutral-border-muted);
+        padding: var(--size-s);
+        border-radius: var(--border-radius-m);
+        background-color: transparent;
+    }
+
+    /** HTMX animations **/
+    .fade-in.htmx-added {
+        opacity: 0;
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out forwards;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes highlight-pulse {
+        0% {
+            background-color: var(--color-primary-fill-muted);
+        }
+        50% {
+            background-color: var(--color-primary-fill-accent);
+        }
+    }
+
+    @keyframes highlight-pulse-target {
+        0% {
+            background-color: var(--color-secondary-fill-muted);
+        }
+        50% {
+            background-color: var(--color-secondary-fill-accent);
+        }
+    }
+
+}

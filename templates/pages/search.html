@@ -1,0 +1,28 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <article class="margin-end-6xl">
+        <header class="margin-start-5xl">
+            <h1>Search Results for "{{.SearchQuery}}"</h1>
+        </header>
+
+        <hr>
+
+        {{range $file, $matches := .SearchResults}}
+            <section>
+                <h2><a href="/{{$file}}">{{$file}}</a></h2>
+                {{range $matches}}
+                    <div class="search-match">
+                        <span><a href="/{{$file}}?q={{$.SearchQuery}}&match={{.MatchIndex}}"><code>Match {{.MatchIndex}}</code></a> - {{.Rendered}}</span>
+                    </div>
+                {{end}}
+            </section>
+        {{end}}
+        {{if not .SearchResults}}
+            <p>No results found.</p>
+        {{end}}
+        <footer class="margin-start-5xl">
+            <a href="/" class="btn secondary">Back to Files</a>
+        </footer>
+    </article>
+{{end}}

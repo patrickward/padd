@@ -1,0 +1,33 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <article class="margin-end-6xl file-id-{{.CurrentFile.CSSClass}}">
+        <header class="margin-start-5xl">
+            <div class="split align-center">
+                <h1>{{.Title}}</h1>
+            </div>
+        </header>
+
+        <hr>
+
+        {{if .TemporalYears}}
+            <h2>Available {{.ArchiveType}} entries:</h2>
+            <ul>
+                {{range .TemporalYears}}
+                    <li>
+                        <strong>{{.}}</strong>
+                        <ul>
+                            {{range $files := index $.TemporalFiles .}}
+                                <li>
+                                    <a href="/{{.ID}}">{{.Display}}</a>
+                                </li>
+                            {{end}}
+                        </ul>
+                    </li>
+                {{end}}
+            </ul>
+        {{else}}
+            <p>No {{.ArchiveType}} entries found.</p>
+        {{end}}
+    </article>
+{{end}}

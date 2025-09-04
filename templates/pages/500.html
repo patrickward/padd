@@ -1,0 +1,25 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <!-- Show a server error message -->
+    <article class="margin-end-6xl">
+        <header class="margin-start-5xl">
+            <div class="split align-center">
+                <h1 class="text-color danger">500 - Internal Server Error</h1>
+            </div>
+        </header>
+        <hr>
+        <div class="margin-start-5xl margin-end-5xl">
+            <p>Sorry, something went wrong on our end. Please try again later.</p>
+            <p>If the problem persists, feel free to contact support or report the issue.</p>
+            <p>You can return to the <a href="/">home page</a> or use the search bar to find what you're looking for.
+            </p>
+
+            {{if .ErrorMessage}}
+                <div class="callout danger">
+                    <strong>Error Details:</strong> {{.ErrorMessage}}
+                </div>
+            {{end}}
+        </div>
+    </article>
+{{end}}
