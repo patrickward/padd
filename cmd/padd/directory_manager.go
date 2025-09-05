@@ -14,8 +14,8 @@ type RootManager struct {
 	path string
 }
 
-// NewDirectoryManager creates a new RootManager for the given directory path
-func NewDirectoryManager(path string) (*RootManager, error) {
+// NewRootManager creates a new RootManager for the given directory path
+func NewRootManager(path string) (*RootManager, error) {
 	// Ensure directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create directory %s: %w", path, err)

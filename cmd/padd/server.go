@@ -35,12 +35,12 @@ type Server struct {
 
 // NewServer initializes the server with the given data directory
 func NewServer(ctx context.Context, dataDir string) (*Server, error) {
-	dirManager, err := NewDirectoryManager(dataDir)
+	rootManager, err := NewRootManager(dataDir)
 	if err != nil {
 		return nil, err
 	}
 
-	md := createMarkdownRenderer(dirManager)
+	md := createMarkdownRenderer(rootManager)
 	tmpl, err := parseTemplates()
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func NewServer(ctx context.Context, dataDir string) (*Server, error) {
 
 	s := &Server{
 		dataDir:          dataDir,
-		rootManager:      dirManager,
+		rootManager:      rootManager,
 		md:               md,
 		baseTempl:        tmpl,
 		flashManager:     NewFlashManager(),
