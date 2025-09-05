@@ -24,8 +24,8 @@ func (s *Server) handleImages() http.Handler {
 
 		// First, try to serve from the user's images directory
 		userImagePath := filepath.Join("images", imagePath)
-		if s.dirManager.FileExists(userImagePath) {
-			content, err := s.dirManager.ReadFile(userImagePath)
+		if s.rootManager.FileExists(userImagePath) {
+			content, err := s.rootManager.ReadFile(userImagePath)
 			if err == nil {
 				// Set an appropriate content type
 				if ext := filepath.Ext(imagePath); ext != "" {
@@ -73,7 +73,7 @@ func (s *Server) handleIconsAPI(w http.ResponseWriter, r *http.Request) {
 
 	// Check user's icons directory first
 	userIconsDir := filepath.Join("images", "icons")
-	_ = s.dirManager.WalkDir(userIconsDir, func(path string, d fs.DirEntry, err error) error {
+	_ = s.rootManager.WalkDir(userIconsDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // Continue walking despite errors
 		}

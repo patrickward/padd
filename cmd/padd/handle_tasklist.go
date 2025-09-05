@@ -25,7 +25,7 @@ func (s *Server) handleTaskToggle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.dirManager.WriteString(file.Path, updatedContent); err != nil {
+	if err := s.rootManager.WriteString(file.Path, updatedContent); err != nil {
 		s.showServerError(w, r, err)
 		return
 	}
@@ -111,7 +111,7 @@ func (s *Server) handleTaskUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.dirManager.WriteString(file.Path, updatedContent); err != nil {
+	if err := s.rootManager.WriteString(file.Path, updatedContent); err != nil {
 		s.showServerError(w, r, err)
 		return
 	}
@@ -146,7 +146,7 @@ func (s *Server) handleTaskDelete(w http.ResponseWriter, r *http.Request) {
 	lines = append(lines[:lineIndex], lines[lineIndex+1:]...)
 	updatedContent := strings.Join(lines, "\n")
 
-	if err := s.dirManager.WriteString(file.Path, updatedContent); err != nil {
+	if err := s.rootManager.WriteString(file.Path, updatedContent); err != nil {
 		s.showServerError(w, r, err)
 		return
 	}
@@ -185,7 +185,7 @@ func (s *Server) extractTaskInfoFromRequest(w http.ResponseWriter, r *http.Reque
 		return FileInfo{}, 0, nil, true
 	}
 
-	content, err := s.dirManager.ReadFile(file.Path)
+	content, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		s.showServerError(w, r, err)
 		return FileInfo{}, 0, nil, true
@@ -311,7 +311,7 @@ func (s *Server) handleArchiveDoneTasks(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	contentBytes, err := s.dirManager.ReadFile(file.Path)
+	contentBytes, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		s.flashManager.SetError(w, "Failed to read file.")
 		w.Header().Set("HX-Redirect", r.Header.Get("Referer"))
@@ -334,7 +334,7 @@ func (s *Server) handleArchiveDoneTasks(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := s.dirManager.WriteString(file.Path, updatedContent); err != nil {
+	if err := s.rootManager.WriteString(file.Path, updatedContent); err != nil {
 		s.flashManager.SetError(w, "Failed to update file.")
 		w.Header().Set("HX-Redirect", r.Header.Get("Referer"))
 		w.WriteHeader(http.StatusSeeOther)

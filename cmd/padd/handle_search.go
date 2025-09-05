@@ -57,7 +57,7 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) searchFile(file FileInfo, query string) []SearchMatch {
 	var matches []SearchMatch
-	content, err := s.dirManager.ReadFile(file.Path)
+	content, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		return matches
 	}

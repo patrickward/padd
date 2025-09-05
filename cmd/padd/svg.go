@@ -34,8 +34,8 @@ func (s *Server) processInlineSVG(htmlContent string) string {
 func (s *Server) getInlineSVG(iconPath string) string {
 	// Try user's path first
 	userSVGPath := filepath.Join("images", iconPath)
-	if s.dirManager.FileExists(userSVGPath) {
-		content, err := s.dirManager.ReadFile(userSVGPath)
+	if s.rootManager.FileExists(userSVGPath) {
+		content, err := s.rootManager.ReadFile(userSVGPath)
 		if err == nil {
 			return string(content)
 		}

@@ -14,7 +14,7 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := s.dirManager.ReadFile(file.Path)
+	content, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		s.showServerError(w, r, err)
 		return

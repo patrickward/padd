@@ -58,8 +58,8 @@ func (s *Server) setupMetadataConfig() {
 	}
 
 	// Find the "metadata.json" file from the user's data directory
-	if s.dirManager.FileExists("metadata.json") {
-		content, err := s.dirManager.ReadFile("metadata.json")
+	if s.rootManager.FileExists("metadata.json") {
+		content, err := s.rootManager.ReadFile("metadata.json")
 		if err == nil {
 			// Read and parse the JSON content
 			var fileMetadata map[string]any

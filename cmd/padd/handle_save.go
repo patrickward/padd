@@ -15,7 +15,7 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	content := r.FormValue("content")
-	if err := s.dirManager.WriteString(file.Path, content); err != nil {
+	if err := s.rootManager.WriteString(file.Path, content); err != nil {
 		s.showServerError(w, r, err)
 		return
 	}

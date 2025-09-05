@@ -54,7 +54,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (PageDa
 		return PageData{}, true
 	}
 
-	content, err := s.dirManager.ReadFile(file.Path)
+	content, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		s.showServerError(w, r, err)
 		return PageData{}, true

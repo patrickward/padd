@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-// DirectoryManager provides safe filesystem operations within a specific directory using os.Root
-type DirectoryManager struct {
+// RootManager provides safe filesystem operations within a specific directory using os.Root
+type RootManager struct {
 	path string
 }
 
-// NewDirectoryManager creates a new DirectoryManager for the given directory path
-func NewDirectoryManager(path string) (*DirectoryManager, error) {
+// NewDirectoryManager creates a new RootManager for the given directory path
+func NewDirectoryManager(path string) (*RootManager, error) {
 	// Ensure directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create directory %s: %w", path, err)
@@ -28,11 +28,11 @@ func NewDirectoryManager(path string) (*DirectoryManager, error) {
 	}
 	_ = testRoot.Close()
 
-	return &DirectoryManager{path: path}, nil
+	return &RootManager{path: path}, nil
 }
 
 // withRoot executes a function with a safely opened os.Root
-func (dm *DirectoryManager) withRoot(fn func(*os.Root) error) error {
+func (dm *RootManager) withRoot(fn func(*os.Root) error) error {
 	root, err := os.OpenRoot(dm.path)
 	if err != nil {
 		return fmt.Errorf("failed to open root: %w", err)
@@ -45,7 +45,7 @@ func (dm *DirectoryManager) withRoot(fn func(*os.Root) error) error {
 }
 
 // ReadFile reads the contents of a file using Root.ReadFile
-func (dm *DirectoryManager) ReadFile(filename string) ([]byte, error) {
+func (dm *RootManager) ReadFile(filename string) ([]byte, error) {
 	var content []byte
 	err := dm.withRoot(func(root *os.Root) error {
 		var err error
@@ -56,19 +56,19 @@ func (dm *DirectoryManager) ReadFile(filename string) ([]byte, error) {
 }
 
 // WriteFile writes content to a file using Root.WriteFile
-func (dm *DirectoryManager) WriteFile(filename string, content []byte, perm os.FileMode) error {
+func (dm *RootManager) WriteFile(filename string, content []byte, perm os.FileMode) error {
 	return dm.withRoot(func(root *os.Root) error {
 		return root.WriteFile(filename, content, perm)
 	})
 }
 
 // WriteString writes a string to a file
-func (dm *DirectoryManager) WriteString(filename string, content string) error {
+func (dm *RootManager) WriteString(filename string, content string) error {
 	return dm.WriteFile(filename, []byte(content), 0644)
 }
 
 // FileExists checks if a file exists using Root.Stat
-func (dm *DirectoryManager) FileExists(filename string) bool {
+func (dm *RootManager) FileExists(filename string) bool {
 	exists := false
 	_ = dm.withRoot(func(root *os.Root) error {
 		_, err := root.Stat(filename)
@@ -79,7 +79,7 @@ func (dm *DirectoryManager) FileExists(filename string) bool {
 }
 
 // Stat returns file info using Root.Stat
-func (dm *DirectoryManager) Stat(filename string) (os.FileInfo, error) {
+func (dm *RootManager) Stat(filename string) (os.FileInfo, error) {
 	var info os.FileInfo
 	err := dm.withRoot(func(root *os.Root) error {
 		var err error
@@ -90,28 +90,28 @@ func (dm *DirectoryManager) Stat(filename string) (os.FileInfo, error) {
 }
 
 // MkdirAll creates a directory and any necessary parent directories using Root.MkdirAll
-func (dm *DirectoryManager) MkdirAll(dir string, perm os.FileMode) error {
+func (dm *RootManager) MkdirAll(dir string, perm os.FileMode) error {
 	return dm.withRoot(func(root *os.Root) error {
 		return root.MkdirAll(dir, perm)
 	})
 }
 
 // Remove removes a file using Root.Remove
-func (dm *DirectoryManager) Remove(filename string) error {
+func (dm *RootManager) Remove(filename string) error {
 	return dm.withRoot(func(root *os.Root) error {
 		return root.Remove(filename)
 	})
 }
 
 // RemoveAll removes a directory and all its contents using Root.RemoveAll
-func (dm *DirectoryManager) RemoveAll(path string) error {
+func (dm *RootManager) RemoveAll(path string) error {
 	return dm.withRoot(func(root *os.Root) error {
 		return root.RemoveAll(path)
 	})
 }
 
 // WalkDir walks the directory tree using Root.FS()
-func (dm *DirectoryManager) WalkDir(root string, fn fs.WalkDirFunc) error {
+func (dm *RootManager) WalkDir(root string, fn fs.WalkDirFunc) error {
 	return dm.withRoot(func(osRoot *os.Root) error {
 		fsys := osRoot.FS()
 		return fs.WalkDir(fsys, root, fn)
@@ -119,7 +119,7 @@ func (dm *DirectoryManager) WalkDir(root string, fn fs.WalkDirFunc) error {
 }
 
 // CreateFileIfNotExists creates a file with default content if it doesn't exist
-func (dm *DirectoryManager) CreateFileIfNotExists(filename string, defaultContent string) error {
+func (dm *RootManager) CreateFileIfNotExists(filename string, defaultContent string) error {
 	if dm.FileExists(filename) {
 		return nil
 	}
@@ -135,7 +135,7 @@ type ScanResult struct {
 }
 
 // Scan scans the directory tree starting from rootDir, applying an optional filter function
-func (dm *DirectoryManager) Scan(rootDir string, filter func(string, fs.DirEntry) bool) ([]ScanResult, error) {
+func (dm *RootManager) Scan(rootDir string, filter func(string, fs.DirEntry) bool) ([]ScanResult, error) {
 	var results []ScanResult
 
 	err := dm.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
@@ -166,7 +166,7 @@ func (dm *DirectoryManager) Scan(rootDir string, filter func(string, fs.DirEntry
 }
 
 // ReadDir reads the contents of a directory and returns DirEntry slices
-func (dm *DirectoryManager) ReadDir(dir string) ([]fs.DirEntry, error) {
+func (dm *RootManager) ReadDir(dir string) ([]fs.DirEntry, error) {
 	var entries []fs.DirEntry
 	err := dm.withRoot(func(root *os.Root) error {
 		fsys := root.FS()
@@ -179,7 +179,7 @@ func (dm *DirectoryManager) ReadDir(dir string) ([]fs.DirEntry, error) {
 }
 
 // ResolveMonthlyFile resolves the path for a monthly file based on the timestamp and file type.
-func (dm *DirectoryManager) ResolveMonthlyFile(timestamp time.Time, fileType string) (string, error) {
+func (dm *RootManager) ResolveMonthlyFile(timestamp time.Time, fileType string) (string, error) {
 	year := timestamp.Format("2006")
 	month := timestamp.Format("01-January")
 
@@ -202,7 +202,7 @@ func (dm *DirectoryManager) ResolveMonthlyFile(timestamp time.Time, fileType str
 }
 
 // createMonthlyFile creates a new monthly file with a header based on the timestamp
-func (dm *DirectoryManager) createMonthlyFile(filePath string, timestamp time.Time) error {
+func (dm *RootManager) createMonthlyFile(filePath string, timestamp time.Time) error {
 	if dm.FileExists(filePath) {
 		return nil
 	}

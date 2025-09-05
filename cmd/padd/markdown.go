@@ -25,7 +25,7 @@ type RenderedContent struct {
 	Metadata          map[string]any // Additional metadata extracted from front matter.
 }
 
-func createMarkdownRenderer(dirManager *DirectoryManager) goldmark.Markdown {
+func createMarkdownRenderer(rootManager *RootManager) goldmark.Markdown {
 	return goldmark.New(
 		goldmark.WithExtensions(
 			//extension.GFM,
@@ -35,7 +35,7 @@ func createMarkdownRenderer(dirManager *DirectoryManager) goldmark.Markdown {
 			extension.Typographer,
 			extension.DefinitionList,
 			pextension.TaskList,
-			pextension.NewIconExtension(pextension.NewDefaultIconChecker(dirManager)),
+			pextension.NewIconExtension(pextension.NewDefaultIconChecker(rootManager)),
 			meta.Meta,
 		),
 		goldmark.WithParserOptions(

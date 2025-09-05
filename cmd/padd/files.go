@@ -42,7 +42,7 @@ func (s *Server) initializeFiles() {
 	}
 
 	for file, content := range defaults {
-		if err := s.dirManager.CreateFileIfNotExists(file, content); err != nil {
+		if err := s.rootManager.CreateFileIfNotExists(file, content); err != nil {
 			log.Printf("Error creating default file %s: %v", file, err)
 			continue
 		}
@@ -123,12 +123,12 @@ func (s *Server) buildDirectoryTree(files []FileInfo) *DirectoryNode {
 // scanResourceFiles scans the resources directory for markdown files and returns their metadata
 func (s *Server) scanResourceFiles(current string) []FileInfo {
 	// Create the resources directory if it doesn't exist
-	if err := s.dirManager.MkdirAll(resourcesDir, 0755); err != nil {
+	if err := s.rootManager.MkdirAll(resourcesDir, 0755); err != nil {
 		log.Printf("Error creating resources directory: %v", err)
 		return []FileInfo{}
 	}
 
-	results, err := s.dirManager.Scan(resourcesDir, func(path string, d fs.DirEntry) bool {
+	results, err := s.rootManager.Scan(resourcesDir, func(path string, d fs.DirEntry) bool {
 		return !d.IsDir() && strings.HasSuffix(d.Name(), ".md")
 	})
 
@@ -289,11 +289,11 @@ func (s *Server) isValidFile(fileName string) bool {
 
 	// Check for temporal files
 	if strings.HasPrefix(fileName, "daily/") || strings.HasPrefix(fileName, "journal/") {
-		return s.dirManager.FileExists(fileName)
+		return s.rootManager.FileExists(fileName)
 	}
 
 	if strings.HasPrefix(fileName, resourcesDir+"/") && strings.HasSuffix(fileName, ".md") {
-		return s.dirManager.FileExists(fileName)
+		return s.rootManager.FileExists(fileName)
 	}
 
 	return false
@@ -311,7 +311,7 @@ func (s *Server) getFileInfo(id string) (FileInfo, error) {
 		parts := strings.Split(id, "/")
 		if len(parts) >= 2 && (parts[0] == "daily" || parts[0] == "journal") {
 			filePath := strings.Join(parts, "/") + ".md"
-			if s.dirManager.FileExists(filePath) {
+			if s.rootManager.FileExists(filePath) {
 				monthPart := parts[2]
 				monthParts := strings.SplitN(monthPart, "-", 2)
 				if len(monthParts) == 2 {
@@ -354,7 +354,7 @@ func (s *Server) getFileInfo(id string) (FileInfo, error) {
 // getCurrentTemporalFile returns the FileInfo for the current month of a temporal file type
 func (s *Server) getCurrentTemporalFile(fileType string) (FileInfo, error) {
 	now := time.Now()
-	filePath, err := s.dirManager.ResolveMonthlyFile(now, fileType)
+	filePath, err := s.rootManager.ResolveMonthlyFile(now, fileType)
 	if err != nil {
 		return FileInfo{}, err
 	}
@@ -378,7 +378,7 @@ func (s *Server) getTemporalFiles(fileType string) ([]string, map[string][]FileI
 	files := make(map[string][]FileInfo)
 
 	// Check if the directory exists
-	yearEntries, err := s.dirManager.ReadDir(fileType)
+	yearEntries, err := s.rootManager.ReadDir(fileType)
 	if err != nil {
 		return yearKeys, files, nil // Return empty list if directory doesn't exist
 	}
@@ -389,7 +389,7 @@ func (s *Server) getTemporalFiles(fileType string) ([]string, map[string][]FileI
 		}
 
 		yearPath := filepath.Join(fileType, yearEntry.Name())
-		monthEntries, err := s.dirManager.ReadDir(yearPath)
+		monthEntries, err := s.rootManager.ReadDir(yearPath)
 		if err != nil {
 			continue // Skip this year if there's an error
 		}

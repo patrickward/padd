@@ -56,12 +56,12 @@ func (s *Server) addTemporalEntry(entry, fileType string, timestamp time.Time) e
 		return fmt.Errorf("entry cannot be empty")
 	}
 
-	filePath, err := s.dirManager.ResolveMonthlyFile(timestamp, fileType)
+	filePath, err := s.rootManager.ResolveMonthlyFile(timestamp, fileType)
 	if err != nil {
 		return fmt.Errorf("failed to resolve %s file: %v", fileType, err)
 	}
 
-	existingContent, err := s.dirManager.ReadFile(filePath)
+	existingContent, err := s.rootManager.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read %s file: %v", fileType, err)
 	}
@@ -71,7 +71,7 @@ func (s *Server) addTemporalEntry(entry, fileType string, timestamp time.Time) e
 	result := s.insertTimestampEntry(lines, formattedEntry, timestamp)
 	updatedContent := strings.Join(result, "\n")
 
-	if err := s.dirManager.WriteString(filePath, updatedContent); err != nil {
+	if err := s.rootManager.WriteString(filePath, updatedContent); err != nil {
 		return fmt.Errorf("failed to write to %s file: %v", fileType, err)
 	}
 
@@ -144,7 +144,7 @@ func (s *Server) addEntry(w http.ResponseWriter, r *http.Request, config EntryCo
 	}
 
 	// Read existing content
-	existingContent, err := s.dirManager.ReadFile(fileInfo.Path)
+	existingContent, err := s.rootManager.ReadFile(fileInfo.Path)
 	if err != nil {
 		s.flashManager.SetError(w, "Failed to read file")
 		http.Redirect(w, r, config.RedirectPath, http.StatusSeeOther)
@@ -165,7 +165,7 @@ func (s *Server) addEntry(w http.ResponseWriter, r *http.Request, config EntryCo
 	}
 
 	updatedContent := strings.Join(result, "\n")
-	if err := s.dirManager.WriteString(fileInfo.Path, updatedContent); err != nil {
+	if err := s.rootManager.WriteString(fileInfo.Path, updatedContent); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

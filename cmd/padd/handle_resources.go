@@ -59,7 +59,7 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	// Create directories if the filename contains path separators
 	if strings.Contains(fileName, "/") {
 		dir := filepath.Dir(fullPath)
-		if err := s.dirManager.MkdirAll(dir, 0755); err != nil {
+		if err := s.rootManager.MkdirAll(dir, 0755); err != nil {
 			s.flashManager.SetError(w, "Failed to create directories")
 			http.Redirect(w, r, "/resources", http.StatusSeeOther)
 			return
@@ -67,7 +67,7 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if file already exists
-	if s.dirManager.FileExists(fullPath) {
+	if s.rootManager.FileExists(fullPath) {
 		s.flashManager.SetError(w, "File already exists")
 		http.Redirect(w, r, "/resources", http.StatusSeeOther)
 		return
@@ -77,7 +77,7 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	defaultContent := fmt.Sprintf("\n\n_Created on %s_\n\n",
 		time.Now().Format("2006-01-02 15:04:05"))
 
-	if err := s.dirManager.WriteString(fullPath, defaultContent); err != nil {
+	if err := s.rootManager.WriteString(fullPath, defaultContent); err != nil {
 		s.flashManager.SetError(w, "Failed to create file")
 		http.Redirect(w, r, "/resources", http.StatusSeeOther)
 		return

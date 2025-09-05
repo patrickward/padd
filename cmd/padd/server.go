@@ -20,7 +20,7 @@ import (
 // Server holds the application state and configuration
 type Server struct {
 	dataDir          string
-	dirManager       *DirectoryManager
+	rootManager      *RootManager
 	md               goldmark.Markdown
 	baseTempl        *template.Template // Common templates (layouts, partials)
 	resourceCache    []FileInfo
@@ -51,7 +51,7 @@ func NewServer(ctx context.Context, dataDir string) (*Server, error) {
 
 	s := &Server{
 		dataDir:          dataDir,
-		dirManager:       dirManager,
+		rootManager:      dirManager,
 		md:               md,
 		baseTempl:        tmpl,
 		flashManager:     NewFlashManager(),
