@@ -4,7 +4,13 @@
     <article class="margin-end-6xl file-id-resources">
         <header class="margin-start-5xl">
             <div class="split align-center">
-                <h1>Resources</h1>
+                <div class="stack gap-4xs">
+                    <h1>Resources</h1>
+                    <p>
+                        Resource files and notes.
+                    </p>
+
+                </div>
                 <button command="show-modal" commandfor="add-resource-modal" class="primary outline size-xs">
                     Add Resource
                 </button>
@@ -17,11 +23,6 @@
 
         <!-- List all Resource Files hierarchically -->
         <section class="margin-start-5xl">
-            <p class="callout margin-end-3xl">
-                Resource files are markdown files stored in the <code>resources/</code> directory. They can be used for
-                notes, documentation, or any other non-core content you want to manage separately from your main files.
-            </p>
-
             {{if .ResourceTree}}
                 {{template "directoryTree" .ResourceTree}}
             {{else}}
@@ -33,23 +34,21 @@
 {{end}}
 
 {{define "directoryTree"}}
-    <div class="resource-listing">
-        <ul class="">
-            {{/* First, display files in this directory */}}
+    <div class="directory-tree">
+        <ul class="margin-end-0 padding-xs">
             {{range .Files}}
-                <li>
+                <li class="directory-file">
                     <a href="/{{.ID}}">{{.DisplayBase}}</a>
                 </li>
             {{end}}
-
-            {{/* Then, display subdirectories */}}
-            {{range $dirName, $dirNode := .Directories}}
-                <li>
-                    <strong>{{$dirName}}/</strong>
-                    {{template "directoryTree" $dirNode}}
-                </li>
-            {{end}}
         </ul>
+
+        {{range $dirName, $dirNode := .Directories}}
+            <details class="directory margin-end-4xs">
+                <summary class="margin-end-0"><strong>{{$dirName}}/</strong></summary>
+                {{template "directoryTree" $dirNode}}
+            </details>
+        {{end}}
     </div>
 {{end}}
 
@@ -66,7 +65,8 @@
             <div class="text-muted size-2xs margin-start-3xs">
                 Files must contain only letters, numbers, dashes, underscores, periods, and slashes. They
                 will automatically be created within the <code>resources/</code> directory and have a ".md" extension.
-                You can add a file to a subdirectory by including slashes in the filename (e.g., <code>notes.md</code> or
+                You can add a file to a subdirectory by including slashes in the filename (e.g., <code>notes.md</code>
+                or
                 <code>projects/foobar/notes.md</code>). Directories will be created automatically as needed.
             </div>
         </form>

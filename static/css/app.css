@@ -243,6 +243,21 @@
         background-color: transparent;
     }
 
+    /** Directory Tree Structure **/
+    .directory-tree {
+        /** Nested Directories should be indented and have a border **/
+        .directory .directory {
+            margin-left: var(--size-s);
+            border-left: 1px solid var(--color-neutral-border-muted);
+            padding-left: var(--size-2xs);
+        }
+
+        /** Nested .directory-tree should be indented **/
+        & .directory-tree {
+            margin-left: var(--size-s);
+        }
+    }
+
     /** HTMX animations **/
     .fade-in.htmx-added {
         opacity: 0;
