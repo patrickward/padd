@@ -16,11 +16,13 @@ import (
 )
 
 type RenderedContent struct {
-	Title          string         // The extracted title, if any.
-	HTML           template.HTML  // The rendered HTML content.
-	SectionHeaders []string       // List of section headers (H2).
-	HasTasks       bool           // Indicates if the content contains task lists.
-	Metadata       map[string]any // Additional metadata extracted from front matter.
+	Title             string         // The extracted title, if any.
+	HTML              template.HTML  // The rendered HTML content.
+	SectionHeaders    []string       // List of section headers (H2).
+	TasksCount        int            // Number of tasks in the content.
+	HasTasks          bool           // Indicates if the content contains task lists.
+	HasCompletedTasks bool           // Indicates if the content contains completed tasks.
+	Metadata          map[string]any // Additional metadata extracted from front matter.
 }
 
 func createMarkdownRenderer(dirManager *DirectoryManager) goldmark.Markdown {
@@ -74,11 +76,13 @@ func (s *Server) renderMarkdown(content string) RenderedContent {
 		content = s.sanitizer.Sanitize(content)
 		metadata := meta.Get(ctx)
 		return RenderedContent{
-			Title:          renderedTitle(processResult.Title, metadata),
-			HTML:           template.HTML(fmt.Sprintf("<pre>%s</pre>", template.HTMLEscapeString(content))),
-			SectionHeaders: processResult.SectionHeaders,
-			HasTasks:       false,
-			Metadata:       metadata,
+			Title:             renderedTitle(processResult.Title, metadata),
+			HTML:              template.HTML(fmt.Sprintf("<pre>%s</pre>", template.HTMLEscapeString(content))),
+			SectionHeaders:    processResult.SectionHeaders,
+			TasksCount:        pextension.TasksCount(ctx),
+			HasTasks:          ctx.Get(pextension.HasTasksKey) == true,
+			HasCompletedTasks: ctx.Get(pextension.HasCompletedTasksKey) == true,
+			Metadata:          metadata,
 		}
 	}
 
@@ -88,11 +92,13 @@ func (s *Server) renderMarkdown(content string) RenderedContent {
 	metadata := meta.Get(ctx)
 
 	return RenderedContent{
-		Title:          renderedTitle(processResult.Title, metadata),
-		HTML:           template.HTML(processedContent),
-		SectionHeaders: processResult.SectionHeaders,
-		HasTasks:       ctx.Get(pextension.HasTasksKey) == true,
-		Metadata:       metadata,
+		Title:             renderedTitle(processResult.Title, metadata),
+		HTML:              template.HTML(processedContent),
+		SectionHeaders:    processResult.SectionHeaders,
+		TasksCount:        pextension.TasksCount(ctx),
+		HasTasks:          ctx.Get(pextension.HasTasksKey) == true,
+		HasCompletedTasks: ctx.Get(pextension.HasCompletedTasksKey) == true,
+		Metadata:          metadata,
 	}
 }
 
@@ -168,11 +174,13 @@ func (s *Server) renderMarkdownWithHighlight(content, query string, targetIndex 
 		metadata := meta.Get(ctx)
 
 		return RenderedContent{
-			Title:          renderedTitle(processResult.Title, metadata),
-			HTML:           template.HTML(fmt.Sprintf("<pre>%s</pre>", template.HTMLEscapeString(content))),
-			SectionHeaders: processResult.SectionHeaders,
-			HasTasks:       false,
-			Metadata:       metadata,
+			Title:             renderedTitle(processResult.Title, metadata),
+			HTML:              template.HTML(fmt.Sprintf("<pre>%s</pre>", template.HTMLEscapeString(content))),
+			SectionHeaders:    processResult.SectionHeaders,
+			TasksCount:        pextension.TasksCount(ctx),
+			HasTasks:          ctx.Get(pextension.HasTasksKey) == true,
+			HasCompletedTasks: ctx.Get(pextension.HasCompletedTasksKey) == true,
+			Metadata:          metadata,
 		}
 	}
 
@@ -182,11 +190,13 @@ func (s *Server) renderMarkdownWithHighlight(content, query string, targetIndex 
 	metadata := meta.Get(ctx)
 
 	return RenderedContent{
-		Title:          renderedTitle(processResult.Title, metadata),
-		HTML:           template.HTML(processedContent),
-		SectionHeaders: processResult.SectionHeaders,
-		HasTasks:       ctx.Get(pextension.HasTasksKey) == true,
-		Metadata:       metadata,
+		Title:             renderedTitle(processResult.Title, metadata),
+		HTML:              template.HTML(processedContent),
+		SectionHeaders:    processResult.SectionHeaders,
+		TasksCount:        pextension.TasksCount(ctx),
+		HasTasks:          ctx.Get(pextension.HasTasksKey) == true,
+		HasCompletedTasks: ctx.Get(pextension.HasCompletedTasksKey) == true,
+		Metadata:          metadata,
 	}
 }
 

@@ -6,7 +6,29 @@ import (
 	"strings"
 )
 
+func (s *Server) handlePageHeader(w http.ResponseWriter, r *http.Request) {
+	data, done := s.processPageView(w, r)
+	if done {
+		return
+	}
+
+	if err := s.executePage(w, "page_header.html", data); err != nil {
+		s.showServerError(w, r, err)
+	}
+}
+
 func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
+	data, done := s.processPageView(w, r)
+	if done {
+		return
+	}
+
+	if err := s.executePage(w, "view.html", data); err != nil {
+		s.showServerError(w, r, err)
+	}
+}
+
+func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (PageData, bool) {
 	id := r.PathValue("id")
 
 	// For daily/journal without specific month, redirect to current month
@@ -14,28 +36,28 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 		currentFile, err := s.getCurrentTemporalFile(id)
 		if err != nil {
 			s.showServerError(w, r, err)
-			return
+			return PageData{}, true
 		}
 
 		http.Redirect(w, r, "/"+currentFile.ID, http.StatusSeeOther)
-		return
+		return PageData{}, true
 	}
 
 	file, err := s.getFileInfo(id)
 	if err != nil {
 		s.showPageNotFound(w, r)
-		return
+		return PageData{}, true
 	}
 
 	if !s.isValidFile(file.Path) {
 		s.showServerError(w, r, fmt.Errorf("invalid file"))
-		return
+		return PageData{}, true
 	}
 
 	content, err := s.dirManager.ReadFile(file.Path)
 	if err != nil {
 		s.showServerError(w, r, err)
-		return
+		return PageData{}, true
 	}
 
 	// Get the search query and match parameters
@@ -58,16 +80,17 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := PageData{
-		Title:          renderedContent.Title,
-		SectionHeaders: renderedContent.SectionHeaders,
-		HasTasks:       renderedContent.HasTasks,
-		CurrentFile:    file,
-		Content:        renderedContent.HTML,
-		RawContent:     string(content),
-		CoreFiles:      s.getCoreFiles(file.Path),
-		ResourceFiles:  s.getResourceFiles(file.Path),
-		SearchQuery:    searchQuery,
-		SearchMatch:    searchMatch,
+		Title:             renderedContent.Title,
+		SectionHeaders:    renderedContent.SectionHeaders,
+		TasksCount:        renderedContent.TasksCount,
+		HasCompletedTasks: renderedContent.HasCompletedTasks,
+		CurrentFile:       file,
+		Content:           renderedContent.HTML,
+		RawContent:        string(content),
+		CoreFiles:         s.getCoreFiles(file.Path),
+		ResourceFiles:     s.getResourceFiles(file.Path),
+		SearchQuery:       searchQuery,
+		SearchMatch:       searchMatch,
 	}
 
 	data = s.addMetadataToPageData(data, renderedContent.Metadata)
@@ -77,8 +100,5 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 		data.FlashMessage = flash.Message
 		data.FlashMessageType = flash.Type
 	}
-
-	if err := s.executePage(w, "view.html", data); err != nil {
-		s.showServerError(w, r, err)
-	}
+	return data, false
 }

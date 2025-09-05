@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+var reloadPageHeaderTrigger = map[string]string{
+	"HX-Trigger": "padd:reload-header",
+}
+
 // handleTaskToggle toggles the completion state of a task item in a Markdown file.
 func (s *Server) handleTaskToggle(w http.ResponseWriter, r *http.Request) {
 	file, checkboxID, content, done := s.extractTaskInfoFromRequest(w, r)
@@ -26,12 +30,13 @@ func (s *Server) handleTaskToggle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.executeSnippet(w, "task_show", map[string]any{
+	err = s.executeSnippetWithHeaders(w, "task_show", map[string]any{
 		"ID":              checkboxID,
 		"Value":           label,
 		"IsChecked":       isChecked,
 		"IncludeCheckbox": false,
-	})
+	}, reloadPageHeaderTrigger)
+
 	if err != nil {
 		s.showServerError(w, r, err)
 		return
@@ -77,10 +82,10 @@ func (s *Server) handleTaskEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.executeSnippet(w, "task_edit", map[string]any{
+	err = s.executeSnippetWithHeaders(w, "task_edit", map[string]any{
 		"ID":    checkboxID,
 		"Value": currentLabel,
-	})
+	}, reloadPageHeaderTrigger)
 	if err != nil {
 		s.showServerError(w, r, err)
 		return
@@ -111,12 +116,12 @@ func (s *Server) handleTaskUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.executeSnippet(w, "task_show", map[string]any{
+	err = s.executeSnippetWithHeaders(w, "task_show", map[string]any{
 		"ID":              checkboxID,
 		"Value":           updatedLabel,
 		"IsChecked":       isChecked,
 		"IncludeCheckbox": true,
-	})
+	}, reloadPageHeaderTrigger)
 	if err != nil {
 		s.showServerError(w, r, err)
 		return
@@ -363,7 +368,9 @@ func (s *Server) archiveCompletedTasks(content string, sourceFilePath string) (i
 		}
 	}
 
-	// Archive all taks to today's daily file
+	// Archive all tasks to today's daily file. Good enough for now.
+	// This is a simple compromise for now, maybe later we can move them to the date they were marked done.
+	// Keep in mind that may require additional work on the entries, such as ensuring dates are properly sorted.
 	now := time.Now()
 	if len(completedTasks) > 0 {
 		completedContent := "**Archived completed tasks (from " + sourceFilePath + "):**\n\n"

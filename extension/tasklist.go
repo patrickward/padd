@@ -22,6 +22,7 @@ import (
 
 var CheckboxCountKey = parser.NewContextKey()
 var HasTasksKey = parser.NewContextKey()
+var HasCompletedTasksKey = parser.NewContextKey()
 
 var taskListRegexp = regexp.MustCompile(`^\[([\sxX])\](.*)$`)
 
@@ -29,6 +30,15 @@ type taskCheckBoxParser struct {
 }
 
 var defaultTaskCheckBoxParser = &taskCheckBoxParser{}
+
+func TasksCount(pc parser.Context) int {
+	if val := pc.Get(CheckboxCountKey); val != nil {
+		if count, ok := val.(int); ok {
+			return count
+		}
+	}
+	return 0
+}
 
 // NewTaskCheckBoxParser returns a new  InlineParser that can parse
 // checkboxes in list items.
@@ -78,6 +88,9 @@ func (s *taskCheckBoxParser) Parse(parent gast.Node, block text.Reader, pc parse
 	label := strings.TrimSpace(string(line[m[4]:]))
 	block.Advance(m[1])
 	checked := value == 'x' || value == 'X'
+	if checked {
+		pc.Set(HasCompletedTasksKey, true)
+	}
 	return ast.NewTaskCheckBox(checked, checkboxCount, template.HTMLEscapeString(label))
 }
 

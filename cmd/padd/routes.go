@@ -39,6 +39,7 @@ func (s *Server) setupRoutes() http.Handler {
 	mux.HandleFunc("GET /resources", s.handleResources)
 	mux.HandleFunc("POST /resources/create", s.handleCreateResource)
 	mux.HandleFunc("POST /admin/refresh", s.handleRefreshResources)
+	mux.HandleFunc("GET /page-header/{id...}", s.handlePageHeader)
 	mux.HandleFunc("GET /{id...}", s.handleView)
 
 	return mux

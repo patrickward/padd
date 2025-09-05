@@ -1,68 +1,7 @@
 {{template "base.html" .}}
 
 {{define "content"}}
-    <article
-            class="margin-end-6xl {{if .CurrentFile.IsTemporal}}temporal-file{{end}} file-id-{{.CurrentFile.CSSClass}}">
-{{/*        <header class="margin-start-5xl">*/}}
-{{/*            {{if .CurrentFile.IsResource}}*/}}
-{{/*                <!-- Build a siimple breadcrumb for resources, starting with "Resources" -->*/}}
-{{/*                <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">*/}}
-{{/*                    <a href="/resources">Resources</a>*/}}
-{{/*                    <span class="text-muted">&raquo;</span>*/}}
-{{/*                    <strong>{{.CurrentFile.RelativePath}}</strong>*/}}
-{{/*                </nav>*/}}
-{{/*            {{else if hasPrefix .CurrentFile.Path "daily/"}}*/}}
-{{/*                <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">*/}}
-{{/*                    <a href="/daily/archive">Daily Archive</a>*/}}
-{{/*                    <span class="text-muted">&raquo;</span>*/}}
-{{/*                    <strong>{{.CurrentFile.RelativePath}}</strong>*/}}
-{{/*                </nav>*/}}
-{{/*            {{else if hasPrefix .CurrentFile.Path "journal/"}}*/}}
-{{/*                <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">*/}}
-{{/*                    <a href="/journal/archive">Journal Archive</a>*/}}
-{{/*                    <span class="text-muted">&raquo;</span>*/}}
-{{/*                    <strong>{{.CurrentFile.RelativePath}}</strong>*/}}
-{{/*                </nav>*/}}
-{{/*            {{end}}*/}}
-{{/*            <div class="split align-start">*/}}
-{{/*                <div>*/}}
-{{/*                    <h1 class="margin-start-0 margin-end-0">{{.Title}}</h1>*/}}
-{{/*                    {{if .Description }}*/}}
-{{/*                        <p class="text-muted size-sm">{{.Description}}</p>*/}}
-{{/*                    {{end}}*/}}
-{{/*                </div>*/}}
-{{/*                <div class="cluster gap-2xs">*/}}
-{{/*                    {{if hasPrefix .CurrentFile.Path "daily/"}}*/}}
-{{/*                        {{if .CurrentFile.IsCurrent}}*/}}
-{{/*                            <button command="show-modal" commandfor="entry-modal-daily" class="primary outline size-xs">*/}}
-{{/*                                Daily Entry*/}}
-{{/*                            </button>*/}}
-{{/*                        {{end}}*/}}
-{{/*                    {{else if hasPrefix .CurrentFile.Path "journal/"}}*/}}
-{{/*                        {{if .CurrentFile.IsCurrent}}*/}}
-{{/*                            <button command="show-modal" commandfor="entry-modal-journal"*/}}
-{{/*                                    class="primary outline size-xs">*/}}
-{{/*                                Journal Entry*/}}
-{{/*                            </button>*/}}
-{{/*                        {{end}}*/}}
-{{/*                    {{else}}*/}}
-{{/*                        {{if .HasTasks}}*/}}
-{{/*                            <button hx-post="/api/tasks/complete/{{.CurrentFile.ID}}" hx-swap="none"*/}}
-{{/*                                    class="btn outline size-2xs">*/}}
-{{/*                                Archive Completed Tasks*/}}
-{{/*                            </button>*/}}
-{{/*                        {{end}}*/}}
-{{/*                        <button command="show-modal" commandfor="entry-modal-quick" class="primary outline size-xs">*/}}
-{{/*                            Add an Entry*/}}
-{{/*                        </button>*/}}
-{{/*                    {{end}}*/}}
-
-{{/*                    <a href="/edit/{{.CurrentFile.ID}}" class="btn outline size-2xs">Edit</a>*/}}
-{{/*                </div>*/}}
-{{/*            </div>*/}}
-{{/*        </header>*/}}
-
-{{/*        <hr>*/}}
+    <article class="margin-end-6xl {{if .CurrentFile.IsTemporal}}temporal-file{{end}} file-id-{{.CurrentFile.CSSClass}}">
 
         {{template "page-header" .}}
 

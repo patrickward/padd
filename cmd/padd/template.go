@@ -85,3 +85,12 @@ func (s *Server) executeSnippet(w http.ResponseWriter, page string, data map[str
 
 	return tmpl.ExecuteTemplate(w, page, data)
 }
+
+// executeSnippetWithHeaders sets custom headers and renders a snippet template
+func (s *Server) executeSnippetWithHeaders(w http.ResponseWriter, page string, data map[string]any, headers map[string]string) error {
+	for k, v := range headers {
+		w.Header().Set(k, v)
+	}
+
+	return s.executeSnippet(w, page, data)
+}

@@ -1,5 +1,5 @@
 {{define "page-header"}}
-    <header class="margin-start-5xl">
+    <header class="margin-start-5xl" hx-get="/page-header/{{.CurrentFile.ID}}" hx-trigger="padd:reload-header from:body" hx-swap="outerHTML">
         <!-- Breadcrumb Navigation -->
         {{if .CurrentFile.IsResource}}
             <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
@@ -45,8 +45,11 @@
                         </button>
                     {{end}}
                 {{else}}
-                    {{if .HasTasks}}
-                        <button hx-post="/api/tasks/complete/{{.CurrentFile.ID}}" hx-swap="none" class="btn outline size-2xs">
+                    {{if .HasCompletedTasks}}
+                        <button hx-post="/api/tasks/complete/{{.CurrentFile.ID}}"
+                                hx-swap="none"
+                                hx-confirm="This will move completed tasks to a daily entry for today. Are you sure?"
+                                class="btn danger outline size-2xs">
                             Archive Completed Tasks
                         </button>
                     {{end}}
@@ -101,8 +104,8 @@
                 {{end}}
             </div>
         {{end}}
-    </header>
 
-    <hr>
+        <hr>
+    </header>
 {{end}}
 
