@@ -59,7 +59,7 @@ func NewFileRepository(rootManager *RootManager, config FileConfig) *FileReposit
 		rootManager: rootManager,
 	}
 
-	fr.reloadCore()
+	fr.ReloadCoreFiles()
 
 	return fr
 }
@@ -220,7 +220,7 @@ func (fr *FileRepository) FilePathExists(path string) bool {
 
 // ReloadCaches refreshes both the core files and resource caches.
 func (fr *FileRepository) ReloadCaches() {
-	fr.reloadCore()
+	fr.ReloadCoreFiles()
 	fr.ReloadResources()
 }
 
@@ -313,8 +313,8 @@ func (fr *FileRepository) DisplayName(relPath string) (string, string) {
 	return display, displayBase
 }
 
-// reloadCore refreshes the core files cache.
-func (fr *FileRepository) reloadCore() {
+// ReloadCoreFiles refreshes the core files cache.
+func (fr *FileRepository) ReloadCoreFiles() {
 	fr.cacheMux.Lock()
 	defer fr.cacheMux.Unlock()
 
