@@ -206,50 +206,57 @@ func (s *Server) Shutdown() error {
 // navigationMenu returns the list of navigation menu items
 // TODO: Make this configurable
 func (s *Server) navigationMenu(current string) []padd.FileInfo {
-	var files []padd.FileInfo
+
 	current = strings.TrimPrefix(current, "/")
-	coreFiles := s.fileRepo.CoreFiles()
-	for _, f := range coreFiles {
-		isCurrent := f.Path == current
-		isNavActive := isCurrent
-
-		fileCopy := f
-		fileCopy.IsCurrent = isCurrent
-		fileCopy.IsNavActive = isNavActive
-		files = append(files, fileCopy)
+	if current == "" {
+		current = "inbox"
 	}
 
-	// Now, add the daily and journal special handling based on the s.fileRepo.TemporalDirectories()
-	temporalDirs := s.fileRepo.Config().TemporalDirectories()
-	for _, dir := range temporalDirs {
-		display, displayBase := s.fileRepo.DisplayName(dir)
-		file := padd.FileInfo{
-			ID:   dir,
-			Path: dir,
-			// TODO: replace with cases
-			Display:     display,
-			DisplayBase: displayBase,
+	files := []padd.FileInfo{
+		{
+			ID:          "inbox",
+			Path:        "inbox.md",
+			Display:     "Inbox",
+			DisplayBase: "Inbox",
+			IsNavActive: current == "inbox",
+			IsCurrent:   current == "inbox",
+		},
+		{
+			ID:          "active",
+			Path:        "active.md",
+			Display:     "Active",
+			DisplayBase: "Active",
+			IsNavActive: current == "active",
+			IsCurrent:   current == "active",
+		},
+		{
+			ID:          "daily",
+			Path:        "daily",
+			Display:     "Daily",
+			DisplayBase: "Daily",
 			IsTemporal:  true,
-			IsNavActive: current == dir || strings.HasPrefix(current, dir+"/"),
-			IsCurrent:   current == dir || strings.HasPrefix(current, dir+"/"),
-		}
-		files = append(files, file)
+			IsNavActive: current == "daily" || strings.HasPrefix(current, "daily/"),
+			IsCurrent:   current == "daily" || strings.HasPrefix(current, "daily/"),
+		},
+		{
+			ID:          "journal",
+			Path:        "journal",
+			Display:     "Journal",
+			DisplayBase: "Journal",
+			IsTemporal:  true,
+			IsNavActive: current == "journal" || strings.HasPrefix(current, "journal/"),
+			IsCurrent:   current == "journal" || strings.HasPrefix(current, "journal/"),
+		},
+		{
+			ID:          "resources",
+			Path:        "resources",
+			Display:     "Resources",
+			DisplayBase: "Resources",
+			IsResource:  true,
+			IsNavActive: current == "resources" || strings.HasPrefix(current, "resources/"),
+			IsCurrent:   current == "resources" || strings.HasPrefix(current, "resources/"),
+		},
 	}
-
-	// Now add the resource link
-	resourceDir := s.fileRepo.Config().ResourcesDirectory
-	display, displayBase := s.fileRepo.DisplayName(s.fileRepo.Config().ResourcesDirectory)
-	log.Println("Resource dir:", resourceDir, " display:", display, " displayBase:", displayBase, " current:", current)
-	resourceFile := padd.FileInfo{
-		ID:          resourceDir,
-		Path:        resourceDir,
-		Display:     display,
-		DisplayBase: displayBase,
-		IsResource:  true,
-		IsNavActive: current == resourceDir || strings.HasPrefix(current, resourceDir+"/"),
-		IsCurrent:   current == resourceDir || strings.HasPrefix(current, resourceDir+"/"),
-	}
-	files = append(files, resourceFile)
 
 	return files
 }

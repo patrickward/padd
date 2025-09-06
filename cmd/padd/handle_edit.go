@@ -29,7 +29,7 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 		CurrentFile:  file,
 		RawContent:   string(content),
 		IsEditing:    true,
-		NavMenuFiles: s.navigationMenu(file.Path),
+		NavMenuFiles: s.navigationMenu(file.ID),
 	}
 
 	if err := s.executePage(w, "edit.html", data); err != nil {

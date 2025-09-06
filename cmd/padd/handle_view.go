@@ -33,6 +33,9 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.PageData, bool) {
 	id := r.PathValue("id")
+	if id == "" {
+		id = "inbox"
+	}
 
 	// For daily/journal without specific month, redirect to current month
 	if id == "daily" || id == "journal" {
@@ -90,7 +93,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 		CurrentFile:       file,
 		Content:           renderedContent.HTML,
 		RawContent:        string(content),
-		NavMenuFiles:      s.navigationMenu(file.Path),
+		NavMenuFiles:      s.navigationMenu(file.ID),
 		SearchQuery:       searchQuery,
 		SearchMatch:       searchMatch,
 	}
