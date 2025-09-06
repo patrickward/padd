@@ -14,7 +14,6 @@ import (
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
 
-	"github.com/patrickward/padd"
 	"github.com/patrickward/padd/extension/ast"
 )
 
@@ -104,11 +103,12 @@ func (r *IconHMTMLRenderer) renderIcon(w util.BufWriter, source []byte, node gas
 // DefaultIconChecker is a no-op icon checker that always returns true.
 type DefaultIconChecker struct {
 	fileManager FileExistsChecker
+	staticFS    fs.FS
 }
 
 // NewDefaultIconChecker creates a new DefaultIconChecker with the given file manager.
-func NewDefaultIconChecker(fileManager FileExistsChecker) *DefaultIconChecker {
-	return &DefaultIconChecker{fileManager: fileManager}
+func NewDefaultIconChecker(fileManager FileExistsChecker, staticFS fs.FS) *DefaultIconChecker {
+	return &DefaultIconChecker{fileManager: fileManager, staticFS: staticFS}
 }
 
 // IconExists checks if the icon exists in the user's directory or in the embedded static files.
@@ -128,7 +128,7 @@ func (c *DefaultIconChecker) IconExists(iconName string) bool {
 
 	// Fallback to static embedded files
 	staticPath := "static/images/icons/" + iconName
-	if file, err := padd.StaticFS.Open(staticPath); err == nil {
+	if file, err := c.staticFS.Open(staticPath); err == nil {
 		defer func(file fs.File) {
 			_ = file.Close()
 		}(file)

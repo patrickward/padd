@@ -13,9 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/microcosm-cc/bluemonday"
-	"github.com/yuin/goldmark"
-
 	"github.com/patrickward/padd"
 )
 
@@ -26,10 +23,9 @@ type Server struct {
 	fileRepo         *padd.FileRepository
 	flashManager     *padd.FlashManager
 	backgroundRunner *padd.BackgroundRunner
-	md               goldmark.Markdown
+	renderer         *padd.MarkdownRenderer
 	baseTempl        *template.Template // Common templates (layouts, partials)
 	httpServer       *http.Server
-	sanitizer        *bluemonday.Policy
 	metadataConfig   MetadataConfig
 }
 
@@ -42,7 +38,7 @@ func NewServer(ctx context.Context, dataDir string) (*Server, error) {
 
 	fileRepo := padd.NewFileRepository(rootManager, padd.DefaultFileConfig)
 
-	md := createMarkdownRenderer(rootManager)
+	renderer := padd.NewMarkdownRenderer(rootManager, fileRepo)
 	tmpl, err := parseTemplates()
 	if err != nil {
 		return nil, err
@@ -55,11 +51,10 @@ func NewServer(ctx context.Context, dataDir string) (*Server, error) {
 		dataDir:          dataDir,
 		rootManager:      rootManager,
 		fileRepo:         fileRepo,
-		md:               md,
+		renderer:         renderer,
 		baseTempl:        tmpl,
 		flashManager:     padd.NewFlashManager(),
 		backgroundRunner: backgroundRunner,
-		sanitizer:        createSanitizer(),
 	}
 
 	err = s.fileRepo.Initialize()
@@ -72,27 +67,6 @@ func NewServer(ctx context.Context, dataDir string) (*Server, error) {
 	s.setupBackgroundTasks()
 
 	return s, nil
-}
-
-func createSanitizer() *bluemonday.Policy {
-	sanitizer := bluemonday.UGCPolicy()
-	sanitizer.AllowAttrs("class", "id").OnElements("span", "div", "i", "code", "pre", "p", "h1", "h2", "h3", "h4", "h5", "h6")
-
-	// Allow form elements, so we can use them in markdown for checklists, etc.
-	sanitizer.AllowElements("form", "input", "textarea", "button", "select", "option", "label")
-	sanitizer.AllowAttrs("type", "checked", "disabled", "name", "value", "placeholder").OnElements("input", "textarea", "button", "select", "option", "label")
-
-	// Allow all of the "hx-*" attributes for htmx (https://htmx.org/)
-	sanitizer.AllowAttrs("hx-get", "hx-post", "hx-put", "hx-delete", "hx-patch", "hx-target", "hx-swap", "hx-trigger", "hx-vals", "hx-include", "hx-headers", "hx-push-url", "hx-confirm", "hx-indicator", "hx-params").
-		OnElements("a", "form", "button", "input", "select", "textarea", "div", "span", "p")
-
-	// Allow media elements
-	// "audio" "svg" "video" are all permitted
-	sanitizer.AllowElements("audio", "svg", "video")
-	sanitizer.AllowAttrs("autoplay", "controls", "loop", "muted", "preload", "src", "type", "width", "height").OnElements("audio", "video")
-	sanitizer.AllowAttrs("xmlns", "viewbox", "width", "height", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin").OnElements("svg", "path", "circle", "rect", "line", "polyline", "polygon")
-	sanitizer.AllowAttrs("d", "cx", "cy", "r", "x", "y", "x1", "y1", "x2", "y2", "points").OnElements("path", "circle", "rect", "line", "polyline", "polygon")
-	return sanitizer
 }
 
 func (s *Server) setupBackgroundTasks() {

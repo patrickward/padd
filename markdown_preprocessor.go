@@ -1,4 +1,4 @@
-package main
+package padd
 
 import (
 	"fmt"
@@ -7,16 +7,24 @@ import (
 	"strings"
 )
 
-// ProcessingResult holds the result of processing content.
-type ProcessingResult struct {
-	Title          string   // The extracted title, if any.
-	Content        string   // The processed content.
-	SectionHeaders []string // List of section headers (H2).
+type PreprocessingResult struct {
+	Title          string
+	Content        string
+	SectionHeaders []string
 }
 
-// preProcessContent processes the content to extract the title, section headers,
-// and wiki links, prior to Markdown rendering.
-func (s *Server) preProcessContent(content string) ProcessingResult {
+// MarkdownPreprocessor represents a Markdown preprocessor for markdown files
+// NOTE: some of this could be in an extension, but it's good enough for now
+type MarkdownPreprocessor struct {
+	fileRepo *FileRepository
+}
+
+// NewMarkdownPreprocessor creates a new MarkdownPreprocessor for the given RootManager
+func NewMarkdownPreprocessor(fileRepo *FileRepository) *MarkdownPreprocessor {
+	return &MarkdownPreprocessor{fileRepo: fileRepo}
+}
+
+func (mp *MarkdownPreprocessor) Process(content string) PreprocessingResult {
 	lines := strings.Split(content, "\n")
 
 	// Compile regexes once for efficiency
@@ -44,11 +52,11 @@ func (s *Server) preProcessContent(content string) ProcessingResult {
 		}
 
 		// Process wiki links
-		line = s.processWikiLinkShortcodes(line, wikiLinksRe)
+		line = mp.processWikiLinkShortcodes(line, wikiLinksRe)
 		lines[i] = line
 	}
 
-	return ProcessingResult{
+	return PreprocessingResult{
 		Title:          title,
 		Content:        strings.Join(lines, "\n"),
 		SectionHeaders: headers,
@@ -58,7 +66,7 @@ func (s *Server) preProcessContent(content string) ProcessingResult {
 // processWikiLinkShortcodes processes wiki link shortcodes in the format [[Page Name]]
 // and replaces them with appropriate links or not-found messages.
 // TODO: Move to a proper goldmark extension?
-func (s *Server) processWikiLinkShortcodes(line string, wikiRe *regexp.Regexp) string {
+func (mp *MarkdownPreprocessor) processWikiLinkShortcodes(line string, wikiRe *regexp.Regexp) string {
 	// Process wiki links first
 	line = wikiRe.ReplaceAllStringFunc(line, func(match string) string {
 		pageName := strings.Trim(match, "[]")
@@ -71,18 +79,19 @@ func (s *Server) processWikiLinkShortcodes(line string, wikiRe *regexp.Regexp) s
 			return match // Return original if empty
 		}
 
-		fileID := s.fileRepo.CreateID(pageName)
+		fileID := mp.fileRepo.CreateID(pageName)
 
 		// Check if the file exists
-		if file, err := s.fileRepo.FileInfo(fileID); err == nil {
+		if file, err := mp.fileRepo.FileInfo(fileID); err == nil {
 			// File exists, return a link
 			return fmt.Sprintf(`[%s](/%s)`, file.Display, file.ID)
-		} else if file, err := s.fileRepo.FileInfo(filepath.Join(resourcesDir, pageName)); err == nil {
+		} else if file, err := mp.fileRepo.FileInfo(filepath.Join(mp.fileRepo.Config().ResourcesDirectory, pageName)); err == nil {
 			// File exists in resources, return a link
 			return fmt.Sprintf(`[%s](/%s)`, file.Display, file.ID)
 		}
 
 		return fmt.Sprintf(`<span class="text-color danger">!! [[%s]] not found !!</span>`, pageName)
 	})
+
 	return line
 }

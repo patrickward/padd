@@ -74,11 +74,12 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 	}
 
 	// Render content with search highlighting if needed
-	var renderedContent RenderedContent
+	var renderedContent padd.RenderedContent
 	if searchQuery != "" {
-		renderedContent = s.renderMarkdownWithHighlight(string(content), searchQuery, searchMatch)
+		renderedContent = s.renderer.RenderWithHighlight(string(content), searchQuery, searchMatch)
 	} else {
-		renderedContent = s.renderMarkdown(string(content))
+		//renderedContent = s.renderMarkdown(string(content))
+		renderedContent = s.renderer.Render(string(content))
 	}
 
 	if renderedContent.Title == "" {

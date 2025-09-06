@@ -69,8 +69,8 @@ func (s *Server) searchFile(file padd.FileInfo, query string) []padd.SearchMatch
 	for i, line := range lines {
 		if strings.Contains(strings.ToLower(line), queryLower) {
 
-			cleanedLine := stripMarkdownMarkers(line)
-			renderedContent := s.renderMarkdown(cleanedLine)
+			cleanedLine := padd.StripMarkdownMarkers(line)
+			renderedContent := s.renderer.Render(cleanedLine)
 			matches = append(matches, padd.SearchMatch{
 				LineNum:    i + 1,
 				Line:       line,

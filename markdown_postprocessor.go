@@ -1,4 +1,4 @@
-package main
+package padd
 
 import (
 	"io"
@@ -6,11 +6,25 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/patrickward/padd"
 )
 
-func (s *Server) processInlineSVG(htmlContent string) string {
+// MarkdownPostprocessor represents a postprocessor for markdown files
+// NOTE: some of this could be in an extension, but it's good enough for now
+type MarkdownPostprocessor struct {
+	rootManager *RootManager
+}
+
+// NewMarkdownPostprocessor creates a new MarkdownPostprocessor for the given RootManager
+func NewMarkdownPostprocessor(rootManager *RootManager) *MarkdownPostprocessor {
+	return &MarkdownPostprocessor{rootManager: rootManager}
+}
+
+// Process performs the postprocessing of the given Markdown content
+func (mp *MarkdownPostprocessor) Process(content string) string {
+	return mp.processInlineSVG(content)
+}
+
+func (mp *MarkdownPostprocessor) processInlineSVG(htmlContent string) string {
 	// Replace <img> tags with inline SVG content
 	re := regexp.MustCompile(`<img[^>]+src="([^">]+\.svg)"[^>]*>`)
 
@@ -22,7 +36,7 @@ func (s *Server) processInlineSVG(htmlContent string) string {
 		}
 
 		iconPath := strings.TrimPrefix(srcMatch[1], "/images/")
-		svgContent := s.getInlineSVG(iconPath)
+		svgContent := mp.getInlineSVG(iconPath)
 		if svgContent != "" {
 			return svgContent
 		}
@@ -31,11 +45,11 @@ func (s *Server) processInlineSVG(htmlContent string) string {
 	})
 }
 
-func (s *Server) getInlineSVG(iconPath string) string {
+func (mp *MarkdownPostprocessor) getInlineSVG(iconPath string) string {
 	// Try user's path first
 	userSVGPath := filepath.Join("images", iconPath)
-	if s.rootManager.FileExists(userSVGPath) {
-		content, err := s.rootManager.ReadFile(userSVGPath)
+	if mp.rootManager.FileExists(userSVGPath) {
+		content, err := mp.rootManager.ReadFile(userSVGPath)
 		if err == nil {
 			return string(content)
 		}
@@ -43,7 +57,7 @@ func (s *Server) getInlineSVG(iconPath string) string {
 
 	// Fallback to static embedded files
 	staticPath := "static/images/" + iconPath
-	if file, err := padd.StaticFS.Open(staticPath); err == nil {
+	if file, err := StaticFS.Open(staticPath); err == nil {
 		defer func(file fs.File) {
 			_ = file.Close()
 		}(file)
