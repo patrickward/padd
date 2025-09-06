@@ -32,12 +32,15 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search temporal files
-	years, temporalFiles, err := s.fileRepo.TemporalTree("daily")
-	if err == nil {
-		for _, year := range years {
-			for _, file := range temporalFiles[year] {
-				if matches := s.searchFile(file, query); len(matches) > 0 {
-					results[file.ID] = matches
+	temporalDirectories := s.fileRepo.Config().TemporalDirectories()
+	for _, dir := range temporalDirectories {
+		years, temporalFiles, err := s.fileRepo.TemporalTree(dir)
+		if err == nil {
+			for _, year := range years {
+				for _, file := range temporalFiles[year] {
+					if matches := s.searchFile(file, query); len(matches) > 0 {
+						results[file.ID] = matches
+					}
 				}
 			}
 		}

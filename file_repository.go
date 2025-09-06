@@ -192,6 +192,11 @@ func (fr *FileRepository) FileIsTemporal(id string) bool {
 	return false
 }
 
+// IDIsATemporalRoot checks if a file with the given id is a temporal root directory (daily or journal).
+func (fr *FileRepository) IDIsATemporalRoot(id string) bool {
+	return slices.Contains(fr.config.temporalDirectories, id)
+}
+
 // FileIDExists checks if a file with the given id exists in either core, resources, or temporal files.
 func (fr *FileRepository) FileIDExists(id string) bool {
 	fr.cacheMux.RLock()
@@ -401,7 +406,8 @@ func (fr *FileRepository) TemporalTree(fileType string) (years []string, files m
 	return years, files, nil
 }
 
-// TemporalFileInfo retrieves or constructs a FileInfo for a temporal file based on type and date.
+// TemporalFileInfo retrieves or constructs a FileInfo for a temporal file based on type and date. If not
+// found, the file will be created and returned.
 func (fr *FileRepository) TemporalFileInfo(fileType string, date time.Time) (FileInfo, error) {
 	filePath, err := fr.rootManager.ResolveMonthlyFile(date, fileType)
 	if err != nil {
@@ -542,4 +548,30 @@ func (fr *FileRepository) normalizeFileName(path string) string {
 	}
 
 	return cleaned
+}
+
+// GetDocument retrieves a document by ID
+func (fr *FileRepository) GetDocument(id string) (*Document, error) {
+	info, err := fr.FileInfo(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Document{
+		Info: info,
+		repo: fr,
+	}, nil
+}
+
+// GetOrCreateTemporalDocument gets or creates a document for a temporal file
+func (fr *FileRepository) GetOrCreateTemporalDocument(id string, date time.Time) (*Document, error) {
+	info, err := fr.TemporalFileInfo(id, date)
+	if err != nil {
+		return nil, fmt.Errorf("error getting temporal file info: %w", err)
+	}
+
+	return &Document{
+		Info: info,
+		repo: fr,
+	}, nil
 }

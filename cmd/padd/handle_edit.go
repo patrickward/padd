@@ -7,29 +7,24 @@ import (
 )
 
 func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
-	file, err := s.fileRepo.FileInfo(r.PathValue("id"))
-	if err != nil {
-		s.showPageNotFound(w, r)
-		return
-	}
+	id := r.PathValue("id")
 
-	if !s.fileRepo.FilePathExists(file.Path) {
-		http.Redirect(w, r, "/"+file.ID, http.StatusSeeOther)
-		return
-	}
-
-	content, err := s.rootManager.ReadFile(file.Path)
+	doc, err := s.fileRepo.GetDocument(id)
 	if err != nil {
 		s.showServerError(w, r, err)
-		return
+	}
+
+	content, err := doc.Content()
+	if err != nil {
+		s.showServerError(w, r, err)
 	}
 
 	data := padd.PageData{
-		Title:        "Edit - " + file.Display,
-		CurrentFile:  file,
-		RawContent:   string(content),
+		Title:        "Edit - " + doc.Info.Display,
+		CurrentFile:  doc.Info,
+		RawContent:   content,
 		IsEditing:    true,
-		NavMenuFiles: s.navigationMenu(file.ID),
+		NavMenuFiles: s.navigationMenu(id),
 	}
 
 	if err := s.executePage(w, "edit.html", data); err != nil {

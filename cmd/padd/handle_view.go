@@ -37,30 +37,24 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 		id = "inbox"
 	}
 
-	// For daily/journal without specific month, redirect to current month
-	if id == "daily" || id == "journal" {
-		currentFile, err := s.fileRepo.TemporalFileInfo(id, time.Now())
+	if s.fileRepo.IDIsATemporalRoot(id) {
+		doc, err := s.fileRepo.GetOrCreateTemporalDocument(id, time.Now())
 		if err != nil {
 			s.showServerError(w, r, err)
 			return padd.PageData{}, true
 		}
 
-		http.Redirect(w, r, "/"+currentFile.ID, http.StatusSeeOther)
+		http.Redirect(w, r, "/"+doc.Info.ID, http.StatusSeeOther)
 		return padd.PageData{}, true
 	}
 
-	file, err := s.fileRepo.FileInfo(id)
+	doc, err := s.fileRepo.GetDocument(id)
 	if err != nil {
-		s.showPageNotFound(w, r)
+		s.showServerError(w, r, err)
 		return padd.PageData{}, true
 	}
 
-	if !s.fileRepo.FilePathExists(file.Path) {
-		s.showServerError(w, r, fmt.Errorf("invalid file"))
-		return padd.PageData{}, true
-	}
-
-	content, err := s.rootManager.ReadFile(file.Path)
+	content, err := doc.Content()
 	if err != nil {
 		s.showServerError(w, r, err)
 		return padd.PageData{}, true
@@ -83,7 +77,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 	}
 
 	if renderedContent.Title == "" {
-		renderedContent.Title = file.DisplayBase
+		renderedContent.Title = doc.Info.DisplayBase
 	}
 
 	data := padd.PageData{
@@ -91,10 +85,10 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 		SectionHeaders:    renderedContent.SectionHeaders,
 		TasksCount:        renderedContent.TasksCount,
 		HasCompletedTasks: renderedContent.HasCompletedTasks,
-		CurrentFile:       file,
+		CurrentFile:       doc.Info,
 		Content:           renderedContent.HTML,
 		RawContent:        string(content),
-		NavMenuFiles:      s.navigationMenu(file.ID),
+		NavMenuFiles:      s.navigationMenu(doc.Info.ID),
 		SearchQuery:       searchQuery,
 		SearchMatch:       searchMatch,
 	}
