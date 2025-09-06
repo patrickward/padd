@@ -136,7 +136,7 @@ func (s *Server) addEntry(w http.ResponseWriter, r *http.Request, config EntryCo
 	}
 
 	// Get the file info
-	fileInfo, err := s.getFileInfo(config.FileID)
+	fileInfo, err := s.fileRepo.FileInfo(config.FileID)
 	if err != nil {
 		s.flashManager.SetError(w, "Invalid file ID")
 		http.Redirect(w, r, "/", http.StatusSeeOther)

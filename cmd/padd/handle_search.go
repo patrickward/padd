@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 	"strings"
+
+	"github.com/patrickward/padd"
 )
 
 func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
@@ -12,17 +14,17 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results := make(map[string][]SearchMatch)
+	results := make(map[string][]padd.SearchMatch)
 
 	// Search core files
-	for _, file := range coreFilesMap {
+	for _, file := range s.fileRepo.CoreFiles() {
 		if matches := s.searchFile(file, query); len(matches) > 0 {
 			results[file.ID] = matches
 		}
 	}
 
 	// Search resource files
-	resourceFiles := s.getResourceFiles("")
+	resourceFiles := s.fileRepo.ResourceFiles()
 	for _, file := range resourceFiles {
 		if matches := s.searchFile(file, query); len(matches) > 0 {
 			results[file.ID] = matches
@@ -30,7 +32,7 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search temporal files
-	years, temporalFiles, err := s.getTemporalFiles("daily")
+	years, temporalFiles, err := s.fileRepo.TemporalTree("daily")
 	if err == nil {
 		for _, year := range years {
 			for _, file := range temporalFiles[year] {
@@ -41,13 +43,12 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data := PageData{
+	data := padd.PageData{
 		Title:         "Search Results",
 		IsSearching:   true,
 		SearchQuery:   query,
 		SearchResults: results,
-		CoreFiles:     s.getCoreFiles(""),
-		ResourceFiles: s.getResourceFiles(""),
+		NavMenuFiles:  s.navigationMenu(""),
 	}
 
 	if err := s.executePage(w, "search.html", data); err != nil {
@@ -55,8 +56,8 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) searchFile(file FileInfo, query string) []SearchMatch {
-	var matches []SearchMatch
+func (s *Server) searchFile(file padd.FileInfo, query string) []padd.SearchMatch {
+	var matches []padd.SearchMatch
 	content, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		return matches
@@ -70,7 +71,7 @@ func (s *Server) searchFile(file FileInfo, query string) []SearchMatch {
 
 			cleanedLine := stripMarkdownMarkers(line)
 			renderedContent := s.renderMarkdown(cleanedLine)
-			matches = append(matches, SearchMatch{
+			matches = append(matches, padd.SearchMatch{
 				LineNum:    i + 1,
 				Line:       line,
 				Rendered:   renderedContent.HTML,

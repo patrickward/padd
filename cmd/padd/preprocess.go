@@ -71,13 +71,13 @@ func (s *Server) processWikiLinkShortcodes(line string, wikiRe *regexp.Regexp) s
 			return match // Return original if empty
 		}
 
-		fileID := s.createID(pageName)
+		fileID := s.fileRepo.CreateID(pageName)
 
 		// Check if the file exists
-		if file, err := s.getFileInfo(fileID); err == nil {
+		if file, err := s.fileRepo.FileInfo(fileID); err == nil {
 			// File exists, return a link
 			return fmt.Sprintf(`[%s](/%s)`, file.Display, file.ID)
-		} else if file, err := s.getFileInfo(filepath.Join(resourcesDir, pageName)); err == nil {
+		} else if file, err := s.fileRepo.FileInfo(filepath.Join(resourcesDir, pageName)); err == nil {
 			// File exists in resources, return a link
 			return fmt.Sprintf(`[%s](/%s)`, file.Display, file.ID)
 		}

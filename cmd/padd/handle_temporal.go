@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 	"strings"
+
+	"github.com/patrickward/padd"
 )
 
 func (s *Server) isTemporalFile(filePath string) bool {
@@ -21,13 +23,13 @@ func (s *Server) handleTemporalArchive(w http.ResponseWriter, r *http.Request) {
 	fileType := parts[0]
 
 	// Get all available temporal files of the specified type
-	years, files, err := s.getTemporalFiles(fileType)
+	years, files, err := s.fileRepo.TemporalTree(fileType)
 	if err != nil {
 		s.showServerError(w, r, err)
 		return
 	}
 
-	archiveFile := FileInfo{
+	archiveFile := padd.FileInfo{
 		ID:          fileType + "-archive",
 		Path:        fileType + "/archive",
 		Display:     strings.Title(fileType) + " Archive",
@@ -35,11 +37,10 @@ func (s *Server) handleTemporalArchive(w http.ResponseWriter, r *http.Request) {
 		IsCurrent:   false,
 	}
 
-	data := PageData{
+	data := padd.PageData{
 		Title:         archiveFile.Display,
 		CurrentFile:   archiveFile,
-		CoreFiles:     s.getCoreFiles(fileType),
-		ResourceFiles: s.getResourceFiles(fileType),
+		NavMenuFiles:  s.navigationMenu(fileType),
 		TemporalYears: years,
 		TemporalFiles: files,
 		ArchiveType:   fileType,

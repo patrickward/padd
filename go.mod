@@ -12,5 +12,6 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/yuin/goldmark-meta v1.1.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

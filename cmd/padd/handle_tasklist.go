@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/patrickward/padd"
 )
 
 var reloadPageHeaderTrigger = map[string]string{
@@ -158,17 +160,17 @@ func (s *Server) handleTaskDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 // extractTaskInfoFromRequest extracts the file info, checkbox ID, and file content from the request.
-func (s *Server) extractTaskInfoFromRequest(w http.ResponseWriter, r *http.Request) (FileInfo, int, []byte, bool) {
+func (s *Server) extractTaskInfoFromRequest(w http.ResponseWriter, r *http.Request) (padd.FileInfo, int, []byte, bool) {
 	fileID := r.Header.Get("X-PADD-File-ID")
 	if fileID == "" {
 		http.Error(w, "Missing file ID", http.StatusBadRequest)
-		return FileInfo{}, 0, nil, true
+		return padd.FileInfo{}, 0, nil, true
 	}
 
-	file, err := s.getFileInfo(fileID)
-	if err != nil || !s.isValidFile(file.Path) {
+	file, err := s.fileRepo.FileInfo(fileID)
+	if err != nil || !s.fileRepo.FilePathExists(file.Path) {
 		http.Error(w, "Invalid file", http.StatusBadRequest)
-		return FileInfo{}, 0, nil, true
+		return padd.FileInfo{}, 0, nil, true
 	}
 
 	//checkboxIDStr := r.FormValue("checkbox_id")
@@ -176,19 +178,19 @@ func (s *Server) extractTaskInfoFromRequest(w http.ResponseWriter, r *http.Reque
 
 	if checkboxIDStr == "" {
 		http.Error(w, "Missing checkbox_id parameter", http.StatusBadRequest)
-		return FileInfo{}, 0, nil, true
+		return padd.FileInfo{}, 0, nil, true
 	}
 
 	checkboxID := 0
 	if _, err := fmt.Sscanf(checkboxIDStr, "%d", &checkboxID); err != nil || checkboxID <= 0 {
 		http.Error(w, "Invalid checkbox_id parameter", http.StatusBadRequest)
-		return FileInfo{}, 0, nil, true
+		return padd.FileInfo{}, 0, nil, true
 	}
 
 	content, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		s.showServerError(w, r, err)
-		return FileInfo{}, 0, nil, true
+		return padd.FileInfo{}, 0, nil, true
 	}
 
 	return file, checkboxID, content, false
@@ -295,8 +297,8 @@ func (s *Server) handleArchiveDoneTasks(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	file, err := s.getFileInfo(fileID)
-	if err != nil || !s.isValidFile(file.Path) {
+	file, err := s.fileRepo.FileInfo(fileID)
+	if err != nil || !s.fileRepo.FilePathExists(file.Path) {
 		s.flashManager.SetError(w, "Invalid file.")
 		w.Header().Set("HX-Redirect", r.Header.Get("Referer"))
 		w.WriteHeader(http.StatusSeeOther)

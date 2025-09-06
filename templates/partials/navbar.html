@@ -3,14 +3,11 @@
         <nav class="navbar" aria-label="Main navigation">
             <a href="/" class="logo xflexbox xalign-center">PADD</a>
             <ul>
-                {{range .CoreFiles}}
+                {{range .NavMenuFiles}}
                     <li>
                         <a href="/{{.ID}}" {{if .IsNavActive}}class="active"{{end}}>{{.Display}}</a>
                     </li>
                 {{end}}
-                <li>
-                    <a href="/resources" {{if or .IsResources .CurrentFile.IsResource}}class="active"{{end}}>Resources</a>
-                </li>
             </ul>
             <ul class="navbar-form">
                 <li class="navbar-form-item">

@@ -7,19 +7,19 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/patrickward/padd"
 )
 
 // handleResources shows a list of available resource files
 func (s *Server) handleResources(w http.ResponseWriter, r *http.Request) {
-	resourceFiles := s.getResourceFiles("")
-	resourceTree := s.buildDirectoryTree(resourceFiles)
+	resourceTree := s.fileRepo.ResourcesTree()
 
-	data := PageData{
-		Title:         "Resources",
-		CoreFiles:     s.getCoreFiles(""),
-		IsResources:   true,
-		ResourceFiles: resourceFiles,
-		ResourceTree:  resourceTree,
+	data := padd.PageData{
+		Title:        "Resources",
+		NavMenuFiles: s.navigationMenu(r.URL.Path),
+		IsResources:  true,
+		ResourceTree: resourceTree,
 	}
 
 	// Check for a flash message
@@ -84,17 +84,17 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Refresh the resource cache
-	s.refreshResourceCache()
+	s.fileRepo.ReloadResources()
 
 	// Redirect to the new file
-	fileID := "resources/" + s.createID(fileName)
+	fileID := "resources/" + s.fileRepo.CreateID(fileName)
 	s.flashManager.SetSuccess(w, "File created successfully")
 	http.Redirect(w, r, "/"+fileID, http.StatusSeeOther)
 }
 
 // handleRefreshResources refreshes the resource file cache and redirects back to the resources page
 func (s *Server) handleRefreshResources(w http.ResponseWriter, r *http.Request) {
-	s.refreshResourceCache()
+	s.fileRepo.ReloadResources()
 	http.Redirect(w, r, "/resources", http.StatusSeeOther)
 }
 
@@ -115,8 +115,7 @@ func filenameIsValid(fileName string) bool {
 func (s *Server) handleResourcesAPI(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	resourceFiles := s.getResourceFiles("")
-	resourceTree := s.buildDirectoryTree(resourceFiles)
+	resourceTree := s.fileRepo.ResourcesTree()
 
 	if err := json.NewEncoder(w).Encode(resourceTree); err != nil {
 		s.showServerError(w, nil, err)

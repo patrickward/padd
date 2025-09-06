@@ -1,4 +1,4 @@
-package main
+package padd
 
 import (
 	"fmt"
@@ -124,6 +124,23 @@ func (dm *RootManager) CreateFileIfNotExists(filename string, defaultContent str
 		return nil
 	}
 	return dm.WriteString(filename, defaultContent)
+}
+
+// CreateDirectoryIfNotExists creates a directory if it doesn't exist
+func (dm *RootManager) CreateDirectoryIfNotExists(dir string) error {
+	info, err := dm.Stat(dir)
+	if os.IsNotExist(err) {
+		return dm.MkdirAll(dir, 0755)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to check directory %s: %w", dir, err)
+	}
+
+	if !info.IsDir() {
+		return fmt.Errorf("%s exists but is not a directory", dir)
+	}
+
+	return nil
 }
 
 // ScanResult holds information about a scanned file or directory

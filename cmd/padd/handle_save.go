@@ -3,13 +3,13 @@ package main
 import "net/http"
 
 func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
-	file, err := s.getFileInfo(r.PathValue("id"))
+	file, err := s.fileRepo.FileInfo(r.PathValue("id"))
 	if err != nil {
 		s.showPageNotFound(w, r)
 		return
 	}
 
-	if !s.isValidFile(file.Path) {
+	if !s.fileRepo.FilePathExists(file.Path) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}

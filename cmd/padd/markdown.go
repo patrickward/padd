@@ -12,6 +12,7 @@ import (
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
 
+	"github.com/patrickward/padd"
 	pextension "github.com/patrickward/padd/extension"
 )
 
@@ -25,7 +26,7 @@ type RenderedContent struct {
 	Metadata          map[string]any // Additional metadata extracted from front matter.
 }
 
-func createMarkdownRenderer(rootManager *RootManager) goldmark.Markdown {
+func createMarkdownRenderer(rootManager *padd.RootManager) goldmark.Markdown {
 	return goldmark.New(
 		goldmark.WithExtensions(
 			//extension.GFM,

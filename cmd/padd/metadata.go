@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"log"
+
+	"github.com/patrickward/padd"
 )
 
 type MetadataConfig struct {
@@ -13,7 +15,7 @@ type MetadataConfig struct {
 	ContextColor   string
 }
 
-func (s *Server) addMetadataToPageData(data PageData, metadata map[string]any) PageData {
+func (s *Server) addMetadataToPageData(data padd.PageData, metadata map[string]any) padd.PageData {
 	data.Description = getMetadataString(metadata, "description", data.Description)
 	data.Category = getMetadataString(metadata, "category", data.Category)
 	status := getMetadataString(metadata, "status", data.Status)

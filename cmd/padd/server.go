@@ -9,25 +9,25 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
+
+	"github.com/patrickward/padd"
 )
 
 // Server holds the application state and configuration
 type Server struct {
 	dataDir          string
-	rootManager      *RootManager
+	rootManager      *padd.RootManager
+	fileRepo         *padd.FileRepository
+	flashManager     *padd.FlashManager
+	backgroundRunner *padd.BackgroundRunner
 	md               goldmark.Markdown
 	baseTempl        *template.Template // Common templates (layouts, partials)
-	resourceCache    []FileInfo
-	cacheMux         sync.RWMutex
-	lastCacheTime    time.Time
-	flashManager     *FlashManager
-	backgroundRunner *BackgroundRunner
 	httpServer       *http.Server
 	sanitizer        *bluemonday.Policy
 	metadataConfig   MetadataConfig
@@ -35,10 +35,12 @@ type Server struct {
 
 // NewServer initializes the server with the given data directory
 func NewServer(ctx context.Context, dataDir string) (*Server, error) {
-	rootManager, err := NewRootManager(dataDir)
+	rootManager, err := padd.NewRootManager(dataDir)
 	if err != nil {
 		return nil, err
 	}
+
+	fileRepo := padd.NewFileRepository(rootManager, padd.DefaultFileConfig)
 
 	md := createMarkdownRenderer(rootManager)
 	tmpl, err := parseTemplates()
@@ -47,21 +49,26 @@ func NewServer(ctx context.Context, dataDir string) (*Server, error) {
 	}
 
 	// Initialize background task runner
-	backgroundRunner := NewBackgroundRunner(ctx)
+	backgroundRunner := padd.NewBackgroundRunner(ctx)
 
 	s := &Server{
 		dataDir:          dataDir,
 		rootManager:      rootManager,
+		fileRepo:         fileRepo,
 		md:               md,
 		baseTempl:        tmpl,
-		flashManager:     NewFlashManager(),
+		flashManager:     padd.NewFlashManager(),
 		backgroundRunner: backgroundRunner,
 		sanitizer:        createSanitizer(),
 	}
 
-	s.initializeFiles()
+	err = s.fileRepo.Initialize()
+	if err != nil {
+		return nil, fmt.Errorf("could not initialize file repository: %w", err)
+	}
+
 	s.setupMetadataConfig()
-	s.refreshResourceCache()
+	s.fileRepo.ReloadCaches()
 	s.setupBackgroundTasks()
 
 	return s, nil
@@ -89,21 +96,14 @@ func createSanitizer() *bluemonday.Policy {
 }
 
 func (s *Server) setupBackgroundTasks() {
+	// TODO: Make the cache duration configurable
 	backgroundCacheDuration := 5 * time.Minute
 
 	s.backgroundRunner.AddPeriodicTask(
 		"cache-refresh",
 		backgroundCacheDuration,
 		func(ctx context.Context) error {
-			// Only refresh if cache is older than backgroundCacheDuration
-			s.cacheMux.RLock()
-			shouldRefresh := time.Since(s.lastCacheTime) > backgroundCacheDuration
-			s.cacheMux.RUnlock()
-
-			if shouldRefresh {
-				s.refreshResourceCache()
-			}
-
+			s.fileRepo.ReloadResourcesIfStale(backgroundCacheDuration)
 			return nil
 		},
 	)
@@ -201,4 +201,55 @@ func (s *Server) Shutdown() error {
 
 	log.Println("Server shutdown complete")
 	return nil
+}
+
+// navigationMenu returns the list of navigation menu items
+// TODO: Make this configurable
+func (s *Server) navigationMenu(current string) []padd.FileInfo {
+	var files []padd.FileInfo
+	current = strings.TrimPrefix(current, "/")
+	coreFiles := s.fileRepo.CoreFiles()
+	for _, f := range coreFiles {
+		isCurrent := f.Path == current
+		isNavActive := isCurrent
+
+		fileCopy := f
+		fileCopy.IsCurrent = isCurrent
+		fileCopy.IsNavActive = isNavActive
+		files = append(files, fileCopy)
+	}
+
+	// Now, add the daily and journal special handling based on the s.fileRepo.TemporalDirectories()
+	temporalDirs := s.fileRepo.Config().TemporalDirectories()
+	for _, dir := range temporalDirs {
+		display, displayBase := s.fileRepo.DisplayName(dir)
+		file := padd.FileInfo{
+			ID:   dir,
+			Path: dir,
+			// TODO: replace with cases
+			Display:     display,
+			DisplayBase: displayBase,
+			IsTemporal:  true,
+			IsNavActive: current == dir || strings.HasPrefix(current, dir+"/"),
+			IsCurrent:   current == dir || strings.HasPrefix(current, dir+"/"),
+		}
+		files = append(files, file)
+	}
+
+	// Now add the resource link
+	resourceDir := s.fileRepo.Config().ResourcesDirectory
+	display, displayBase := s.fileRepo.DisplayName(s.fileRepo.Config().ResourcesDirectory)
+	log.Println("Resource dir:", resourceDir, " display:", display, " displayBase:", displayBase, " current:", current)
+	resourceFile := padd.FileInfo{
+		ID:          resourceDir,
+		Path:        resourceDir,
+		Display:     display,
+		DisplayBase: displayBase,
+		IsResource:  true,
+		IsNavActive: current == resourceDir || strings.HasPrefix(current, resourceDir+"/"),
+		IsCurrent:   current == resourceDir || strings.HasPrefix(current, resourceDir+"/"),
+	}
+	files = append(files, resourceFile)
+
+	return files
 }

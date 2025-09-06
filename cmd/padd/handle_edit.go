@@ -1,15 +1,19 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/patrickward/padd"
+)
 
 func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
-	file, err := s.getFileInfo(r.PathValue("id"))
+	file, err := s.fileRepo.FileInfo(r.PathValue("id"))
 	if err != nil {
 		s.showPageNotFound(w, r)
 		return
 	}
 
-	if !s.isValidFile(file.Path) {
+	if !s.fileRepo.FilePathExists(file.Path) {
 		http.Redirect(w, r, "/"+file.ID, http.StatusSeeOther)
 		return
 	}
@@ -20,13 +24,12 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := PageData{
-		Title:         "Edit - " + file.Display,
-		CurrentFile:   file,
-		RawContent:    string(content),
-		IsEditing:     true,
-		CoreFiles:     s.getCoreFiles(file.Path),
-		ResourceFiles: s.getResourceFiles(file.Path),
+	data := padd.PageData{
+		Title:        "Edit - " + file.Display,
+		CurrentFile:  file,
+		RawContent:   string(content),
+		IsEditing:    true,
+		NavMenuFiles: s.navigationMenu(file.Path),
 	}
 
 	if err := s.executePage(w, "edit.html", data); err != nil {

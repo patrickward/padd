@@ -2,13 +2,15 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/patrickward/padd"
 )
 
 func (s *Server) showPageNotFound(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
-	if err := s.executePage(w, "404.html", PageData{
-		Title:     "Page Not Found",
-		CoreFiles: s.getCoreFiles(""),
+	if err := s.executePage(w, "404.html", padd.PageData{
+		Title:        "Page Not Found",
+		NavMenuFiles: s.navigationMenu(""),
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -16,9 +18,9 @@ func (s *Server) showPageNotFound(w http.ResponseWriter, _ *http.Request) {
 
 func (s *Server) showServerError(w http.ResponseWriter, _ *http.Request, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
-	if err := s.executePage(w, "500.html", PageData{
+	if err := s.executePage(w, "500.html", padd.PageData{
 		Title:        "Server Error",
-		CoreFiles:    s.getCoreFiles(""),
+		NavMenuFiles: s.navigationMenu(""),
 		ErrorMessage: err.Error(),
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

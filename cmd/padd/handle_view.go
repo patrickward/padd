@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/patrickward/padd"
 )
 
 func (s *Server) handlePageHeader(w http.ResponseWriter, r *http.Request) {
@@ -28,36 +31,36 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (PageData, bool) {
+func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.PageData, bool) {
 	id := r.PathValue("id")
 
 	// For daily/journal without specific month, redirect to current month
 	if id == "daily" || id == "journal" {
-		currentFile, err := s.getCurrentTemporalFile(id)
+		currentFile, err := s.fileRepo.TemporalFileInfo(id, time.Now())
 		if err != nil {
 			s.showServerError(w, r, err)
-			return PageData{}, true
+			return padd.PageData{}, true
 		}
 
 		http.Redirect(w, r, "/"+currentFile.ID, http.StatusSeeOther)
-		return PageData{}, true
+		return padd.PageData{}, true
 	}
 
-	file, err := s.getFileInfo(id)
+	file, err := s.fileRepo.FileInfo(id)
 	if err != nil {
 		s.showPageNotFound(w, r)
-		return PageData{}, true
+		return padd.PageData{}, true
 	}
 
-	if !s.isValidFile(file.Path) {
+	if !s.fileRepo.FilePathExists(file.Path) {
 		s.showServerError(w, r, fmt.Errorf("invalid file"))
-		return PageData{}, true
+		return padd.PageData{}, true
 	}
 
 	content, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		s.showServerError(w, r, err)
-		return PageData{}, true
+		return padd.PageData{}, true
 	}
 
 	// Get the search query and match parameters
@@ -79,7 +82,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (PageDa
 		renderedContent.Title = file.DisplayBase
 	}
 
-	data := PageData{
+	data := padd.PageData{
 		Title:             renderedContent.Title,
 		SectionHeaders:    renderedContent.SectionHeaders,
 		TasksCount:        renderedContent.TasksCount,
@@ -87,8 +90,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (PageDa
 		CurrentFile:       file,
 		Content:           renderedContent.HTML,
 		RawContent:        string(content),
-		CoreFiles:         s.getCoreFiles(file.Path),
-		ResourceFiles:     s.getResourceFiles(file.Path),
+		NavMenuFiles:      s.navigationMenu(file.Path),
 		SearchQuery:       searchQuery,
 		SearchMatch:       searchMatch,
 	}
