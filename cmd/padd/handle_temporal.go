@@ -7,10 +7,6 @@ import (
 	"github.com/patrickward/padd"
 )
 
-func (s *Server) isTemporalFile(filePath string) bool {
-	return strings.HasPrefix(filePath, "daily/") || strings.HasPrefix(filePath, "journal/")
-}
-
 func (s *Server) handleTemporalArchive(w http.ResponseWriter, r *http.Request) {
 	// Get the type from the URL path (e.g., /daily/archive is "daily", /journal/archive is "journal")
 	path := strings.Trim(r.URL.Path, "/")
@@ -34,7 +30,6 @@ func (s *Server) handleTemporalArchive(w http.ResponseWriter, r *http.Request) {
 		Path:        fileType + "/archive",
 		Display:     strings.Title(fileType) + " Archive",
 		DisplayBase: strings.Title(fileType) + " Archive",
-		IsCurrent:   false,
 	}
 
 	data := padd.PageData{

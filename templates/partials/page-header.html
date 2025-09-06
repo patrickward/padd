@@ -1,5 +1,6 @@
 {{define "page-header"}}
-    <header class="margin-start-5xl" hx-get="/page-header/{{.CurrentFile.ID}}" hx-trigger="padd:reload-header from:body" hx-swap="outerHTML">
+    <header class="margin-start-5xl" hx-get="/page-header/{{.CurrentFile.ID}}" hx-trigger="padd:reload-header from:body"
+            hx-swap="outerHTML">
         <!-- Breadcrumb Navigation -->
         {{if .CurrentFile.IsResource}}
             <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
@@ -32,18 +33,14 @@
 
             <!-- Action Buttons -->
             <div class="cluster gap-2xs">
-                {{if hasPrefix .CurrentFile.Path "daily/"}}
-                    {{if .CurrentFile.IsCurrent}}
-                        <button command="show-modal" commandfor="entry-modal-daily" class="primary outline size-xs">
-                            Daily Entry
-                        </button>
-                    {{end}}
-                {{else if hasPrefix .CurrentFile.Path "journal/"}}
-                    {{if .CurrentFile.IsCurrent}}
-                        <button command="show-modal" commandfor="entry-modal-journal" class="primary outline size-xs">
-                            Journal Entry
-                        </button>
-                    {{end}}
+                {{if hasPrefix .CurrentFile.Path "daily"}}
+                    <button command="show-modal" commandfor="entry-modal-daily" class="primary outline size-xs">
+                        Daily Entry
+                    </button>
+                {{else if hasPrefix .CurrentFile.Path "journal"}}
+                    <button command="show-modal" commandfor="entry-modal-journal" class="primary outline size-xs">
+                        Journal Entry
+                    </button>
                 {{else}}
                     {{if .HasCompletedTasks}}
                         <button hx-post="/api/tasks/complete/{{.CurrentFile.ID}}"

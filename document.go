@@ -246,3 +246,17 @@ func (d *Document) createNewSection(lines []string, formattedEntry string, confi
 
 	return result
 }
+
+// Entry formatters
+
+func NoteEntryFormatter(entry string, _ time.Time) string {
+	return fmt.Sprintf("%s\n", entry)
+}
+
+func TaskEntryFormatter(entry string, _ time.Time) string {
+	return fmt.Sprintf("- [ ] %s", entry)
+}
+
+func TimestampEntryFormatter(entry string, timestamp time.Time) string {
+	return fmt.Sprintf("### %s\n\n%s\n", timestamp.Format("03:04:05 PM"), entry)
+}

@@ -11,7 +11,6 @@ type FileInfo struct {
 	Path        string
 	Display     string
 	DisplayBase string // Base name without directory
-	IsCurrent   bool
 	IsTemporal  bool   // True if the file is a temporal file (daily/journal)
 	IsNavActive bool   // True if the file should indicate active in navigation
 	Directory   string // Directory path relative to the resources/ (empty for core and files at the root of resources/)

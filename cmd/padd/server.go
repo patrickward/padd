@@ -193,7 +193,6 @@ func (s *Server) navigationMenu(current string) []padd.FileInfo {
 			Display:     "Inbox",
 			DisplayBase: "Inbox",
 			IsNavActive: current == "inbox",
-			IsCurrent:   current == "inbox",
 		},
 		{
 			ID:          "active",
@@ -201,7 +200,6 @@ func (s *Server) navigationMenu(current string) []padd.FileInfo {
 			Display:     "Active",
 			DisplayBase: "Active",
 			IsNavActive: current == "active",
-			IsCurrent:   current == "active",
 		},
 		{
 			ID:          "daily",
@@ -210,7 +208,6 @@ func (s *Server) navigationMenu(current string) []padd.FileInfo {
 			DisplayBase: "Daily",
 			IsTemporal:  true,
 			IsNavActive: current == "daily" || strings.HasPrefix(current, "daily/"),
-			IsCurrent:   current == "daily" || strings.HasPrefix(current, "daily/"),
 		},
 		{
 			ID:          "journal",
@@ -219,7 +216,6 @@ func (s *Server) navigationMenu(current string) []padd.FileInfo {
 			DisplayBase: "Journal",
 			IsTemporal:  true,
 			IsNavActive: current == "journal" || strings.HasPrefix(current, "journal/"),
-			IsCurrent:   current == "journal" || strings.HasPrefix(current, "journal/"),
 		},
 		{
 			ID:          "resources",
@@ -228,7 +224,6 @@ func (s *Server) navigationMenu(current string) []padd.FileInfo {
 			DisplayBase: "Resources",
 			IsResource:  true,
 			IsNavActive: current == "resources" || strings.HasPrefix(current, "resources/"),
-			IsCurrent:   current == "resources" || strings.HasPrefix(current, "resources/"),
 		},
 	}
 

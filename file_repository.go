@@ -160,7 +160,6 @@ func (fr *FileRepository) FileInfo(id string) (FileInfo, error) {
 				Year:        subParts[0],
 				Month:       monthNumber,
 				MonthName:   titleCaser.String(monthName),
-				IsCurrent:   false,
 				IsTemporal:  true,
 			}, nil
 		}
@@ -422,7 +421,6 @@ func (fr *FileRepository) TemporalFileInfo(fileType string, date time.Time) (Fil
 		Path:        filePath,
 		Display:     displayName,
 		DisplayBase: displayName,
-		IsCurrent:   false,
 		IsTemporal:  true,
 	}, nil
 }
@@ -470,7 +468,6 @@ func (fr *FileRepository) scanResources() map[string]FileInfo {
 			Path:        result.Path,
 			Display:     display,
 			DisplayBase: displayBase,
-			IsCurrent:   false,
 			Directory:   dir,
 			Depth:       depth,
 			IsResource:  true,
