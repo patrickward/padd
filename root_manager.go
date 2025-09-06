@@ -32,8 +32,8 @@ func NewRootManager(path string) (*RootManager, error) {
 }
 
 // withRoot executes a function with a safely opened os.Root
-func (dm *RootManager) withRoot(fn func(*os.Root) error) error {
-	root, err := os.OpenRoot(dm.path)
+func (rm *RootManager) withRoot(fn func(*os.Root) error) error {
+	root, err := os.OpenRoot(rm.path)
 	if err != nil {
 		return fmt.Errorf("failed to open root: %w", err)
 	}
@@ -45,9 +45,9 @@ func (dm *RootManager) withRoot(fn func(*os.Root) error) error {
 }
 
 // ReadFile reads the contents of a file using Root.ReadFile
-func (dm *RootManager) ReadFile(filename string) ([]byte, error) {
+func (rm *RootManager) ReadFile(filename string) ([]byte, error) {
 	var content []byte
-	err := dm.withRoot(func(root *os.Root) error {
+	err := rm.withRoot(func(root *os.Root) error {
 		var err error
 		content, err = root.ReadFile(filename)
 		return err
@@ -56,21 +56,21 @@ func (dm *RootManager) ReadFile(filename string) ([]byte, error) {
 }
 
 // WriteFile writes content to a file using Root.WriteFile
-func (dm *RootManager) WriteFile(filename string, content []byte, perm os.FileMode) error {
-	return dm.withRoot(func(root *os.Root) error {
+func (rm *RootManager) WriteFile(filename string, content []byte, perm os.FileMode) error {
+	return rm.withRoot(func(root *os.Root) error {
 		return root.WriteFile(filename, content, perm)
 	})
 }
 
 // WriteString writes a string to a file
-func (dm *RootManager) WriteString(filename string, content string) error {
-	return dm.WriteFile(filename, []byte(content), 0644)
+func (rm *RootManager) WriteString(filename string, content string) error {
+	return rm.WriteFile(filename, []byte(content), 0644)
 }
 
 // FileExists checks if a file exists using Root.Stat
-func (dm *RootManager) FileExists(filename string) bool {
+func (rm *RootManager) FileExists(filename string) bool {
 	exists := false
-	_ = dm.withRoot(func(root *os.Root) error {
+	_ = rm.withRoot(func(root *os.Root) error {
 		_, err := root.Stat(filename)
 		exists = err == nil
 		return nil
@@ -79,9 +79,9 @@ func (dm *RootManager) FileExists(filename string) bool {
 }
 
 // Stat returns file info using Root.Stat
-func (dm *RootManager) Stat(filename string) (os.FileInfo, error) {
+func (rm *RootManager) Stat(filename string) (os.FileInfo, error) {
 	var info os.FileInfo
-	err := dm.withRoot(func(root *os.Root) error {
+	err := rm.withRoot(func(root *os.Root) error {
 		var err error
 		info, err = root.Stat(filename)
 		return err
@@ -90,47 +90,47 @@ func (dm *RootManager) Stat(filename string) (os.FileInfo, error) {
 }
 
 // MkdirAll creates a directory and any necessary parent directories using Root.MkdirAll
-func (dm *RootManager) MkdirAll(dir string, perm os.FileMode) error {
-	return dm.withRoot(func(root *os.Root) error {
+func (rm *RootManager) MkdirAll(dir string, perm os.FileMode) error {
+	return rm.withRoot(func(root *os.Root) error {
 		return root.MkdirAll(dir, perm)
 	})
 }
 
 // Remove removes a file using Root.Remove
-func (dm *RootManager) Remove(filename string) error {
-	return dm.withRoot(func(root *os.Root) error {
+func (rm *RootManager) Remove(filename string) error {
+	return rm.withRoot(func(root *os.Root) error {
 		return root.Remove(filename)
 	})
 }
 
 // RemoveAll removes a directory and all its contents using Root.RemoveAll
-func (dm *RootManager) RemoveAll(path string) error {
-	return dm.withRoot(func(root *os.Root) error {
+func (rm *RootManager) RemoveAll(path string) error {
+	return rm.withRoot(func(root *os.Root) error {
 		return root.RemoveAll(path)
 	})
 }
 
 // WalkDir walks the directory tree using Root.FS()
-func (dm *RootManager) WalkDir(root string, fn fs.WalkDirFunc) error {
-	return dm.withRoot(func(osRoot *os.Root) error {
+func (rm *RootManager) WalkDir(root string, fn fs.WalkDirFunc) error {
+	return rm.withRoot(func(osRoot *os.Root) error {
 		fsys := osRoot.FS()
 		return fs.WalkDir(fsys, root, fn)
 	})
 }
 
 // CreateFileIfNotExists creates a file with default content if it doesn't exist
-func (dm *RootManager) CreateFileIfNotExists(filename string, defaultContent string) error {
-	if dm.FileExists(filename) {
+func (rm *RootManager) CreateFileIfNotExists(filename string, defaultContent string) error {
+	if rm.FileExists(filename) {
 		return nil
 	}
-	return dm.WriteString(filename, defaultContent)
+	return rm.WriteString(filename, defaultContent)
 }
 
 // CreateDirectoryIfNotExists creates a directory if it doesn't exist
-func (dm *RootManager) CreateDirectoryIfNotExists(dir string) error {
-	info, err := dm.Stat(dir)
+func (rm *RootManager) CreateDirectoryIfNotExists(dir string) error {
+	info, err := rm.Stat(dir)
 	if os.IsNotExist(err) {
-		return dm.MkdirAll(dir, 0755)
+		return rm.MkdirAll(dir, 0755)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to check directory %s: %w", dir, err)
@@ -152,10 +152,10 @@ type ScanResult struct {
 }
 
 // Scan scans the directory tree starting from rootDir, applying an optional filter function
-func (dm *RootManager) Scan(rootDir string, filter func(string, fs.DirEntry) bool) ([]ScanResult, error) {
+func (rm *RootManager) Scan(rootDir string, filter func(string, fs.DirEntry) bool) ([]ScanResult, error) {
 	var results []ScanResult
 
-	err := dm.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
+	err := rm.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // Continue walking despite errors
 		}
@@ -183,9 +183,9 @@ func (dm *RootManager) Scan(rootDir string, filter func(string, fs.DirEntry) boo
 }
 
 // ReadDir reads the contents of a directory and returns DirEntry slices
-func (dm *RootManager) ReadDir(dir string) ([]fs.DirEntry, error) {
+func (rm *RootManager) ReadDir(dir string) ([]fs.DirEntry, error) {
 	var entries []fs.DirEntry
-	err := dm.withRoot(func(root *os.Root) error {
+	err := rm.withRoot(func(root *os.Root) error {
 		fsys := root.FS()
 		var err error
 		entries, err = fs.ReadDir(fsys, dir)
@@ -195,8 +195,9 @@ func (dm *RootManager) ReadDir(dir string) ([]fs.DirEntry, error) {
 	return entries, err
 }
 
-// ResolveMonthlyFile resolves the path for a monthly file based on the timestamp and file type.
-func (dm *RootManager) ResolveMonthlyFile(timestamp time.Time, fileType string) (string, error) {
+// ResolveMonthlyFile resolves the path for a monthly file based on the timestamp and file type. If not
+// found, it will create the file.
+func (rm *RootManager) ResolveMonthlyFile(timestamp time.Time, fileType string) (string, error) {
 	year := timestamp.Format("2006")
 	month := timestamp.Format("01-January")
 
@@ -204,13 +205,13 @@ func (dm *RootManager) ResolveMonthlyFile(timestamp time.Time, fileType string) 
 	filePath := strings.ToLower(filepath.Join(dirPath, month+".md"))
 
 	// Ensure directory exists
-	if err := dm.MkdirAll(dirPath, 0755); err != nil {
+	if err := rm.MkdirAll(dirPath, 0755); err != nil {
 		return "", fmt.Errorf("failed to create directory %s: %w", dirPath, err)
 	}
 
 	// Create the file if it doesn't exist
-	if !dm.FileExists(filePath) {
-		if err := dm.createMonthlyFile(filePath, timestamp); err != nil {
+	if !rm.FileExists(filePath) {
+		if err := rm.createMonthlyFile(filePath, timestamp); err != nil {
 			return "", fmt.Errorf("failed to create dated file %s: %w", filePath, err)
 		}
 	}
@@ -219,11 +220,17 @@ func (dm *RootManager) ResolveMonthlyFile(timestamp time.Time, fileType string) 
 }
 
 // createMonthlyFile creates a new monthly file with a header based on the timestamp
-func (dm *RootManager) createMonthlyFile(filePath string, timestamp time.Time) error {
-	if dm.FileExists(filePath) {
+func (rm *RootManager) createMonthlyFile(filePath string, timestamp time.Time) error {
+	if rm.FileExists(filePath) {
 		return nil
 	}
 
+	// Make sure the directory exists
+	dirPath := filepath.Dir(filePath)
+	if err := rm.MkdirAll(dirPath, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
+	}
+
 	//content := fmt.Sprintf("# %s\n\n", timestamp.Format("January 2006"))
-	return dm.WriteString(filePath, "\n")
+	return rm.WriteString(filePath, "\n")
 }
