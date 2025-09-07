@@ -17,41 +17,8 @@ type Task struct {
 	Suffix    string // The rest of the line
 }
 
+//goland:noinspection RegExpRedundantEscape
 var taskListPattern = regexp.MustCompile(`^(\s*[-*]\s+)\[([ xX])\](.*)$`)
-
-func (d *Document) findTaskByID(taskID int) (*Task, error) {
-	if err := d.load(); err != nil {
-		return nil, err
-	}
-
-	taskCount := 0
-	lines := strings.Split(d.content, "\n")
-
-	for i, line := range lines {
-		if matches := taskListPattern.FindStringSubmatch(line); matches != nil {
-			taskCount++
-			if taskCount == taskID {
-				prefix := matches[1]
-				state := matches[2]
-				suffix := matches[3]
-				label := strings.TrimSpace(suffix)
-				isChecked := state == "x" || state == "X"
-
-				return &Task{
-					ID:        taskID,
-					Label:     label,
-					IsChecked: isChecked,
-					LineIndex: i,
-					Prefix:    prefix,
-					State:     state,
-					Suffix:    suffix,
-				}, nil
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("task ID %d not found", taskID)
-}
 
 func (d *Document) GetTask(taskID int) (*Task, error) {
 	return d.findTaskByID(taskID)
@@ -165,4 +132,81 @@ func (d *Document) ArchiveCompletedTasks() ([]string, error) {
 	}
 
 	return completedTasks, nil
+}
+
+func (d *Document) findTaskByID(taskID int) (*Task, error) {
+	tasks, err := d.getAllTasks()
+	if err != nil {
+		return nil, err
+	}
+
+	if taskID < 1 || taskID > len(tasks) {
+		return nil, fmt.Errorf("task ID %d not found (document has %d tasks)", taskID, len(tasks))
+	}
+
+	return &tasks[taskID-1], nil
+}
+
+// extractAllTasks extracts all tasks from the given lines.
+func (d *Document) extractAllTasks(lines []string) []Task {
+	var tasks []Task
+	taskCount := 0
+
+	for i, line := range lines {
+		if matches := taskListPattern.FindStringSubmatch(line); matches != nil {
+			taskCount++
+			prefix := matches[1]
+			state := matches[2]
+			suffix := matches[3]
+			label := strings.TrimSpace(suffix)
+			isChecked := state == "x" || state == "X"
+			tasks = append(tasks, Task{
+				ID:        taskCount,
+				Label:     label,
+				IsChecked: isChecked,
+				LineIndex: i,
+				Prefix:    prefix,
+				State:     state,
+				Suffix:    suffix,
+			})
+		}
+	}
+
+	return tasks
+}
+
+func (d *Document) getAllTasks() ([]Task, error) {
+	if err := d.load(); err != nil {
+		return nil, err
+	}
+
+	d.taskMu.RLock()
+	if d.taskCacheValid && d.taskCache != nil {
+		d.taskMu.RUnlock()
+		return d.taskCache, nil
+	}
+	d.taskMu.RUnlock()
+
+	// Rebuild the cache
+	d.taskMu.Lock()
+	defer d.taskMu.Unlock()
+
+	// Double-check cache validity (another goroutine may have already updated it)
+	if d.taskCacheValid && d.taskCache != nil {
+		return d.taskCache, nil
+	}
+
+	lines := strings.Split(d.content, "\n")
+	d.taskCache = d.extractAllTasks(lines)
+	d.taskCacheValid = true
+
+	return d.taskCache, nil
+}
+
+func (d *Document) invalidateTaskCache() {
+	d.taskMu.Lock()
+	defer d.taskMu.Unlock()
+
+	d.taskCacheValid = false
+	d.taskCache = nil
 }

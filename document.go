@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -35,10 +36,13 @@ type SectionInsertionConfig struct {
 }
 
 type Document struct {
-	Info    FileInfo
-	repo    *FileRepository
-	content string
-	loaded  bool
+	Info           FileInfo
+	repo           *FileRepository
+	content        string
+	loaded         bool
+	taskCache      []Task
+	taskCacheValid bool
+	taskMu         sync.RWMutex
 }
 
 // load reads the document from disk
@@ -74,6 +78,8 @@ func (d *Document) Save(content string) error {
 
 	d.content = content
 	d.loaded = true
+	d.invalidateTaskCache()
+
 	return nil
 }
 
