@@ -53,8 +53,10 @@ func NewFileRepository(rootManager *RootManager, config FileConfig) *FileReposit
 	config.temporalDirectories = []string{config.DailyDirectory, config.JournalDirectory}
 
 	fr := &FileRepository{
-		config:      config,
-		rootManager: rootManager,
+		config:        config,
+		rootManager:   rootManager,
+		coreCache:     make(map[string]FileInfo),
+		resourceCache: make(map[string]FileInfo),
 	}
 
 	fr.ReloadCoreFiles()
