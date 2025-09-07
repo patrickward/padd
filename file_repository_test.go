@@ -9,9 +9,14 @@ import (
 	"github.com/patrickward/padd/assert"
 )
 
-func setupTestFileRepo(t *testing.T) (*padd.FileRepository, *padd.RootManager) {
+func setupTestFileRepo(t *testing.T, path string) (*padd.FileRepository, *padd.RootManager) {
 	t.Helper()
-	rm, err := padd.NewRootManager("./testdata/data")
+
+	if path == "" {
+		path = "./testdata/data"
+	}
+
+	rm, err := padd.NewRootManager(path)
 	assert.Nil(t, err)
 
 	return padd.NewFileRepository(rm, padd.DefaultFileConfig), rm
@@ -20,11 +25,8 @@ func setupTestFileRepo(t *testing.T) (*padd.FileRepository, *padd.RootManager) {
 func TestFileRepository_Initialize(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
-	rm, err := padd.NewRootManager(tmp)
-	assert.Nil(t, err)
-
-	fr := padd.NewFileRepository(rm, padd.DefaultFileConfig)
-	err = fr.Initialize()
+	fr, rm := setupTestFileRepo(t, tmp)
+	err := fr.Initialize()
 	assert.Nil(t, err)
 
 	// Ensure file exists
@@ -34,7 +36,7 @@ func TestFileRepository_Initialize(t *testing.T) {
 
 func TestFileRepository_FileInfo(t *testing.T) {
 	t.Parallel()
-	fr, _ := setupTestFileRepo(t)
+	fr, _ := setupTestFileRepo(t, "")
 	fr.ReloadCaches()
 
 	file, err := fr.FileInfo("inbox")
@@ -79,7 +81,7 @@ func TestFileRepository_FileInfo(t *testing.T) {
 
 func TestFileRepository_CoreFiles(t *testing.T) {
 	t.Parallel()
-	fr, _ := setupTestFileRepo(t)
+	fr, _ := setupTestFileRepo(t, "")
 	coreFiles := fr.CoreFiles()
 	assert.Equal(t, len(fr.CoreFiles()), 2)
 	assert.Equal(t, coreFiles["inbox"].Path, "inbox.md")
@@ -90,7 +92,7 @@ func TestFileRepository_CoreFiles(t *testing.T) {
 
 func TestFileRepository_FileInfo_CoreFiles(t *testing.T) {
 	t.Parallel()
-	fr, _ := setupTestFileRepo(t)
+	fr, _ := setupTestFileRepo(t, "")
 	info, err := fr.FileInfo("inbox")
 	assert.Nil(t, err)
 	assert.Equal(t, info.ID, "inbox")
@@ -103,7 +105,7 @@ func TestFileRepository_FileInfo_CoreFiles(t *testing.T) {
 
 func TestFileRepository_FileInfo_ResourceFiles(t *testing.T) {
 	t.Parallel()
-	fr, _ := setupTestFileRepo(t)
+	fr, _ := setupTestFileRepo(t, "")
 	fr.ReloadCaches()
 	info, err := fr.FileInfo("resources/looney")
 	assert.Nil(t, err)
@@ -125,7 +127,7 @@ func TestFileRepository_FileInfo_ResourceFiles(t *testing.T) {
 
 func TestFileRepository_ResourcesDirectory(t *testing.T) {
 	t.Parallel()
-	fr, _ := setupTestFileRepo(t)
+	fr, _ := setupTestFileRepo(t, "")
 	fr.ReloadCaches()
 
 	dir := fr.ResourcesTree()
@@ -141,7 +143,7 @@ func TestFileRepository_ResourcesDirectory(t *testing.T) {
 
 func TestFileRepository_TemporalTree(t *testing.T) {
 	t.Parallel()
-	fr, _ := setupTestFileRepo(t)
+	fr, _ := setupTestFileRepo(t, "")
 	fr.ReloadCaches()
 
 	dirs := []string{"daily", "journal"}
@@ -164,7 +166,7 @@ func TestFileRepository_TemporalTree(t *testing.T) {
 
 func TestFileRepository_GetTemporalFile(t *testing.T) {
 	t.Parallel()
-	fr, _ := setupTestFileRepo(t)
+	fr, _ := setupTestFileRepo(t, "")
 	fr.ReloadCaches()
 
 	// Create time var for September 5, 2025
@@ -184,7 +186,7 @@ func TestFileRepository_GetTemporalFile(t *testing.T) {
 
 func TestFileRepository_GetDocument(t *testing.T) {
 	t.Parallel()
-	fr, _ := setupTestFileRepo(t)
+	fr, _ := setupTestFileRepo(t, "")
 	fr.ReloadCaches()
 
 	doc, err := fr.GetDocument("inbox")
@@ -203,14 +205,30 @@ func TestFileRepository_GetDocument(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestFileRepository_GetOrCreateDocument(t *testing.T) {
+	t.Parallel()
+	tmp := t.TempDir()
+	fr, _ := setupTestFileRepo(t, tmp)
+	fr.ReloadCaches()
+
+	assert.False(t, fr.FilePathExists("resources/foobar.md"))
+
+	doc, err := fr.GetOrCreateDocument("resources/foobar")
+	assert.Nil(t, err)
+	assert.True(t, fr.FilePathExists("resources/foobar.md"))
+	assert.Equal(t, doc.Info.Path, "resources/foobar.md")
+	assert.Equal(t, doc.Info.Display, "Foobar")
+	assert.Equal(t, doc.Info.DisplayBase, "Foobar")
+	assert.Equal(t, doc.Info.ID, "resources/foobar")
+	assert.Equal(t, doc.Info.Path, "resources/foobar.md")
+}
+
 func TestFileRepository_GetOrCreateTemporalDocument(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
-	rm, err := padd.NewRootManager(tmp)
+	fr, _ := setupTestFileRepo(t, tmp)
+	err := fr.Initialize()
 	assert.Nil(t, err)
-
-	fr := padd.NewFileRepository(rm, padd.DefaultFileConfig)
-	err = fr.Initialize()
 
 	doc, err := fr.GetOrCreateTemporalDocument("daily", time.Date(2025, time.March, 3, 0, 0, 0, 0, time.UTC))
 	assert.Nil(t, err)

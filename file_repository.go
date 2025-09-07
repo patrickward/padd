@@ -569,6 +569,57 @@ func (fr *FileRepository) GetDocument(id string) (*Document, error) {
 	}, nil
 }
 
+// GetOrCreateDocument gets or creates a document for a file, based on its ID.
+// If the file doesn't exist, it will be created with default content.'
+func (fr *FileRepository) GetOrCreateDocument(id string) (*Document, error) {
+	info, err := fr.FileInfo(id)
+	if err == nil {
+		return &Document{
+			Info: info,
+			repo: fr,
+		}, nil
+	}
+
+	// File wasn't found, so create it
+	path := id
+
+	// Ensure .md extension
+	if !strings.HasSuffix(path, ".md") {
+		path += ".md"
+	}
+
+	// First, get the directory
+	directory := filepath.Dir(path)
+	if directory == "." {
+		directory = ""
+	}
+
+	// Ensure the directory exists
+	if err := fr.rootManager.MkdirAll(directory, 0755); err != nil {
+		return nil, fmt.Errorf("error creating directory: %w", err)
+	}
+
+	// Create the file
+	defaultContent := []byte("# " + filepath.Base(path) + "\n\n")
+	if err := fr.rootManager.WriteFile(path, defaultContent, 0644); err != nil {
+		return nil, fmt.Errorf("error creating file: %w", err)
+	}
+
+	// Reload the cache
+	fr.ReloadCaches()
+
+	// Get the file info again
+	info, err = fr.FileInfo(id)
+	if err != nil {
+		return nil, fmt.Errorf("error getting file info: %w", err)
+	}
+
+	return &Document{
+		Info: info,
+		repo: fr,
+	}, nil
+}
+
 // GetOrCreateTemporalDocument gets or creates a document for a temporal file
 func (fr *FileRepository) GetOrCreateTemporalDocument(directory string, date time.Time) (*Document, error) {
 	info, err := fr.TemporalFileInfo(directory, date)
