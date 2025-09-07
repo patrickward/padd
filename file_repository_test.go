@@ -34,6 +34,46 @@ func TestFileRepository_Initialize(t *testing.T) {
 	assert.True(t, rm.FileExists("active.md"))
 }
 
+func TestFileRepository_ReloadCaches(t *testing.T) {
+	fr, _ := setupTestFileRepo(t, "")
+	err := fr.Initialize()
+	assert.Nil(t, err)
+
+	fr.ReloadCaches()
+	assert.True(t, fr.FilePathExists("inbox.md"))
+	assert.True(t, fr.FilePathExists("active.md"))
+	assert.True(t, fr.FilePathExists("resources/looney.md"))
+	assert.True(t, fr.FilePathExists("resources/characters/roadrunner.md"))
+}
+
+func TestFileRepository_ReloadResource(t *testing.T) {
+	t.Parallel()
+	tmp := t.TempDir()
+	fr, rm := setupTestFileRepo(t, tmp)
+	err := fr.Initialize()
+	assert.Nil(t, err)
+	fr.ReloadCaches()
+
+	// Add a new resource directly for this test
+	err = rm.WriteString("resources/foobar.md", "test")
+	assert.Nil(t, err)
+	assert.True(t, fr.FilePathExists("resources/foobar.md"))
+
+	// Resource shouldn't exist in the cache yet
+	_, err = fr.FileInfo("resources/foobar")
+	assert.NotNil(t, err)
+
+	// Reload the resource and check the cache
+	fr.ReloadResource("resources/foobar.md")
+	assert.True(t, fr.FilePathExists("resources/foobar.md"))
+	info, err := fr.FileInfo("resources/foobar")
+	assert.Nil(t, err)
+	assert.Equal(t, info.ID, "resources/foobar")
+	assert.Equal(t, info.Path, "resources/foobar.md")
+	assert.Equal(t, info.Display, "Foobar")
+	assert.Equal(t, info.DisplayBase, "Foobar")
+}
+
 func TestFileRepository_FileInfo(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
@@ -172,8 +212,8 @@ func TestFileRepository_GetTemporalFile(t *testing.T) {
 	// Create time var for September 5, 2025
 	current := time.Date(2025, time.September, 5, 0, 0, 0, 0, time.UTC)
 
-	file, err := fr.TemporalFileInfo("daily", current)
-	assert.Nil(t, err)
+	file, found := fr.TemporalFileInfo("daily", current)
+	assert.True(t, found)
 	assert.Equal(t, file.Path, "daily/2025/09-september.md")
 	assert.Equal(t, file.Display, "September 2025")
 	assert.Equal(t, file.DisplayBase, "September 2025")
@@ -205,7 +245,7 @@ func TestFileRepository_GetDocument(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func TestFileRepository_GetOrCreateDocument(t *testing.T) {
+func TestFileRepository_GetOrCreateResourceDocument(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
 	fr, _ := setupTestFileRepo(t, tmp)
@@ -213,7 +253,7 @@ func TestFileRepository_GetOrCreateDocument(t *testing.T) {
 
 	assert.False(t, fr.FilePathExists("resources/foobar.md"))
 
-	doc, err := fr.GetOrCreateDocument("resources/foobar")
+	doc, err := fr.GetOrCreateResourceDocument("foobar")
 	assert.Nil(t, err)
 	assert.True(t, fr.FilePathExists("resources/foobar.md"))
 	assert.Equal(t, doc.Info.Path, "resources/foobar.md")

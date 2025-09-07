@@ -37,7 +37,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 		id = "inbox"
 	}
 
-	if s.fileRepo.IDIsATemporalRoot(id) {
+	if s.fileRepo.IsTemporalRoot(id) {
 		doc, err := s.fileRepo.GetOrCreateTemporalDocument(id, time.Now())
 		if err != nil {
 			s.showServerError(w, r, err)

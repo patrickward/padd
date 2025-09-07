@@ -193,8 +193,8 @@ func (fr *FileRepository) FileIsTemporal(id string) bool {
 	return false
 }
 
-// IDIsATemporalRoot checks if a file with the given id is a temporal root directory (daily or journal).
-func (fr *FileRepository) IDIsATemporalRoot(id string) bool {
+// IsTemporalRoot checks if a file with the given id is a temporal root directory (daily or journal).
+func (fr *FileRepository) IsTemporalRoot(id string) bool {
 	return slices.Contains(fr.config.temporalDirectories, id)
 }
 
@@ -237,6 +237,16 @@ func (fr *FileRepository) ReloadResources() {
 	fr.resourceCache = fr.scanResources()
 	fr.lastCacheTime = time.Now()
 	log.Printf("Resource cache refreshed with %d files", len(fr.resourceCache))
+}
+
+// ReloadResource reloads a single resource file.
+func (fr *FileRepository) ReloadResource(path string) {
+	fr.cacheMux.Lock()
+	defer fr.cacheMux.Unlock()
+
+	if fr.rootManager.FileExists(path) {
+		fr.resourceCache[fr.CreateID(path)] = fr.fileInfoFromPath(path)
+	}
 }
 
 // ReloadResourcesIfStale refreshes the resource cache if it is older than the specified duration.
@@ -407,30 +417,6 @@ func (fr *FileRepository) TemporalTree(fileType string) (years []string, files m
 	return years, files, nil
 }
 
-// TemporalFileInfo retrieves or constructs a FileInfo for a temporal file based on type and date. If not
-// found, the file will be created and returned.
-func (fr *FileRepository) TemporalFileInfo(fileType string, date time.Time) (FileInfo, error) {
-	filePath, err := fr.rootManager.ResolveMonthlyFile(date, fileType)
-	if err != nil {
-		return FileInfo{}, err
-	}
-
-	id := fr.CreateID(filePath)
-	displayName := fmt.Sprintf("%s %d", date.Format("January"), date.Year())
-
-	return FileInfo{
-		ID:          id,
-		Path:        filePath,
-		Display:     displayName,
-		DisplayBase: displayName,
-		IsTemporal:  true,
-		Directory:   fileType + "/" + date.Format("2006"),
-		Year:        date.Format("2006"),
-		Month:       date.Format("01"),
-		MonthName:   date.Format("January"),
-	}, nil
-}
-
 // scanResources scans the resources directory for markdown files and builds the resource cache.
 func (fr *FileRepository) scanResources() map[string]FileInfo {
 	// Create the resources directory if it doesn't exist
@@ -451,36 +437,41 @@ func (fr *FileRepository) scanResources() map[string]FileInfo {
 	var files = make(map[string]FileInfo, len(results))
 
 	for _, result := range results {
-		id := fr.CreateID(result.Path)
-
-		// Extract directory info
-		pathWithoutPrefix := strings.TrimPrefix(result.Path, fr.config.ResourcesDirectory+"/")
-		dir := filepath.Dir(pathWithoutPrefix)
-		if dir == "." {
-			dir = "" // Root of resources
-		}
-
-		// Calculate depth
-		depth := 0
-		if dir != "" {
-			depth = strings.Count(dir, string(filepath.Separator)) + 1
-		}
-
-		// Create display name
-		display, displayBase := fr.DisplayName(result.Path)
-
-		files[id] = FileInfo{
-			ID:          id,
-			Path:        result.Path,
-			Display:     display,
-			DisplayBase: displayBase,
-			Directory:   dir,
-			Depth:       depth,
-			IsResource:  true,
-		}
+		fileInfo := fr.fileInfoFromPath(result.Path)
+		files[fileInfo.ID] = fileInfo
 	}
 
 	return files
+}
+
+func (fr *FileRepository) fileInfoFromPath(path string) FileInfo {
+	id := fr.CreateID(path)
+
+	// Extract directory info
+	pathWithoutPrefix := strings.TrimPrefix(path, fr.config.ResourcesDirectory+"/")
+	dir := filepath.Dir(pathWithoutPrefix)
+	if dir == "." {
+		dir = "" // Root of resources
+	}
+
+	// Calculate depth
+	depth := 0
+	if dir != "" {
+		depth = strings.Count(dir, string(filepath.Separator)) + 1
+	}
+
+	// Create a display name
+	display, displayBase := fr.DisplayName(path)
+
+	return FileInfo{
+		ID:          id,
+		Path:        path,
+		Display:     display,
+		DisplayBase: displayBase,
+		Directory:   dir,
+		Depth:       depth,
+		IsResource:  true,
+	}
 }
 
 // sortedResources returns a slice of FileInfo sorted by directory and display name.
@@ -569,9 +560,22 @@ func (fr *FileRepository) GetDocument(id string) (*Document, error) {
 	}, nil
 }
 
-// GetOrCreateDocument gets or creates a document for a file, based on its ID.
+// GetOrCreateResourceDocument retrieves a document by ID, or creates a new one if it doesn't exist.
+// If the file doesn't exist, it will be created with default content. Files are always created
+// in the ResourcesDirectory. You can omit the ResourcesDirectory prefix in the ID and it will be
+// automatically added. Similarly, you can omit the .md extension and it will be added.
+func (fr *FileRepository) GetOrCreateResourceDocument(id string) (*Document, error) {
+	// Ensure the file is in the resources directory
+	if !strings.HasPrefix(id, fr.Config().ResourcesDirectory+"/") {
+		id = fr.Config().ResourcesDirectory + "/" + id
+	}
+
+	return fr.getOrCreateDocument(id)
+}
+
+// getOrCreateDocument gets or creates a document for a file, based on its ID.
 // If the file doesn't exist, it will be created with default content.'
-func (fr *FileRepository) GetOrCreateDocument(id string) (*Document, error) {
+func (fr *FileRepository) getOrCreateDocument(id string) (*Document, error) {
 	info, err := fr.FileInfo(id)
 	if err == nil {
 		return &Document{
@@ -605,8 +609,8 @@ func (fr *FileRepository) GetOrCreateDocument(id string) (*Document, error) {
 		return nil, fmt.Errorf("error creating file: %w", err)
 	}
 
-	// Reload the cache
-	fr.ReloadCaches()
+	// Reload the cache for this single file
+	fr.ReloadResource(path)
 
 	// Get the file info again
 	info, err = fr.FileInfo(id)
@@ -620,11 +624,71 @@ func (fr *FileRepository) GetOrCreateDocument(id string) (*Document, error) {
 	}, nil
 }
 
+// TemporalFileInfo retrieves or constructs a FileInfo for a temporal file based on type and date. If not
+// found, the file will be created and returned.
+func (fr *FileRepository) TemporalFileInfo(fileType string, timestamp time.Time) (FileInfo, bool) {
+	//filePath, err := fr.rootManager.ResolveMonthlyFile(date, fileType)
+	//if err != nil {
+	//	return FileInfo{}, err
+	//}
+	//
+	//id := fr.CreateID(filePath)
+	//displayName := fmt.Sprintf("%s %d", date.Format("January"), date.Year())
+	//
+	//return FileInfo{
+	//	ID:          id,
+	//	Path:        filePath,
+	//	Display:     displayName,
+	//	DisplayBase: displayName,
+	//	IsTemporal:  true,
+	//	Directory:   fileType + "/" + date.Format("2006"),
+	//	Year:        date.Format("2006"),
+	//	Month:       date.Format("01"),
+	//	MonthName:   date.Format("January"),
+	//}, nil
+
+	year := timestamp.Format("2006")
+	month := timestamp.Format("01-January")
+
+	dirPath := strings.ToLower(filepath.Join(fileType, year))
+	filePath := strings.ToLower(filepath.Join(dirPath, month+".md"))
+
+	id := fr.CreateID(filePath)
+	displayName := fmt.Sprintf("%s %d", timestamp.Format("January"), timestamp.Year())
+
+	info := FileInfo{
+		ID:          id,
+		Path:        filePath,
+		Display:     displayName,
+		DisplayBase: displayName,
+		IsTemporal:  true,
+		Directory:   fileType + "/" + timestamp.Format("2006"),
+		Year:        timestamp.Format("2006"),
+		Month:       timestamp.Format("01"),
+		MonthName:   timestamp.Format("January"),
+	}
+
+	found := fr.rootManager.FileExists(filePath)
+
+	return info, found
+}
+
 // GetOrCreateTemporalDocument gets or creates a document for a temporal file
 func (fr *FileRepository) GetOrCreateTemporalDocument(directory string, date time.Time) (*Document, error) {
-	info, err := fr.TemporalFileInfo(directory, date)
-	if err != nil {
-		return nil, fmt.Errorf("error getting temporal file info: %w", err)
+	info, found := fr.TemporalFileInfo(directory, date)
+
+	if !found {
+		// Make sure the directory exists
+		dirPath := filepath.Dir(info.Path)
+		if err := fr.rootManager.MkdirAll(dirPath, 0755); err != nil {
+			return nil, fmt.Errorf("failed to create directory %s: %w", dirPath, err)
+		}
+
+		//content := fmt.Sprintf("# %s\n\n", timestamp.Format("January 2006"))
+		err := fr.rootManager.WriteString(info.Path, "\n")
+		if err != nil {
+			return nil, fmt.Errorf("failed to create file %s: %w", info.Path, err)
+		}
 	}
 
 	return &Document{
@@ -632,3 +696,43 @@ func (fr *FileRepository) GetOrCreateTemporalDocument(directory string, date tim
 		repo: fr,
 	}, nil
 }
+
+//// findTemporalFile resolves the path for a monthly file based on the timestamp and file type. If not
+//// found, it will create the file.
+//func (fr *FileRepository) findTemporalFile(fileType string, timestamp time.Time) (string, error) {
+//	year := timestamp.Format("2006")
+//	month := timestamp.Format("01-January")
+//
+//	dirPath := strings.ToLower(filepath.Join(fileType, year))
+//	filePath := strings.ToLower(filepath.Join(dirPath, month+".md"))
+//
+//	// Ensure directory exists
+//	if err := fr.rootManager.MkdirAll(dirPath, 0755); err != nil {
+//		return "", fmt.Errorf("failed to create directory %s: %w", dirPath, err)
+//	}
+//
+//	// Create the file if it doesn't exist
+//	if !fr.rootManager.FileExists(filePath) {
+//		if err := fr.createMonthlyFile(filePath, timestamp); err != nil {
+//			return "", fmt.Errorf("failed to create dated file %s: %w", filePath, err)
+//		}
+//	}
+//
+//	return filePath, nil
+//}
+
+//// createMonthlyFile creates a new monthly file with a header based on the timestamp
+//func (fr *FileRepository) createMonthlyFile(filePath string, timestamp time.Time) error {
+//	if fr.rootManager.FileExists(filePath) {
+//		return nil
+//	}
+//
+//	// Make sure the directory exists
+//	dirPath := filepath.Dir(filePath)
+//	if err := fr.rootManager.MkdirAll(dirPath, 0755); err != nil {
+//		return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
+//	}
+//
+//	//content := fmt.Sprintf("# %s\n\n", timestamp.Format("January 2006"))
+//	return fr.rootManager.WriteString(filePath, "\n")
+//}

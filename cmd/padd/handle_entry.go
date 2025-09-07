@@ -18,7 +18,7 @@ type EntryConfig struct {
 	SectionConfig  *padd.SectionInsertionConfig // nil means use date insertion logic
 }
 
-func (s *Server) handleTemporalEntry(directory string) func(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleAddTemporalEntry(directory string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		entry := strings.TrimSpace(r.FormValue("entry"))
 

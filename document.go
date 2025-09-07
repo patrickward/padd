@@ -41,8 +41,8 @@ type Document struct {
 	loaded  bool
 }
 
-// Load reads the document from disk
-func (d *Document) Load() error {
+// load reads the document from disk
+func (d *Document) load() error {
 	if d.loaded {
 		return nil
 	}
@@ -59,7 +59,7 @@ func (d *Document) Load() error {
 
 // Content returns the content of the document
 func (d *Document) Content() (string, error) {
-	if err := d.Load(); err != nil {
+	if err := d.load(); err != nil {
 		return "", err
 	}
 
@@ -84,7 +84,7 @@ func (d *Document) Delete() error {
 
 // AddEntry adds content to the document
 func (d *Document) AddEntry(entry string, config EntryInsertionConfig) error {
-	if err := d.Load(); err != nil {
+	if err := d.load(); err != nil {
 		return err
 	}
 
