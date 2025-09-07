@@ -174,4 +174,54 @@ func TestFileRepository_GetTemporalFile(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, file.Path, "daily/2025/09-september.md")
 	assert.Equal(t, file.Display, "September 2025")
+	assert.Equal(t, file.DisplayBase, "September 2025")
+	assert.Equal(t, file.IsTemporal, true)
+	assert.Equal(t, file.Directory, "daily/2025")
+	assert.Equal(t, file.Year, "2025")
+	assert.Equal(t, file.Month, "09")
+	assert.Equal(t, file.MonthName, "September")
+}
+
+func TestFileRepository_GetDocument(t *testing.T) {
+	t.Parallel()
+	fr, _ := setupTestFileRepo(t)
+	fr.ReloadCaches()
+
+	doc, err := fr.GetDocument("inbox")
+	assert.Nil(t, err)
+
+	assert.Equal(t, doc.Info.Path, "inbox.md")
+	assert.Equal(t, doc.Info.Display, "Inbox")
+
+	doc, err = fr.GetDocument("resources/looney")
+	assert.Nil(t, err)
+	assert.Equal(t, doc.Info.Path, "resources/looney.md")
+	assert.Equal(t, doc.Info.Display, "Looney")
+	assert.Equal(t, doc.Info.DisplayBase, "Looney")
+
+	doc, err = fr.GetDocument("nonexistent")
+	assert.NotNil(t, err)
+}
+
+func TestFileRepository_GetOrCreateTemporalDocument(t *testing.T) {
+	t.Parallel()
+	tmp := t.TempDir()
+	rm, err := padd.NewRootManager(tmp)
+	assert.Nil(t, err)
+
+	fr := padd.NewFileRepository(rm, padd.DefaultFileConfig)
+	err = fr.Initialize()
+
+	doc, err := fr.GetOrCreateTemporalDocument("daily", time.Date(2025, time.March, 3, 0, 0, 0, 0, time.UTC))
+	assert.Nil(t, err)
+	assert.Equal(t, doc.Info.Path, "daily/2025/03-march.md")
+	assert.Equal(t, doc.Info.Display, "March 2025")
+	assert.Equal(t, doc.Info.DisplayBase, "March 2025")
+	assert.Equal(t, doc.Info.IsTemporal, true)
+	assert.Equal(t, doc.Info.Directory, "daily/2025")
+	assert.Equal(t, doc.Info.Year, "2025")
+	assert.Equal(t, doc.Info.Month, "03")
+	assert.Equal(t, doc.Info.MonthName, "March")
+	assert.Equal(t, doc.Info.ID, "daily/2025/03-march")
+	assert.Equal(t, doc.Info.Path, "daily/2025/03-march.md")
 }

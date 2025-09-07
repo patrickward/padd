@@ -424,6 +424,10 @@ func (fr *FileRepository) TemporalFileInfo(fileType string, date time.Time) (Fil
 		Display:     displayName,
 		DisplayBase: displayName,
 		IsTemporal:  true,
+		Directory:   fileType + "/" + date.Format("2006"),
+		Year:        date.Format("2006"),
+		Month:       date.Format("01"),
+		MonthName:   date.Format("January"),
 	}, nil
 }
 
@@ -566,8 +570,8 @@ func (fr *FileRepository) GetDocument(id string) (*Document, error) {
 }
 
 // GetOrCreateTemporalDocument gets or creates a document for a temporal file
-func (fr *FileRepository) GetOrCreateTemporalDocument(id string, date time.Time) (*Document, error) {
-	info, err := fr.TemporalFileInfo(id, date)
+func (fr *FileRepository) GetOrCreateTemporalDocument(directory string, date time.Time) (*Document, error) {
+	info, err := fr.TemporalFileInfo(directory, date)
 	if err != nil {
 		return nil, fmt.Errorf("error getting temporal file info: %w", err)
 	}
