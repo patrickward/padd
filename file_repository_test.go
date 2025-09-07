@@ -9,7 +9,7 @@ import (
 	"github.com/patrickward/padd/assert"
 )
 
-func setupFileRepository(t *testing.T) (*padd.FileRepository, *padd.RootManager) {
+func setupTestFileRepo(t *testing.T) (*padd.FileRepository, *padd.RootManager) {
 	t.Helper()
 	rm, err := padd.NewRootManager("./testdata/data")
 	assert.Nil(t, err)
@@ -18,6 +18,7 @@ func setupFileRepository(t *testing.T) (*padd.FileRepository, *padd.RootManager)
 }
 
 func TestFileRepository_Initialize(t *testing.T) {
+	t.Parallel()
 	tmp := t.TempDir()
 	rm, err := padd.NewRootManager(tmp)
 	assert.Nil(t, err)
@@ -32,7 +33,8 @@ func TestFileRepository_Initialize(t *testing.T) {
 }
 
 func TestFileRepository_FileInfo(t *testing.T) {
-	fr, _ := setupFileRepository(t)
+	t.Parallel()
+	fr, _ := setupTestFileRepo(t)
 	fr.ReloadCaches()
 
 	file, err := fr.FileInfo("inbox")
@@ -76,8 +78,8 @@ func TestFileRepository_FileInfo(t *testing.T) {
 }
 
 func TestFileRepository_CoreFiles(t *testing.T) {
-
-	fr, _ := setupFileRepository(t)
+	t.Parallel()
+	fr, _ := setupTestFileRepo(t)
 	coreFiles := fr.CoreFiles()
 	assert.Equal(t, len(fr.CoreFiles()), 2)
 	assert.Equal(t, coreFiles["inbox"].Path, "inbox.md")
@@ -87,7 +89,8 @@ func TestFileRepository_CoreFiles(t *testing.T) {
 }
 
 func TestFileRepository_FileInfo_CoreFiles(t *testing.T) {
-	fr, _ := setupFileRepository(t)
+	t.Parallel()
+	fr, _ := setupTestFileRepo(t)
 	info, err := fr.FileInfo("inbox")
 	assert.Nil(t, err)
 	assert.Equal(t, info.ID, "inbox")
@@ -99,7 +102,8 @@ func TestFileRepository_FileInfo_CoreFiles(t *testing.T) {
 }
 
 func TestFileRepository_FileInfo_ResourceFiles(t *testing.T) {
-	fr, _ := setupFileRepository(t)
+	t.Parallel()
+	fr, _ := setupTestFileRepo(t)
 	fr.ReloadCaches()
 	info, err := fr.FileInfo("resources/looney")
 	assert.Nil(t, err)
@@ -120,7 +124,8 @@ func TestFileRepository_FileInfo_ResourceFiles(t *testing.T) {
 }
 
 func TestFileRepository_ResourcesDirectory(t *testing.T) {
-	fr, _ := setupFileRepository(t)
+	t.Parallel()
+	fr, _ := setupTestFileRepo(t)
 	fr.ReloadCaches()
 
 	dir := fr.ResourcesTree()
@@ -135,7 +140,8 @@ func TestFileRepository_ResourcesDirectory(t *testing.T) {
 }
 
 func TestFileRepository_TemporalTree(t *testing.T) {
-	fr, _ := setupFileRepository(t)
+	t.Parallel()
+	fr, _ := setupTestFileRepo(t)
 	fr.ReloadCaches()
 
 	dirs := []string{"daily", "journal"}
@@ -157,7 +163,8 @@ func TestFileRepository_TemporalTree(t *testing.T) {
 }
 
 func TestFileRepository_GetTemporalFile(t *testing.T) {
-	fr, _ := setupFileRepository(t)
+	t.Parallel()
+	fr, _ := setupTestFileRepo(t)
 	fr.ReloadCaches()
 
 	// Create time var for September 5, 2025

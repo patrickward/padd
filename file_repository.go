@@ -16,8 +16,6 @@ import (
 	"golang.org/x/text/language"
 )
 
-var titleCaser = cases.Title(language.English)
-
 // FileRepository manages the core files and directories of the application.
 type FileRepository struct {
 	config        FileConfig
@@ -64,6 +62,10 @@ func NewFileRepository(rootManager *RootManager, config FileConfig) *FileReposit
 	return fr
 }
 
+func (fr *FileRepository) titleCase(s string) string {
+	return cases.Title(language.English).String(s)
+}
+
 // Config returns the current FileConfig.
 func (fr *FileRepository) Config() FileConfig {
 	return fr.config
@@ -74,7 +76,7 @@ func (fr *FileRepository) Initialize() error {
 	// Create the core files if they do not exist
 	for _, file := range fr.config.CoreFiles {
 		// Remove the md extension for CreateFileIfNotExists
-		fileTitle := titleCaser.String(strings.TrimSuffix(file, ".md"))
+		fileTitle := fr.titleCase(strings.TrimSuffix(file, ".md"))
 		// Create the default frontmatter content
 		frontmatter := "---\n" +
 			"title: " + fileTitle + "\n" +
@@ -148,7 +150,7 @@ func (fr *FileRepository) FileInfo(id string) (FileInfo, error) {
 
 		monthNumber := monthParts[0]
 		monthName := monthParts[1]
-		displayName := fmt.Sprintf("%s %s", titleCaser.String(monthName), subParts[0])
+		displayName := fmt.Sprintf("%s %s", fr.titleCase(monthName), subParts[0])
 
 		if fr.rootManager.FileExists(filePath) {
 			return FileInfo{
@@ -159,7 +161,7 @@ func (fr *FileRepository) FileInfo(id string) (FileInfo, error) {
 				Directory:   parts[0] + "/" + subParts[0],
 				Year:        subParts[0],
 				Month:       monthNumber,
-				MonthName:   titleCaser.String(monthName),
+				MonthName:   fr.titleCase(monthName),
 				IsTemporal:  true,
 			}, nil
 		}
@@ -306,7 +308,7 @@ func (fr *FileRepository) DisplayName(relPath string) (string, string) {
 	for i, part := range parts {
 		part = strings.ReplaceAll(part, "-", " ")
 		part = strings.ReplaceAll(part, "_", " ")
-		parts[i] = titleCaser.String(part)
+		parts[i] = fr.titleCase(part)
 	}
 
 	// Display is the full path with title-cased parts joined by "/"
@@ -326,7 +328,7 @@ func (fr *FileRepository) ReloadCoreFiles() {
 	for _, file := range fr.config.CoreFiles {
 		if fr.rootManager.FileExists(file) {
 			name := strings.TrimSuffix(file, ".md")
-			title := titleCaser.String(name)
+			title := fr.titleCase(name)
 			coreFiles[name] = FileInfo{
 				ID:          name,
 				Path:        file,
@@ -376,8 +378,8 @@ func (fr *FileRepository) TemporalTree(fileType string) (years []string, files m
 				monthNumber := parts[0]
 				monthDisplay := monthName
 				if len(parts) == 2 {
-					displayName = fmt.Sprintf("%s %s", titleCaser.String(parts[1]), yearEntry.Name())
-					monthDisplay = titleCaser.String(parts[1])
+					displayName = fmt.Sprintf("%s %s", fr.titleCase(parts[1]), yearEntry.Name())
+					monthDisplay = fr.titleCase(parts[1])
 				}
 
 				files[yearEntry.Name()] = append(files[yearEntry.Name()], FileInfo{
@@ -479,6 +481,9 @@ func (fr *FileRepository) scanResources() map[string]FileInfo {
 
 // sortedResources returns a slice of FileInfo sorted by directory and display name.
 func (fr *FileRepository) sortedResources() []FileInfo {
+	fr.cacheMux.Lock()
+	defer fr.cacheMux.Unlock()
+
 	resources := maps.Values(fr.resourceCache)
 
 	files := slices.SortedFunc(resources, func(a, b FileInfo) int {
