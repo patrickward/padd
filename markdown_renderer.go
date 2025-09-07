@@ -26,13 +26,13 @@ type MarkdownRenderer struct {
 }
 
 type RenderedContent struct {
-	Title             string         // The extracted title, if any.
-	HTML              template.HTML  // The rendered HTML content.
-	SectionHeaders    []string       // List of section headers (H2).
-	TasksCount        int            // Number of tasks in the content.
-	HasTasks          bool           // Indicates if the content contains task lists.
-	HasCompletedTasks bool           // Indicates if the content contains completed tasks.
-	Metadata          map[string]any // Additional metadata extracted from front matter.
+	Title          string         // The extracted title, if any.
+	HTML           template.HTML  // The rendered HTML content.
+	SectionHeaders []string       // List of section headers (H2).
+	TasksTotal     int            // Number of tasks in the content.
+	TasksCompleted int            // Number of completed tasks in the content.
+	TasksPending   int            // Number of pending tasks in the content.
+	Metadata       map[string]any // Additional metadata extracted from front matter.
 }
 
 type RenderOptions struct {
@@ -115,14 +115,16 @@ func (mr *MarkdownRenderer) renderWithOptions(content string, opts RenderOptions
 	processedHTML = mr.sanitizer.Sanitize(processedHTML)
 	metadata := meta.Get(ctx)
 
+	taskStats := pextension.TaskStats(ctx)
+
 	return RenderedContent{
-		Title:             renderedTitle(processResult.Title, metadata),
-		HTML:              template.HTML(processedHTML),
-		SectionHeaders:    processResult.SectionHeaders,
-		TasksCount:        pextension.TasksCount(ctx),
-		HasTasks:          ctx.Get(pextension.HasTasksKey) == true,
-		HasCompletedTasks: ctx.Get(pextension.HasCompletedTasksKey) == true,
-		Metadata:          metadata,
+		Title:          renderedTitle(processResult.Title, metadata),
+		HTML:           template.HTML(processedHTML),
+		SectionHeaders: processResult.SectionHeaders,
+		TasksTotal:     taskStats.Total,
+		TasksCompleted: taskStats.Completed,
+		TasksPending:   taskStats.Pending,
+		Metadata:       metadata,
 	}
 }
 
@@ -196,14 +198,16 @@ func (mr *MarkdownRenderer) renderError(ctx parser.Context, content string, proc
 	// Prepend the error message to the content
 	content = fmt.Sprintf("<div class=\"callout danger\">%s</div><pre>%s</pre>", err.Error(), template.HTMLEscapeString(content))
 
+	taskStats := pextension.TaskStats(ctx)
+
 	return RenderedContent{
-		Title:             renderedTitle(processResult.Title, metadata),
-		HTML:              template.HTML(content),
-		SectionHeaders:    processResult.SectionHeaders,
-		TasksCount:        pextension.TasksCount(ctx),
-		HasTasks:          ctx.Get(pextension.HasTasksKey) == true,
-		HasCompletedTasks: ctx.Get(pextension.HasCompletedTasksKey) == true,
-		Metadata:          metadata,
+		Title:          renderedTitle(processResult.Title, metadata),
+		HTML:           template.HTML(content),
+		SectionHeaders: processResult.SectionHeaders,
+		TasksTotal:     taskStats.Total,
+		TasksCompleted: taskStats.Completed,
+		TasksPending:   taskStats.Pending,
+		Metadata:       metadata,
 	}
 }
 

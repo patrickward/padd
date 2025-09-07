@@ -81,16 +81,17 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 	}
 
 	data := padd.PageData{
-		Title:             renderedContent.Title,
-		SectionHeaders:    renderedContent.SectionHeaders,
-		TasksCount:        renderedContent.TasksCount,
-		HasCompletedTasks: renderedContent.HasCompletedTasks,
-		CurrentFile:       doc.Info,
-		Content:           renderedContent.HTML,
-		RawContent:        string(content),
-		NavMenuFiles:      s.navigationMenu(doc.Info.ID),
-		SearchQuery:       searchQuery,
-		SearchMatch:       searchMatch,
+		Title:          renderedContent.Title,
+		SectionHeaders: renderedContent.SectionHeaders,
+		TasksTotal:     renderedContent.TasksTotal,
+		TasksCompleted: renderedContent.TasksCompleted,
+		TasksPending:   renderedContent.TasksPending,
+		CurrentFile:    doc.Info,
+		Content:        renderedContent.HTML,
+		RawContent:     string(content),
+		NavMenuFiles:   s.navigationMenu(doc.Info.ID),
+		SearchQuery:    searchQuery,
+		SearchMatch:    searchMatch,
 	}
 
 	data = s.addMetadataToPageData(data, renderedContent.Metadata)

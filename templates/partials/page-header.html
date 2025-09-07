@@ -59,11 +59,34 @@
         </div>
 
         <!-- Metadata Section -->
-        {{if or .Status .Priority .DueDate .Category .Tags .Contexts}}
-            <div class="metadata-section margin-end-s">
+        {{if or .Status .Priority .DueDate .Category .Tags .Contexts .HasTasks}}
+            <div class="metadata-section margin-end-s stack gap-2xs">
+                <!-- Organizational Metadata -->
+                {{if .Category}}
+                    <div class="cluster gap-m size-s">
+                        {{if .Category}}
+                            <div class="metadata-item">
+                                <span class="text-muted">Category:</span>
+                                <a href="/search?q={{.Category}}" class="link">{{.Category}}</a>
+                            </div>
+                        {{end}}
+                    </div>
+                {{end}}
+
+                <!-- Task Counts -->
+                {{if .HasTasks}}
+                    <div class="cluster gap-2xs">
+                        <div class="metadata-item">
+                            <span class="text-muted">
+                                Tasks: <strong>{{.TasksCompleted}}</strong> of <strong>{{.TasksTotal}}</strong> tasks completed
+                            </span>
+                        </div>
+                    </div>
+                {{end}}
+
                 <!-- Status/Priority Badges -->
                 {{if or .Status .Priority .DueDate}}
-                    <div class="cluster gap-3xs margin-end-2xs">
+                    <div class="cluster gap-3xs">
                         {{if .Status}}
                             <span class="badge {{.StatusColor}}">Status: {{.Status}}</span>
                         {{end}}
@@ -72,18 +95,6 @@
                         {{end}}
                         {{if .DueDate}}
                             <span class="badge {{.DueColor}}">Due: {{.DueDate}}</span>
-                        {{end}}
-                    </div>
-                {{end}}
-
-                <!-- Organizational Metadata -->
-                {{if .Category}}
-                    <div class="cluster gap-m size-s margin-end-2xs">
-                        {{if .Category}}
-                            <div class="metadata-item">
-                                <span class="text-muted">Category:</span>
-                                <a href="/search?q={{.Category}}" class="link">{{.Category}}</a>
-                            </div>
                         {{end}}
                     </div>
                 {{end}}
@@ -99,6 +110,7 @@
                         {{end}}
                     </div>
                 {{end}}
+
             </div>
         {{end}}
 

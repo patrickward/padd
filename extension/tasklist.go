@@ -20,9 +20,8 @@ import (
 	"github.com/patrickward/padd/extension/ast"
 )
 
-var CheckboxCountKey = parser.NewContextKey()
-var HasTasksKey = parser.NewContextKey()
-var HasCompletedTasksKey = parser.NewContextKey()
+var TasksCountKey = parser.NewContextKey()
+var CompletedTasksCountKey = parser.NewContextKey()
 
 var taskListRegexp = regexp.MustCompile(`^\[([\sxX])\](.*)$`)
 
@@ -31,13 +30,34 @@ type taskCheckBoxParser struct {
 
 var defaultTaskCheckBoxParser = &taskCheckBoxParser{}
 
-func TasksCount(pc parser.Context) int {
-	if val := pc.Get(CheckboxCountKey); val != nil {
+type TasksStatsInfo struct {
+	Total     int
+	Completed int
+	Pending   int
+}
+
+// TaskStats returns the number of completed tasks and whether there are any tasks at all.
+func TaskStats(pc parser.Context) TasksStatsInfo {
+	total := 0
+	pending := 0
+	completed := 0
+	if val := pc.Get(TasksCountKey); val != nil {
 		if count, ok := val.(int); ok {
-			return count
+			total = count
+			if val := pc.Get(CompletedTasksCountKey); val != nil {
+				if completedCount, ok := val.(int); ok {
+					completed = completedCount
+					pending = total - completed
+				}
+			}
 		}
 	}
-	return 0
+
+	return TasksStatsInfo{
+		Total:     total,
+		Completed: completed,
+		Pending:   pending,
+	}
 }
 
 // NewTaskCheckBoxParser returns a new  InlineParser that can parse
@@ -75,21 +95,28 @@ func (s *taskCheckBoxParser) Parse(parent gast.Node, block text.Reader, pc parse
 
 	// Get the number of checkboxes so far
 	checkboxCount := 0
-	if val := pc.Get(CheckboxCountKey); val != nil {
+	if val := pc.Get(TasksCountKey); val != nil {
 		if count, ok := val.(int); ok {
 			checkboxCount = count
 		}
 	}
 	checkboxCount++
-	pc.Set(CheckboxCountKey, checkboxCount)
-	pc.Set(HasTasksKey, true)
+	pc.Set(TasksCountKey, checkboxCount)
+
+	completedCount := 0
+	if val := pc.Get(CompletedTasksCountKey); val != nil {
+		if count, ok := val.(int); ok {
+			completedCount = count
+		}
+	}
 
 	value := line[m[2]:m[3]][0]
 	label := strings.TrimSpace(string(line[m[4]:]))
 	block.Advance(m[1])
 	checked := value == 'x' || value == 'X'
 	if checked {
-		pc.Set(HasCompletedTasksKey, true)
+		completedCount++
+		pc.Set(CompletedTasksCountKey, completedCount)
 	}
 	return ast.NewTaskCheckBox(checked, checkboxCount, template.HTMLEscapeString(label))
 }
