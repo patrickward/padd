@@ -219,6 +219,7 @@ func (d *Document) insertByTimestamp(lines []string, formattedEntry string, time
 		if line == dayHeader {
 			result := make([]string, 0, len(lines)+1)
 			result = append(result, lines[:i+1]...)
+			result = append(result, "")
 			result = append(result, formattedEntry)
 			result = append(result, lines[i+1:]...)
 			return result
@@ -241,6 +242,7 @@ func (d *Document) insertByTimestamp(lines []string, formattedEntry string, time
 		result := make([]string, 0, len(lines)+3)
 		result = append(result, lines[:insertPos]...)
 		result = append(result, dayHeader)
+		result = append(result, "")
 		result = append(result, formattedEntry)
 		result = append(result, "")
 		result = append(result, lines[insertPos:]...)
@@ -264,57 +266,18 @@ func (d *Document) insertByTimestamp(lines []string, formattedEntry string, time
 		result = append(result, lines...)
 		result = append(result, "")
 		result = append(result, dayHeader)
+		result = append(result, "")
 		result = append(result, formattedEntry)
 	} else {
 		// Insert at the specified position
 		result = append(result, lines[:insertIdx]...)
 		result = append(result, dayHeader)
+		result = append(result, "")
 		result = append(result, formattedEntry)
 		result = append(result, "")
 		result = append(result, lines[insertIdx:]...)
 	}
 
-	return result
-}
-
-func (d *Document) insertByTimestampOld(lines []string, formattedEntry string, timestamp time.Time) []string {
-	dayHeader := fmt.Sprintf("## %s", timestamp.Format("Monday, January 2, 2006"))
-
-	// Find the insertion point after the main header
-	insertPos := 0
-	for i, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "# ") {
-			insertPos = i + 1
-			// Skip blank lines after main header
-			for insertPos < len(lines) && strings.TrimSpace(lines[insertPos]) == "" {
-				insertPos++
-			}
-			break
-		}
-	}
-
-	// Now, look for an existing day header starting from the insertion point
-	for i := insertPos; i < len(lines); i++ {
-		line := strings.TrimSpace(lines[i])
-
-		// If we find our exact day header
-		if line == dayHeader {
-			// Add entry right after it
-			result := make([]string, 0, len(lines)+1)
-			result = append(result, lines[:i+1]...)
-			result = append(result, formattedEntry)
-			result = append(result, lines[i+1:]...)
-			return result
-		}
-	}
-
-	// Day header doesn't exist - add it at the top
-	result := make([]string, 0, len(lines)+3)
-	result = append(result, lines[:insertPos]...)
-	result = append(result, dayHeader)
-	result = append(result, formattedEntry)
-	result = append(result, "")
-	result = append(result, lines[insertPos:]...)
 	return result
 }
 
