@@ -25,8 +25,16 @@ const (
 // EntryInsertionConfig defines how to insert entries into a file
 type EntryInsertionConfig struct {
 	Strategy       EntryInsertionStrategy
+	EntryTimestamp time.Time
 	EntryFormatter func(entry string, timestamp time.Time) string
 	SectionConfig  *SectionInsertionConfig
+}
+
+func (c EntryInsertionConfig) Timestamp() time.Time {
+	if c.EntryTimestamp.IsZero() {
+		return time.Now()
+	}
+	return c.EntryTimestamp
 }
 
 type SectionInsertionConfig struct {
@@ -100,14 +108,14 @@ func (d *Document) AddEntry(entry string, config EntryInsertionConfig) error {
 	}
 
 	lines := strings.Split(d.content, "\n")
-	formattedEntry := config.EntryFormatter(entry, time.Now())
+	formattedEntry := config.EntryFormatter(entry, config.Timestamp())
 
 	var result []string
 	switch config.Strategy {
 	case InsertInSection:
 		result = d.insertInSection(lines, formattedEntry, *config.SectionConfig)
 	case InsertByTimestamp:
-		result = d.insertByTimestamp(lines, formattedEntry, time.Now())
+		result = d.insertByTimestamp(lines, formattedEntry, config.Timestamp())
 	case PrependToFile:
 		result = append([]string{formattedEntry}, lines...)
 	case AppendToFile:
@@ -183,6 +191,93 @@ func (d *Document) insertInSection(lines []string, formattedEntry string, config
 }
 
 func (d *Document) insertByTimestamp(lines []string, formattedEntry string, timestamp time.Time) []string {
+	dayHeader := fmt.Sprintf("## %s", timestamp.Format("Monday, January 2, 2006"))
+
+	// Find the insertion point after the main header
+	insertPos := 0
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "# ") {
+			insertPos = i + 1
+			// Skip blank lines after main header
+			for insertPos < len(lines) && strings.TrimSpace(lines[insertPos]) == "" {
+				insertPos++
+			}
+			break
+		}
+	}
+
+	// Look for existing day headers and find the correct position
+	var dateHeaders []struct {
+		index int
+		date  time.Time
+	}
+
+	for i := insertPos; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+
+		// If we find our exact day header, just add it and return
+		if line == dayHeader {
+			result := make([]string, 0, len(lines)+1)
+			result = append(result, lines[:i+1]...)
+			result = append(result, formattedEntry)
+			result = append(result, lines[i+1:]...)
+			return result
+		}
+
+		// Check if this is a day header
+		if strings.HasPrefix(line, "## ") && len(line) > 3 {
+			headerDateStr := line[3:]
+			if headerDate, err := time.Parse("Monday, January 2, 2006", headerDateStr); err == nil {
+				dateHeaders = append(dateHeaders, struct {
+					index int
+					date  time.Time
+				}{i, headerDate})
+			}
+		}
+	}
+
+	// If no existing date headers found, insert at the top
+	if len(dateHeaders) == 0 {
+		result := make([]string, 0, len(lines)+3)
+		result = append(result, lines[:insertPos]...)
+		result = append(result, dayHeader)
+		result = append(result, formattedEntry)
+		result = append(result, "")
+		result = append(result, lines[insertPos:]...)
+		return result
+	}
+
+	// Find the correct position for the new entry
+	// (should be in reverse chronological order - newest first)
+	insertIdx := -1
+	for _, header := range dateHeaders {
+		if header.date.Before(timestamp) {
+			insertIdx = header.index
+			break
+		}
+	}
+
+	result := make([]string, 0, len(lines)+2)
+
+	if insertIdx == -1 {
+		// Insertion date is newer than all existing dates - add to top
+		result = append(result, lines...)
+		result = append(result, "")
+		result = append(result, dayHeader)
+		result = append(result, formattedEntry)
+	} else {
+		// Insert at the specified position
+		result = append(result, lines[:insertIdx]...)
+		result = append(result, dayHeader)
+		result = append(result, formattedEntry)
+		result = append(result, "")
+		result = append(result, lines[insertIdx:]...)
+	}
+
+	return result
+}
+
+func (d *Document) insertByTimestampOld(lines []string, formattedEntry string, timestamp time.Time) []string {
 	dayHeader := fmt.Sprintf("## %s", timestamp.Format("Monday, January 2, 2006"))
 
 	// Find the insertion point after the main header
