@@ -276,10 +276,10 @@ hyphens and making the link lowercase.
 
 It currently assumes the target file exists as a core file (inbox.md, active.md, daily.md) or in the resources
 directory. Future enhancements may include more robust handling of nested directories and non-existent files, but this
-works for now. It also assumes
-you are using the normalized naming convention (lowercase, letters, and numbers, with hyphens) for your markdown files.
-You do not have to add the `.md` extension in the link. It will be added automatically. You also do not need to add the
-`resources/` prefix for files in that directory. It will first search the core files, then the resources directory.
+works for now. It also assumes you are using the normalized naming convention (lowercase, letters, and numbers, 
+with hyphens) for your markdown files. You do not have to add the `.md` extension in the link. It will be added 
+automatically. You also do not need to add the `resources/` prefix for files in that directory. It will first search 
+the core files, then the resources directory.
 
 If a file does not exist, it will show a red error message where the link would be, but it will not break the rest of
 the markdown rendering.
@@ -394,7 +394,6 @@ Example `metadata.json`:
 
 ## Possible Future Enhancements
 
-- Add searching across temporal archives (daily/journal)
 - Enhanced search functionality (currently uses a very simple "contains" search across all markdown files)
 - Tagging and linking between notes
 - Custom Theme support
@@ -408,13 +407,13 @@ Example `metadata.json`:
   leaving the page or having to enter full edit mode.
 - Make lines and sections (H2) draggable for easy reordering of tasks and notes. This would also require more
   JavaScript, but could greatly enhance the usability of each file as a command center.
-- Add ability to normalize the sort order of date sections within a temporal file (daily/journal). This is currently a
+- Add ability to reorder date sections within a temporal file (daily/journal). This is currently a
   manual process, but could be automated with a button or command. For example, if, for some reason, August 3rd is
-  listed before August 30th, a "normalize" button could reorder the sections correctly.
+  listed before August 30th, a "reorder" button could reorder the sections correctly.
 - Add tests for the various components and functions.
 - Task templates and recurring tasks
 - Cross-file task dependencies and relationships
-- Task statistics and completion reporting
+- When archiving completed tasks, move them to the daily entry associated with the `@done(YYYY-MM-DD)` tag.
 
 ## Credits
 
