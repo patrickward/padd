@@ -44,7 +44,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 			return padd.PageData{}, true
 		}
 
-		http.Redirect(w, r, "/"+doc.Info.ID, http.StatusSeeOther)
+		s.redirectTo(w, r, "/"+doc.Info.ID)
 		return padd.PageData{}, true
 	}
 

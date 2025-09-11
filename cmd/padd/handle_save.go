@@ -16,5 +16,5 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.flashManager.SetSuccess(w, "File saved successfully")
-	http.Redirect(w, r, "/"+doc.Info.ID, http.StatusSeeOther)
+	s.redirectTo(w, r, "/"+doc.Info.ID)
 }

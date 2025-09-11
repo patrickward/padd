@@ -37,14 +37,14 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	fileName := strings.TrimSpace(r.FormValue("filename"))
 	if fileName == "" {
 		s.flashManager.SetError(w, "Filename cannot be empty")
-		http.Redirect(w, r, "/resources", http.StatusSeeOther)
+		s.redirectTo(w, r, "/resources")
 		return
 	}
 
 	// Validate filename contains only allowed characters
 	if !filenameIsValid(fileName) {
 		s.flashManager.SetError(w, "Filename must contain only letters, numbers, dashes, periods, underscores, and forward slashes")
-		http.Redirect(w, r, "/resources", http.StatusSeeOther)
+		s.redirectTo(w, r, "/resources")
 		return
 	}
 
@@ -61,7 +61,7 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 		dir := filepath.Dir(fullPath)
 		if err := s.rootManager.MkdirAll(dir, 0755); err != nil {
 			s.flashManager.SetError(w, "Failed to create directories")
-			http.Redirect(w, r, "/resources", http.StatusSeeOther)
+			s.redirectTo(w, r, "/resources")
 			return
 		}
 	}
@@ -69,7 +69,7 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	// Check if file already exists
 	if s.rootManager.FileExists(fullPath) {
 		s.flashManager.SetError(w, "File already exists")
-		http.Redirect(w, r, "/resources", http.StatusSeeOther)
+		s.redirectTo(w, r, "/resources")
 		return
 	}
 
@@ -79,7 +79,7 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.rootManager.WriteString(fullPath, defaultContent); err != nil {
 		s.flashManager.SetError(w, "Failed to create file")
-		http.Redirect(w, r, "/resources", http.StatusSeeOther)
+		s.redirectTo(w, r, "/resources")
 		return
 	}
 
@@ -89,13 +89,13 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	// Redirect to the new file
 	fileID := "resources/" + s.fileRepo.CreateID(fileName)
 	s.flashManager.SetSuccess(w, "File created successfully")
-	http.Redirect(w, r, "/"+fileID, http.StatusSeeOther)
+	s.redirectTo(w, r, "/"+fileID)
 }
 
 // handleRefreshResources refreshes the resource file cache and redirects back to the resources page
 func (s *Server) handleRefreshResources(w http.ResponseWriter, r *http.Request) {
 	s.fileRepo.ReloadResources()
-	http.Redirect(w, r, "/resources", http.StatusSeeOther)
+	s.redirectTo(w, r, "/resources")
 }
 
 // filenameIsValid checks if a filename contains only allowed characters

@@ -25,20 +25,20 @@ func (s *Server) handleAddTemporalEntry(directory string) func(w http.ResponseWr
 		// Make sure directory is one of the temporal directories
 		if !slices.Contains(s.fileRepo.Config().TemporalDirectories(), directory) {
 			s.flashManager.SetError(w, "Invalid directory")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			s.redirectTo(w, r, "/")
 			return
 		}
 
 		if entry == "" {
 			s.flashManager.SetError(w, "Entry cannot be empty")
-			http.Redirect(w, r, "/"+directory, http.StatusSeeOther)
+			s.redirectTo(w, r, "/"+directory)
 			return
 		}
 
 		doc, err := s.fileRepo.GetOrCreateTemporalDocument(directory, time.Now())
 		if err != nil {
 			s.flashManager.SetError(w, fmt.Sprintf("Failed to get daily document: %v", err))
-			http.Redirect(w, r, "/"+directory, http.StatusSeeOther)
+			s.redirectTo(w, r, "/"+directory)
 			return
 		}
 
@@ -49,12 +49,12 @@ func (s *Server) handleAddTemporalEntry(directory string) func(w http.ResponseWr
 
 		if err := doc.AddEntry(entry, config); err != nil {
 			s.flashManager.SetError(w, fmt.Sprintf("Failed to add entry: %v", err))
-			http.Redirect(w, r, "/"+directory, http.StatusSeeOther)
+			s.redirectTo(w, r, "/"+directory)
 			return
 		}
 
 		s.flashManager.SetSuccess(w, "Entry added successfully")
-		http.Redirect(w, r, "/"+directory, http.StatusSeeOther)
+		s.redirectTo(w, r, "/"+directory)
 	}
 }
 
@@ -66,7 +66,7 @@ func (s *Server) handleAddEntry(w http.ResponseWriter, r *http.Request) {
 	fileID := r.PathValue("id")
 	if fileID == "" {
 		s.flashManager.SetError(w, "File ID is required")
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		s.redirectTo(w, r, "/")
 		return
 	}
 
@@ -103,21 +103,21 @@ func (s *Server) handleAddEntry(w http.ResponseWriter, r *http.Request) {
 // addEntry is a generic handler for adding entries to markdown files
 func (s *Server) addEntry(w http.ResponseWriter, r *http.Request, config EntryConfig) {
 	if r.Method != http.MethodPost {
-		http.Redirect(w, r, config.RedirectPath, http.StatusSeeOther)
+		s.redirectTo(w, r, config.RedirectPath)
 		return
 	}
 
 	entry := strings.TrimSpace(r.FormValue("entry"))
 	if entry == "" {
 		s.flashManager.SetError(w, "Entry cannot be empty")
-		http.Redirect(w, r, config.RedirectPath, http.StatusSeeOther)
+		s.redirectTo(w, r, config.RedirectPath)
 		return
 	}
 
 	doc, err := s.fileRepo.GetDocument(config.FileID)
 	if err != nil {
 		s.flashManager.SetError(w, "Invalid file ID")
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		s.redirectTo(w, r, "/")
 		return
 	}
 
@@ -134,10 +134,10 @@ func (s *Server) addEntry(w http.ResponseWriter, r *http.Request, config EntryCo
 
 	if err := doc.AddEntry(entry, insertionConfig); err != nil {
 		s.flashManager.SetError(w, fmt.Sprintf("Failed to add entry: %v", err))
-		http.Redirect(w, r, config.RedirectPath, http.StatusSeeOther)
+		s.redirectTo(w, r, config.RedirectPath)
 		return
 	}
 
 	s.flashManager.SetSuccess(w, "Entry added successfully")
-	http.Redirect(w, r, config.RedirectPath, http.StatusSeeOther)
+	s.redirectTo(w, r, config.RedirectPath)
 }
