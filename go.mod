@@ -6,7 +6,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/yuin/goldmark v1.7.13
 	github.com/yuin/goldmark-meta v1.1.0
-	golang.org/x/text v0.28.0
+	golang.org/x/text v0.29.0
 )
 
 require (
