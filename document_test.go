@@ -90,6 +90,7 @@ func TestDocument_Delete(t *testing.T) {
 	tmp := t.TempDir()
 	fr, _ := setupTestFileRepo(t, tmp)
 	err := fr.Initialize()
+	assert.Nil(t, err)
 
 	assert.False(t, fr.FilePathExists("resources/new-resource.md"))
 

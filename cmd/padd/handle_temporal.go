@@ -28,8 +28,8 @@ func (s *Server) handleTemporalArchive(w http.ResponseWriter, r *http.Request) {
 	archiveFile := padd.FileInfo{
 		ID:          fileType + "-archive",
 		Path:        fileType + "/archive",
-		Display:     strings.Title(fileType) + " Archive",
-		DisplayBase: strings.Title(fileType) + " Archive",
+		Display:     padd.TitleCase(fileType) + " Archive",
+		DisplayBase: padd.TitleCase(fileType) + " Archive",
 	}
 
 	data := padd.PageData{

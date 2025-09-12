@@ -95,6 +95,7 @@ func TestRootManager_RemoveAll(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, rm.FileExists("test/"))
 	err = rm.WriteFile("test/test1.md", []byte("testy once"), 0644)
+	assert.Nil(t, err)
 	err = rm.WriteFile("test/test2.md", []byte("testy twice"), 0644)
 	assert.Nil(t, err)
 	assert.True(t, rm.FileExists("test/test1.md"))

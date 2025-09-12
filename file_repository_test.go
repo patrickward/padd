@@ -241,7 +241,7 @@ func TestFileRepository_GetDocument(t *testing.T) {
 	assert.Equal(t, doc.Info.Display, "Looney")
 	assert.Equal(t, doc.Info.DisplayBase, "Looney")
 
-	doc, err = fr.GetDocument("nonexistent")
+	_, err = fr.GetDocument("nonexistent")
 	assert.NotNil(t, err)
 }
 
