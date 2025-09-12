@@ -30,6 +30,8 @@
 <body>
 {{template "navbar.html" .}}
 
+<div id="system-error" class="callout danger" style="display: none;"></div>
+
 <main class="container-l">
     {{template "message.html" .}}
     {{block "content" .}}{{end}}

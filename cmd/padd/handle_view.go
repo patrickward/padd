@@ -40,7 +40,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 	if s.fileRepo.IsTemporalRoot(id) {
 		doc, err := s.fileRepo.GetOrCreateTemporalDocument(id, time.Now())
 		if err != nil {
-			s.showServerError(w, r, err)
+			s.showServerError(w, r, fmt.Errorf("failed to get or create temporal document: %w", err))
 			return padd.PageData{}, true
 		}
 
@@ -50,7 +50,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 
 	doc, err := s.fileRepo.GetDocument(id)
 	if err != nil {
-		s.showServerError(w, r, err)
+		s.showPageNotFound(w, r)
 		return padd.PageData{}, true
 	}
 

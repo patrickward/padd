@@ -1,6 +1,8 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	doc, err := s.fileRepo.GetDocument(r.PathValue("id"))

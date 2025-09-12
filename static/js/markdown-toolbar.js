@@ -222,6 +222,12 @@
     #handleSave () {
       const form = this.closest('form')
       if (form) {
+        // If the form element has a hx-post, hx-put, or hx-patch attribute,
+        if (form.hasAttribute('hx-post') || form.hasAttribute('hx-put') || form.hasAttribute('hx-patch')) {
+          window.htmx.trigger(form, 'submit')
+          return
+        }
+
         form.submit()
       }
     }

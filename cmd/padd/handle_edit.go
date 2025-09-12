@@ -11,7 +11,8 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 
 	doc, err := s.fileRepo.GetDocument(id)
 	if err != nil {
-		s.showServerError(w, r, err)
+		s.showPageNotFound(w, r)
+		return
 	}
 
 	content, err := doc.Content()

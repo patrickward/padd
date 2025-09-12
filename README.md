@@ -55,13 +55,10 @@ lightweight and maintainable.
 
 - **Simple text search**: Search looks for exact text matches across all files
 - **No tagging system**: Organization relies on file hierarchy and manual categorization
-- **No automatic linking**: WikiLinks must reference existing files - no automatic page creation
 
 ### Interface
 
-- **Web browser required**: No native desktop or mobile apps
 - **Single session (no logins)**: No user accounts or authentication
-- **No offline editing**: Requires the local web server to be running
 
 These limitations are intentional design choices to keep PADD simple, predictable, and maintainable.
 
@@ -98,8 +95,10 @@ few additional features:
 
 ### Task Archiving
 
-The "Archive Done Tasks" feature moves all completed tasks from a file to the current day's daily log. This keeps active
+The "Archive Completed" feature moves all completed tasks from a file to the current day's daily log. This keeps active
 task lists clean while preserving a record of what was accomplished.
+
+Future enhancement: move to the daily log file associated with the @done date.
 
 Archived tasks appear in daily logs with source context:
 
@@ -168,6 +167,30 @@ resources/
 2. Build the application: `go build`
 3. Run the server: `./padd`
 4. Open <http://localhost:8080> in your browser
+
+## There are some Makefile targets to help with development and local installation:
+
+```text
+Usage of make:
+  version              print the version of the padd application
+  help                 print this help message
+  audit                run quality control checks
+  test                 run all tests
+  test/cover           run all tests and display coverage
+  upgradeable          list direct dependencies that have upgrades available
+  tidy                 tidy modfiles and format .go files
+  build                build the padd application
+  run                  run the padd application
+  run/live             run the application with reloading on file changes
+  install              install the padd application using go install
+  install-service      install the service management script
+  install-all          install both the application and service script
+  service-start        start the padd service
+  service-stop         stop the padd service
+  service-restart      restart the padd service
+  service-status       show padd service status
+  update-and-restart   install updated binary and restart service
+```
 
 ## Data Directory Configuration
 

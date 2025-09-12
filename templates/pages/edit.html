@@ -11,7 +11,7 @@
 
         <hr>
 
-        <form action="/save/{{.CurrentFile.ID}}" method="post">
+        <form hx-post="/{{.CurrentFile.ID}}" hx-target="#system-error" hx-swap="outerHTML show:top">
             <label for="content" class="visually-hidden">Content</label>
             <div class="markdown-editor">
                 <markdown-toolbar cancel-url="/{{.CurrentFile.ID}}" icons-api="/api/icons">

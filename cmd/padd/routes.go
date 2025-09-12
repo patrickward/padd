@@ -29,7 +29,6 @@ func (s *Server) setupRoutes() http.Handler {
 	// Routes using new Go 1.22+ patterns
 	//mux.HandleFunc("GET /", server.handleView)
 	mux.HandleFunc("GET /edit/{id...}", s.handleEdit)
-	mux.HandleFunc("POST /save/{id...}", s.handleSave)
 	mux.HandleFunc("GET /daily/archive", s.handleTemporalArchive)
 	mux.HandleFunc("POST /daily", s.handleAddTemporalEntry("daily"))
 	mux.HandleFunc("POST /add/{id...}", s.handleAddEntry)
@@ -40,6 +39,7 @@ func (s *Server) setupRoutes() http.Handler {
 	mux.HandleFunc("POST /resources/create", s.handleCreateResource)
 	mux.HandleFunc("POST /admin/refresh", s.handleRefreshResources)
 	mux.HandleFunc("GET /page-header/{id...}", s.handlePageHeader)
+	mux.HandleFunc("POST /{id...}", s.handleSave)
 	mux.HandleFunc("GET /{id...}", s.handleView)
 
 	return mux
