@@ -29,6 +29,12 @@
                 {{if .Description}}
                     <p class="text-muted size-s">{{.Description}}</p>
                 {{end}}
+                {{if or .CreatedAt .UpdatedAt}}
+                    <p class="text-muted size-xs cluster">
+                        {{if .CreatedAt}}<span>Created: {{.CreatedAt}}</span>{{end}}
+                        {{if .UpdatedAt}}<span>Updated: {{.UpdatedAt}}</span>{{end}}
+                    </p>
+                {{end}}
             </div>
 
             <!-- Action Buttons -->
