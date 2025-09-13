@@ -31,21 +31,22 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) handleTemporalRoot(path string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		doc, err := s.fileRepo.GetOrCreateTemporalDocument(path, time.Now())
+		if err != nil {
+			s.showServerError(w, r, fmt.Errorf("failed to get or create temporal document: %w", err))
+			return
+		}
+
+		s.redirectTo(w, r, "/"+doc.Info.ID)
+	}
+}
+
 func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.PageData, bool) {
 	id := r.PathValue("id")
 	if id == "" {
 		id = "inbox"
-	}
-
-	if s.fileRepo.IsTemporalRoot(id) {
-		doc, err := s.fileRepo.GetOrCreateTemporalDocument(id, time.Now())
-		if err != nil {
-			s.showServerError(w, r, fmt.Errorf("failed to get or create temporal document: %w", err))
-			return padd.PageData{}, true
-		}
-
-		s.redirectTo(w, r, "/"+doc.Info.ID)
-		return padd.PageData{}, true
 	}
 
 	doc, err := s.fileRepo.GetDocument(id)

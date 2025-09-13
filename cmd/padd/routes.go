@@ -18,7 +18,7 @@ func (s *Server) setupRoutes() http.Handler {
 
 	// API routes
 	mux.HandleFunc("GET /api/icons", s.handleIconsAPI)
-	mux.HandleFunc("GET /api/resources", s.handleResourcesAPI)
+	//mux.HandleFunc("GET /api/resources", s.handleResourcesAPI)
 	mux.HandleFunc("PATCH /api/tasks/toggle/{id...}", s.handleTaskToggle)
 	mux.HandleFunc("GET /api/tasks/edit/{id...}", s.handleTaskEdit)
 	mux.HandleFunc("GET /api/tasks/show/{id...}", s.handleTaskShow)
@@ -28,9 +28,11 @@ func (s *Server) setupRoutes() http.Handler {
 
 	mux.HandleFunc("GET /edit/{id...}", s.handleEdit)
 	mux.HandleFunc("GET /daily/archive", s.handleTemporalArchive)
+	mux.HandleFunc("GET /daily", s.handleTemporalRoot("daily"))
 	mux.HandleFunc("POST /daily", s.handleAddTemporalEntry("daily"))
 	mux.HandleFunc("POST /add/{id...}", s.handleAddEntry)
 	mux.HandleFunc("GET /journal/archive", s.handleTemporalArchive)
+	mux.HandleFunc("GET /journal", s.handleTemporalRoot("journal"))
 	mux.HandleFunc("POST /journal", s.handleAddTemporalEntry("journal"))
 	mux.HandleFunc("GET /search", s.handleSearch)
 	mux.HandleFunc("GET /resources", s.handleResources)
