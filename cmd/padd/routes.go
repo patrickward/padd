@@ -26,8 +26,6 @@ func (s *Server) setupRoutes() http.Handler {
 	mux.HandleFunc("PATCH /api/tasks/{id...}", s.handleTaskUpdate)
 	mux.HandleFunc("DELETE /api/tasks/{id...}", s.handleTaskDelete)
 
-	// Routes using new Go 1.22+ patterns
-	//mux.HandleFunc("GET /", server.handleView)
 	mux.HandleFunc("GET /edit/{id...}", s.handleEdit)
 	mux.HandleFunc("GET /daily/archive", s.handleTemporalArchive)
 	mux.HandleFunc("POST /daily", s.handleAddTemporalEntry("daily"))
@@ -36,10 +34,12 @@ func (s *Server) setupRoutes() http.Handler {
 	mux.HandleFunc("POST /journal", s.handleAddTemporalEntry("journal"))
 	mux.HandleFunc("GET /search", s.handleSearch)
 	mux.HandleFunc("GET /resources", s.handleResources)
-	mux.HandleFunc("POST /resources/create", s.handleCreateResource)
-	mux.HandleFunc("POST /admin/refresh", s.handleRefreshResources)
+	mux.HandleFunc("POST /resources", s.handleCreateResource)
+	mux.HandleFunc("POST /resources/refresh", s.handleRefreshResources)
 	mux.HandleFunc("GET /page-header/{id...}", s.handlePageHeader)
 	mux.HandleFunc("POST /{id...}", s.handleSave)
+
+	// Handles page views and root
 	mux.HandleFunc("GET /{id...}", s.handleView)
 
 	return mux
