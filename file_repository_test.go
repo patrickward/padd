@@ -283,3 +283,28 @@ func TestFileRepository_GetOrCreateTemporalDocument(t *testing.T) {
 	assert.Equal(t, doc.Info.ID, "daily/2025/03-march")
 	assert.Equal(t, doc.Info.Path, "daily/2025/03-march.md")
 }
+
+func TestFileRepository_NormalizeFileName_EdgeCases(t *testing.T) {
+	fr, _ := setupTestFileRepo(t, "")
+
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		{"", "untitled"},
+		{"   ", "untitled"},
+		{"Hello World!.md", "hello-world"},
+		{"file (1).md", "file-1"},
+		{"my_file-name.md", "my-file-name"},
+		{"resources/sub dir/file&name.md", "resources/sub-dir/file-name"},
+		{"café.md", "caf"}, // International characters
+		{"123.md", "123"},
+		{"---test---.md", "test"},
+		{"test//.md", "test"},
+	}
+
+	for _, tc := range testCases {
+		result := fr.CreateID(tc.input + ".md")
+		assert.Equal(t, result, tc.expected)
+	}
+}

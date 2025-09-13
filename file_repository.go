@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const emptyFilePath = "untitled"
+
 // FileRepository manages the core files and directories of the application.
 type FileRepository struct {
 	config        FileConfig
@@ -294,6 +296,10 @@ func (fr *FileRepository) ResourcesTree() *DirectoryNode {
 
 // CreateID generates a consistent URL-safe ID from a file path
 func (fr *FileRepository) CreateID(path string) string {
+	if path == "" {
+		return emptyFilePath
+	}
+
 	pathWithoutExt := strings.TrimSuffix(path, ".md")
 	normalized := fr.normalizeFileName(pathWithoutExt)
 
@@ -503,6 +509,14 @@ func (fr *FileRepository) sortedResources() []FileInfo {
 // NOTE: This is obviously not perfect and could be improved for internationalization, etc.
 // It's also not guaranteed to be unique, so collisions should be handled at a higher level if needed.
 func (fr *FileRepository) normalizeFileName(path string) string {
+	// Handle empty path
+	if path == "" {
+		return emptyFilePath
+	}
+
+	// Strip any .md extension
+	path = strings.TrimSuffix(path, ".md")
+
 	// Convert to lowercase for consistency
 	normalized := strings.ToLower(path)
 
@@ -516,6 +530,10 @@ func (fr *FileRepository) normalizeFileName(path string) string {
 	// Remove or replace other problematic characters
 	// Keep only: letters, numbers, hyphens, periods, and forward slashes
 	var result strings.Builder
+
+	// Preallocate memory for the result
+	result.Grow(len(normalized))
+
 	for _, char := range normalized {
 		switch {
 		case (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9'):
@@ -532,11 +550,31 @@ func (fr *FileRepository) normalizeFileName(path string) string {
 
 	// Clean up any trailing hyphens or multiple consecutive hyphens
 	cleaned := result.String()
+
+	// Clean up path separators - no hyphens immediately before or after
+	cleaned = strings.ReplaceAll(cleaned, "-/", "/")
+	cleaned = strings.ReplaceAll(cleaned, "/-", "/")
+	cleaned = strings.ReplaceAll(cleaned, "-.", ".")
+	cleaned = strings.ReplaceAll(cleaned, "./", "/")
+
+	// Handle consecutive forward slashes
+	cleaned = strings.ReplaceAll(cleaned, "//", "/")
+
+	// Clean up leading and trailing hyphens
 	cleaned = strings.Trim(cleaned, "-")
 
 	// Replace multiple consecutive hyphens with single hyphen
 	for strings.Contains(cleaned, "--") {
 		cleaned = strings.ReplaceAll(cleaned, "--", "-")
+	}
+
+	cleaned = strings.Trim(cleaned, "-")
+	cleaned = strings.Trim(cleaned, "/")
+	cleaned = strings.TrimSpace(cleaned)
+
+	// Handle edge case: if the path becomes empty after normalization
+	if cleaned == "" {
+		return emptyFilePath
 	}
 
 	return cleaned
