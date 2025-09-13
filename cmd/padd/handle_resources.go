@@ -74,7 +74,7 @@ func (s *Server) handleCreateResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create the new file with default content
-	defaultContent := fmt.Sprintf("\n\n_Created on %s_\n\n",
+	defaultContent := fmt.Sprintf("---\ncreated_at: %s\n---\n",
 		time.Now().Format("2006-01-02 15:04:05"))
 
 	if err := s.rootManager.WriteString(fullPath, defaultContent); err != nil {
