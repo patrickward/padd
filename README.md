@@ -25,43 +25,6 @@ PADD uses a simple capture → process → execute → store workflow with core 
   deeper thoughts and insights
 - **resources/**: Organized reference material by topic - where processed information lives long-term
 
-## Limitations
-
-PADD is intentionally simple and designed for single-user, local operation. Several features are deliberately omitted or
-handled manually. Some of this may be improved in future versions, but many limitations are by design to keep the system
-lightweight and maintainable.
-
-### Synchronization
-
-- **No built-in sync**: Use external tools like Syncthing, iCloud, Git, or Dropbox to sync files across devices
-- **No conflict resolution**: If the same file is edited simultaneously on different devices, manual conflict resolution
-  is required
-- **No real-time collaboration**: Multiple users cannot edit the same files simultaneously
-
-### File Management
-
-- **Manual organization**: Moving items between files requires copy/paste or manual editing
-- **No automatic cleanup**: Old or unused files must be deleted manually
-- **Limited file validation**: PADD assumes well-formed markdown and doesn't validate file structure
-
-### Task Management
-
-- **No task dependencies**: Tasks are independent - no automatic handling of prerequisite relationships
-- **No recurring tasks**: Repeated tasks must be created manually each time
-- **No task priorities**: All tasks are treated equally - prioritization is handled through file organization
-- **No cross-file task tracking**: Tasks in different files are not linked or aggregated
-
-### Search and Navigation
-
-- **Simple text search**: Search looks for exact text matches across all files
-- **No tagging system**: Organization relies on file hierarchy and manual categorization
-
-### Interface
-
-- **Single session (no logins)**: No user accounts or authentication
-
-These limitations are intentional design choices to keep PADD simple, predictable, and maintainable.
-
 ## Workflow
 
 1. Everything starts in `inbox.md` - capture first, organize later
@@ -414,6 +377,10 @@ Example `metadata.json`:
   "due_color": "danger muted"
 }
 ```
+
+## Limitations
+
+See [limitations.md](limitations.md)
 
 ## Possible Future Enhancements
 
