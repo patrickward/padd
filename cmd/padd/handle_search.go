@@ -7,6 +7,8 @@ import (
 	"github.com/patrickward/padd"
 )
 
+type searchResults map[string][]padd.SearchMatch
+
 func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	if query == "" {
@@ -14,7 +16,7 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results := make(map[string][]padd.SearchMatch)
+	results := make(searchResults)
 
 	// Search core files
 	for _, file := range s.fileRepo.CoreFiles() {
@@ -24,26 +26,14 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search resource files
-	resourceFiles := s.fileRepo.ResourceFiles()
-	for _, file := range resourceFiles {
-		if matches := s.searchFile(file, query); len(matches) > 0 {
-			results[file.ID] = matches
-		}
-	}
+	resourceDir := s.fileRepo.DirectoryTreeFor(s.fileRepo.Config().ResourcesDirectory)
+	s.searchDirectory(query, resourceDir, results)
 
 	// Search temporal files
 	temporalDirectories := s.fileRepo.Config().TemporalDirectories()
 	for _, dir := range temporalDirectories {
-		years, temporalFiles, err := s.fileRepo.TemporalTree(dir)
-		if err == nil {
-			for _, year := range years {
-				for _, file := range temporalFiles[year] {
-					if matches := s.searchFile(file, query); len(matches) > 0 {
-						results[file.ID] = matches
-					}
-				}
-			}
-		}
+		node := s.fileRepo.DirectoryTreeFor(dir)
+		s.searchDirectory(query, node, results)
 	}
 
 	data := padd.PageData{
@@ -56,6 +46,19 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.executePage(w, "search.html", data); err != nil {
 		s.showServerError(w, r, err)
+	}
+}
+
+// searchDirectory recursively searches a directory for matches to a query and adds to the results map
+func (s *Server) searchDirectory(query string, directory *padd.DirectoryNode, results searchResults) {
+	for _, file := range directory.Files {
+		if matches := s.searchFile(file, query); len(matches) > 0 {
+			results[file.ID] = matches
+		}
+	}
+
+	for _, child := range directory.Directories {
+		s.searchDirectory(query, child, results)
 	}
 }
 

@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"maps"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -21,8 +19,8 @@ type FileRepository struct {
 	rootManager   *RootManager
 	cacheMux      sync.RWMutex
 	lastCacheTime time.Time
-	coreCache     map[string]FileInfo
-	resourceCache map[string]FileInfo
+	directoryTree *DirectoryNode
+	fileIndex     map[string]FileInfo
 }
 
 // FileConfig holds the configuration for core files and directories.
@@ -52,13 +50,9 @@ func NewFileRepository(rootManager *RootManager, config FileConfig) *FileReposit
 	config.temporalDirectories = []string{config.DailyDirectory, config.JournalDirectory}
 
 	fr := &FileRepository{
-		config:        config,
-		rootManager:   rootManager,
-		coreCache:     make(map[string]FileInfo),
-		resourceCache: make(map[string]FileInfo),
+		config:      config,
+		rootManager: rootManager,
 	}
-
-	fr.ReloadCoreFiles()
 
 	return fr
 }
@@ -108,77 +102,47 @@ func (fr *FileRepository) Initialize() error {
 func (fr *FileRepository) CoreFiles() map[string]FileInfo {
 	fr.cacheMux.RLock()
 	defer fr.cacheMux.RUnlock()
-	return fr.coreCache
-}
+	//return fr.coreCache
 
-// ResourceFiles returns the cached list of resource files.
-func (fr *FileRepository) ResourceFiles() map[string]FileInfo {
-	fr.cacheMux.RLock()
-	defer fr.cacheMux.RUnlock()
-	return fr.resourceCache
+	result := make(map[string]FileInfo)
+	for _, coreFile := range fr.config.CoreFiles {
+		id := strings.TrimSuffix(coreFile, ".md")
+		if info, ok := fr.fileIndex[id]; ok {
+			result[id] = info
+		}
+	}
+
+	return result
 }
 
 // FileInfo retrieves the FileInfo for a given file id.
 func (fr *FileRepository) FileInfo(id string) (FileInfo, error) {
-	// If the id is equal to one of the temporal directories, show the current date file for that directory
-	parts := strings.SplitN(id, "/", 2)
+	fr.cacheMux.RLock()
+	defer fr.cacheMux.RUnlock()
 
-	// Check if it's a temporal directory
-	if len(parts) > 0 && slices.Contains(fr.config.temporalDirectories, parts[0]) {
-		filePath := id + ".md"
-		// ids are like daily/2025/09-september, so the filePath is daily/2025/09-september.md
-		// and the display name is "September 2025"
-		// We can construct the display name from the parts
-		if len(parts) < 2 {
-			return FileInfo{}, fmt.Errorf("invalid temporal file id: %s", id)
-		}
+	// Find the file in the fileIndex
+	if info, ok := fr.fileIndex[id]; ok {
+		return info, nil
+	}
 
-		// parts[1] is like 2025/09-september
-		subParts := strings.SplitN(parts[1], "/", 2)
-		if len(subParts) < 2 {
-			return FileInfo{}, fmt.Errorf("invalid temporal file id: %s", id)
-		}
-
-		// subParts[0] is the year, subParts[1] is like 09-september
-		monthParts := strings.SplitN(subParts[1], "-", 2)
-		if len(monthParts) < 2 {
-			return FileInfo{}, fmt.Errorf("invalid temporal file id: %s", id)
-		}
-
-		monthNumber := monthParts[0]
-		monthName := monthParts[1]
-		displayName := fmt.Sprintf("%s %s", TitleCase(monthName), subParts[0])
-
-		if fr.rootManager.FileExists(filePath) {
+	// Look for a directory in the tree
+	if fr.directoryTree != nil {
+		if node := fr.directoryTree.FindDirectory(id); node != nil {
+			display, displayBase := fr.DisplayName(id)
 			return FileInfo{
-				ID:          id,
-				Path:        filePath,
-				Display:     displayName,
-				DisplayBase: displayName,
-				Directory:   parts[0] + "/" + subParts[0],
-				Year:        subParts[0],
-				Month:       monthNumber,
-				MonthName:   TitleCase(monthName),
-				IsTemporal:  true,
+				ID:            id,
+				Path:          id,
+				Title:         display,
+				TitleBase:     displayBase,
+				DirectoryPath: id,
+				IsDirectory:   true,
+				DirectoryNode: node,
+				IsResource:    strings.HasPrefix(id, fr.config.ResourcesDirectory),
 			}, nil
 		}
 	}
 
-	// Lock for reading the caches
-	fr.cacheMux.RLock()
-	defer fr.cacheMux.RUnlock()
-
-	// Check core files
-	if info, ok := fr.CoreFiles()[id]; ok {
-		return info, nil
-	}
-
-	// Check resources
-	if info, ok := fr.resourceCache[id]; ok {
-		return info, nil
-	}
-
-	return FileInfo{}, fmt.Errorf("file %s not found", id)
+	return FileInfo{}, fmt.Errorf("file or directory %s not found", id)
 }
 
 // FileIsTemporal checks if a file with the given id is a temporal file (daily or journal).
@@ -200,20 +164,8 @@ func (fr *FileRepository) FileIDExists(id string) bool {
 	fr.cacheMux.RLock()
 	defer fr.cacheMux.RUnlock()
 
-	if _, ok := fr.CoreFiles()[id]; ok {
-		return true
-	}
-
-	if _, ok := fr.resourceCache[id]; ok {
-		return true
-	}
-
-	// Check if it's a temporal directory
-	if fr.FileIsTemporal(id) {
-		return fr.rootManager.FileExists(id)
-	}
-
-	return false
+	_, exists := fr.fileIndex[id]
+	return exists
 }
 
 // FilePathExists checks if a file with the given path exists in either core, resources, or temporal files.
@@ -223,27 +175,77 @@ func (fr *FileRepository) FilePathExists(path string) bool {
 
 // ReloadCaches refreshes both the core files and resource caches.
 func (fr *FileRepository) ReloadCaches() {
-	fr.ReloadCoreFiles()
-	fr.ReloadResources()
+	fr.cacheMux.Lock()
+	defer fr.cacheMux.Unlock()
+
+	tree, index := fr.buildDirectoryTree(".")
+	fr.directoryTree = tree
+	fr.fileIndex = index
+	fr.lastCacheTime = time.Now()
+	log.Printf("Cache refreshed with %d files", len(fr.fileIndex))
+}
+
+// printDirectoryTree prints the directory tree to a log.
+func (fr *FileRepository) printDirectoryTree(tree *DirectoryNode, indent string) {
+	for _, file := range tree.Files {
+		log.Printf("%sFile: %s", indent, file.Path)
+	}
+
+	for _, dir := range tree.Directories {
+		log.Printf("%sDirectory: %s", indent, dir.Name)
+		fr.printDirectoryTree(dir, indent+"  ")
+	}
 }
 
 // ReloadResources refreshes the resource files cache by rescanning the resources' directory.
 func (fr *FileRepository) ReloadResources() {
 	fr.cacheMux.Lock()
 	defer fr.cacheMux.Unlock()
-	fr.resourceCache = fr.scanResources()
-	fr.lastCacheTime = time.Now()
-	log.Printf("Resource cache refreshed with %d files", len(fr.resourceCache))
-}
 
-// ReloadResource reloads a single resource file.
-func (fr *FileRepository) ReloadResource(path string) {
-	fr.cacheMux.Lock()
-	defer fr.cacheMux.Unlock()
-
-	if fr.rootManager.FileExists(path) {
-		fr.resourceCache[fr.CreateID(path)] = fr.fileInfoFromPath(path)
+	// If the directory tree is nil, then reload all caches
+	if fr.directoryTree == nil {
+		fr.ReloadCaches()
+		return
 	}
+
+	// Otherwise, find the resource directory in the DirectoryNode tree if it exists
+	_, ok := fr.directoryTree.Directories[fr.config.ResourcesDirectory]
+	if !ok {
+		log.Printf("Resource directory not found in tree, reloading all caches")
+		//fr.ReloadCaches()
+		// Create it
+		fr.directoryTree.Directories[fr.config.ResourcesDirectory] = &DirectoryNode{
+			Name:        fr.config.ResourcesDirectory,
+			Files:       []FileInfo{},
+			Directories: make(map[string]*DirectoryNode),
+		}
+	}
+
+	// Now, build the directory for the resources directory
+	tree, index := fr.buildDirectoryTree(fr.config.ResourcesDirectory)
+	if tree == nil {
+		log.Printf("Error building directory tree for resources directory, reloading all caches")
+		fr.ReloadCaches()
+		return
+	}
+
+	// When refreshing, we get the directory tree with the "resources" directory as the root.
+	// So, we need to drill down to the resources directory and replace it with the new tree.
+	if _, ok := tree.Directories[fr.config.ResourcesDirectory]; ok {
+		fr.directoryTree.Directories[fr.config.ResourcesDirectory] = tree.Directories[fr.config.ResourcesDirectory]
+	} else {
+		log.Printf("Error replacing resources directory in directory tree, reloading all caches")
+		fr.ReloadCaches()
+		return
+	}
+
+	// Update or insert the resource files into the fileIndex
+	for _, file := range index {
+		fr.fileIndex[file.ID] = file
+	}
+
+	fr.lastCacheTime = time.Now()
+	log.Printf("Resource cache refreshed with %d files", len(fr.fileIndex))
 }
 
 // ReloadResourcesIfStale refreshes the resource cache if it is older than the specified duration.
@@ -257,41 +259,28 @@ func (fr *FileRepository) ReloadResourcesIfStale(maxAge time.Duration) {
 	}
 }
 
-// ResourcesTree builds a hierarchical tree of resources based on their directory structure.
-func (fr *FileRepository) ResourcesTree() *DirectoryNode {
-	files := fr.sortedResources()
+// DirectoryTreeFor builds a hierarchical tree of resources based on their directory structure.
+func (fr *FileRepository) DirectoryTreeFor(directory string) *DirectoryNode {
+	fr.cacheMux.RLock()
+	defer fr.cacheMux.RUnlock()
 
-	root := &DirectoryNode{
+	emptyTree := &DirectoryNode{
 		Name:        "",
 		Files:       []FileInfo{},
 		Directories: make(map[string]*DirectoryNode),
 	}
 
-	for _, file := range files {
-		if file.Directory == "" {
-			// File is at the root of resources/
-			root.Files = append(root.Files, file)
-			continue
-		}
-
-		parts := strings.Split(file.Directory, string(filepath.Separator))
-		currentNode := root
-
-		for _, part := range parts {
-			if _, exists := currentNode.Directories[part]; !exists {
-				currentNode.Directories[part] = &DirectoryNode{
-					Name:        part,
-					Files:       []FileInfo{},
-					Directories: make(map[string]*DirectoryNode),
-				}
-			}
-			currentNode = currentNode.Directories[part]
-		}
-
-		currentNode.Files = append(currentNode.Files, file)
+	if fr.directoryTree == nil {
+		log.Printf("Directory tree is nil, returning empty tree")
+		return emptyTree
 	}
 
-	return root
+	//if resourceNode, ok := fr.directoryTree.Directories[fr.config.ResourcesDirectory]; ok {
+	if resourceNode, ok := fr.directoryTree.Directories[directory]; ok {
+		return resourceNode
+	}
+
+	return emptyTree
 }
 
 // CreateID generates a consistent URL-safe ID from a file path
@@ -322,135 +311,19 @@ func (fr *FileRepository) DisplayName(relPath string) (string, string) {
 		parts[i] = TitleCase(part)
 	}
 
-	// Display is the full path with title-cased parts joined by "/"
+	// Title is the full path with title-cased parts joined by "/"
 	display := strings.Join(parts, "/")
 
-	// DisplayBase is just the last part (the file name without directory and without extension)
+	// TitleBase is just the last part (the file name without directory and without extension)
 	displayBase := parts[len(parts)-1]
 	return display, displayBase
-}
-
-// ReloadCoreFiles refreshes the core files cache.
-func (fr *FileRepository) ReloadCoreFiles() {
-	fr.cacheMux.Lock()
-	defer fr.cacheMux.Unlock()
-
-	coreFiles := make(map[string]FileInfo, len(fr.config.CoreFiles))
-	for _, file := range fr.config.CoreFiles {
-		if fr.rootManager.FileExists(file) {
-			name := strings.TrimSuffix(file, ".md")
-			title := TitleCase(name)
-			coreFiles[name] = FileInfo{
-				ID:          name,
-				Path:        file,
-				Display:     title,
-				DisplayBase: title,
-			}
-		}
-	}
-
-	fr.coreCache = coreFiles
-}
-
-// TemporalTree builds a hierarchical tree of temporal files (daily, journal) based on their directory structure.
-func (fr *FileRepository) TemporalTree(fileType string) (years []string, files map[string][]FileInfo, err error) {
-	files = make(map[string][]FileInfo)
-
-	// Check if the directory exists
-	yearEntries, err := fr.rootManager.ReadDir(fileType)
-	if err != nil {
-		return []string{}, files, nil // Return empty list if directory doesn't exist
-	}
-
-	for _, yearEntry := range yearEntries {
-		if !yearEntry.IsDir() {
-			continue
-		}
-
-		yearPath := filepath.Join(fileType, yearEntry.Name())
-		monthEntries, err := fr.rootManager.ReadDir(yearPath)
-		if err != nil {
-			continue // Skip this year if there's an error
-		}
-
-		// Create the year entry if it doesn't exist
-		if _, exists := files[yearEntry.Name()]; !exists {
-			files[yearEntry.Name()] = []FileInfo{}
-		}
-
-		for _, monthEntry := range monthEntries {
-			if !monthEntry.IsDir() && strings.HasSuffix(monthEntry.Name(), ".md") {
-				monthName := strings.TrimSuffix(monthEntry.Name(), ".md")
-				filePath := filepath.Join(yearPath, monthEntry.Name())
-				id := fmt.Sprintf("%s/%s/%s", fileType, yearEntry.Name(), monthName)
-
-				parts := strings.SplitN(monthName, "-", 2)
-				displayName := monthName // Fallback to raw month name
-				monthNumber := parts[0]
-				monthDisplay := monthName
-				if len(parts) == 2 {
-					displayName = fmt.Sprintf("%s %s", TitleCase(parts[1]), yearEntry.Name())
-					monthDisplay = TitleCase(parts[1])
-				}
-
-				files[yearEntry.Name()] = append(files[yearEntry.Name()], FileInfo{
-					ID:          id,
-					Path:        filePath,
-					Display:     displayName,
-					DisplayBase: displayName,
-					Directory:   fileType + "/" + yearEntry.Name(),
-					Year:        yearEntry.Name(),
-					Month:       monthNumber,
-					MonthName:   monthDisplay,
-				})
-			}
-		}
-
-		// Sort months within the year
-		sort.Slice(files[yearEntry.Name()], func(i, j int) bool {
-			return files[yearEntry.Name()][i].Month > files[yearEntry.Name()][j].Month // Reverse chronological order
-		})
-	}
-
-	years = slices.Sorted(maps.Keys(files))
-	slices.Reverse(years)
-
-	return years, files, nil
-}
-
-// scanResources scans the resources directory for markdown files and builds the resource cache.
-func (fr *FileRepository) scanResources() map[string]FileInfo {
-	// Create the resources directory if it doesn't exist
-	if err := fr.rootManager.MkdirAll(fr.config.ResourcesDirectory, 0755); err != nil {
-		log.Printf("Error creating resources directory: %v", err)
-		return map[string]FileInfo{}
-	}
-
-	results, err := fr.rootManager.Scan(fr.config.ResourcesDirectory, func(path string, d fs.DirEntry) bool {
-		return !d.IsDir() && strings.HasSuffix(d.Name(), ".md")
-	})
-
-	if err != nil {
-		log.Printf("Error scanning resources directory: %v", err)
-		return map[string]FileInfo{}
-	}
-
-	var files = make(map[string]FileInfo, len(results))
-
-	for _, result := range results {
-		fileInfo := fr.fileInfoFromPath(result.Path)
-		files[fileInfo.ID] = fileInfo
-	}
-
-	return files
 }
 
 func (fr *FileRepository) fileInfoFromPath(path string) FileInfo {
 	id := fr.CreateID(path)
 
 	// Extract directory info
-	pathWithoutPrefix := strings.TrimPrefix(path, fr.config.ResourcesDirectory+"/")
-	dir := filepath.Dir(pathWithoutPrefix)
+	dir := filepath.Dir(path)
 	if dir == "." {
 		dir = "" // Root of resources
 	}
@@ -464,45 +337,28 @@ func (fr *FileRepository) fileInfoFromPath(path string) FileInfo {
 	// Create a display name
 	display, displayBase := fr.DisplayName(path)
 
-	return FileInfo{
-		ID:          id,
-		Path:        path,
-		Display:     display,
-		DisplayBase: displayBase,
-		Directory:   dir,
-		Depth:       depth,
-		IsResource:  true,
+	isResource := strings.HasPrefix(path, fr.config.ResourcesDirectory+"/")
+	isTemporal := false
+
+	for _, temporalDir := range fr.config.temporalDirectories {
+		if strings.HasPrefix(path, temporalDir+"/") {
+			isTemporal = true
+			break
+		}
 	}
-}
 
-// sortedResources returns a slice of FileInfo sorted by directory and display name.
-func (fr *FileRepository) sortedResources() []FileInfo {
-	fr.cacheMux.Lock()
-	defer fr.cacheMux.Unlock()
+	fileInfo := FileInfo{
+		ID:            id,
+		Path:          path,
+		Title:         display,
+		TitleBase:     displayBase,
+		DirectoryPath: dir,
+		Depth:         depth,
+		IsResource:    isResource,
+		IsTemporal:    isTemporal,
+	}
 
-	resources := maps.Values(fr.resourceCache)
-
-	files := slices.SortedFunc(resources, func(a, b FileInfo) int {
-		// Primary sort: Root files (empty directory) should come before any directory files
-		// This ensures all root-level files appear at the top, regardless of name
-		if a.Directory == "" && b.Directory != "" {
-			return -1 // a comes before b
-		}
-
-		if a.Directory != "" && b.Directory == "" {
-			return 1 // b comes before a
-		}
-
-		// Secondary sort: By directory name
-		if a.Directory != b.Directory {
-			return strings.Compare(a.Directory, b.Directory)
-		}
-
-		// Tertiary sort: By display name
-		return strings.Compare(a.Display, b.Display)
-	})
-
-	return files
+	return fileInfo
 }
 
 // normalizeFileName creates a URL-safe, consistent filename/path
@@ -642,8 +498,8 @@ func (fr *FileRepository) getOrCreateDocument(id string) (*Document, error) {
 		return nil, fmt.Errorf("error creating file: %w", err)
 	}
 
-	// Reload the cache for this single file
-	fr.ReloadResource(path)
+	// Reload the resources to include the new file
+	fr.ReloadResources()
 
 	// Get the file info again
 	info, err = fr.FileInfo(id)
@@ -660,26 +516,6 @@ func (fr *FileRepository) getOrCreateDocument(id string) (*Document, error) {
 // TemporalFileInfo retrieves or constructs a FileInfo for a temporal file based on type and date. If not
 // found, the file will be created and returned.
 func (fr *FileRepository) TemporalFileInfo(fileType string, timestamp time.Time) (FileInfo, bool) {
-	//filePath, err := fr.rootManager.ResolveMonthlyFile(date, fileType)
-	//if err != nil {
-	//	return FileInfo{}, err
-	//}
-	//
-	//id := fr.CreateID(filePath)
-	//displayName := fmt.Sprintf("%s %d", date.Format("January"), date.Year())
-	//
-	//return FileInfo{
-	//	ID:          id,
-	//	Path:        filePath,
-	//	Display:     displayName,
-	//	DisplayBase: displayName,
-	//	IsTemporal:  true,
-	//	Directory:   fileType + "/" + date.Format("2006"),
-	//	Year:        date.Format("2006"),
-	//	Month:       date.Format("01"),
-	//	MonthName:   date.Format("January"),
-	//}, nil
-
 	year := timestamp.Format("2006")
 	month := timestamp.Format("01-January")
 
@@ -690,15 +526,12 @@ func (fr *FileRepository) TemporalFileInfo(fileType string, timestamp time.Time)
 	displayName := fmt.Sprintf("%s %d", timestamp.Format("January"), timestamp.Year())
 
 	info := FileInfo{
-		ID:          id,
-		Path:        filePath,
-		Display:     displayName,
-		DisplayBase: displayName,
-		IsTemporal:  true,
-		Directory:   fileType + "/" + timestamp.Format("2006"),
-		Year:        timestamp.Format("2006"),
-		Month:       timestamp.Format("01"),
-		MonthName:   timestamp.Format("January"),
+		ID:            id,
+		Path:          filePath,
+		Title:         displayName,
+		TitleBase:     displayName,
+		IsTemporal:    true,
+		DirectoryPath: fileType + "/" + timestamp.Format("2006"),
 	}
 
 	found := fr.rootManager.FileExists(filePath)
@@ -730,42 +563,78 @@ func (fr *FileRepository) GetOrCreateTemporalDocument(directory string, date tim
 	}, nil
 }
 
-//// findTemporalFile resolves the path for a monthly file based on the timestamp and file type. If not
-//// found, it will create the file.
-//func (fr *FileRepository) findTemporalFile(fileType string, timestamp time.Time) (string, error) {
-//	year := timestamp.Format("2006")
-//	month := timestamp.Format("01-January")
-//
-//	dirPath := strings.ToLower(filepath.Join(fileType, year))
-//	filePath := strings.ToLower(filepath.Join(dirPath, month+".md"))
-//
-//	// Ensure directory exists
-//	if err := fr.rootManager.MkdirAll(dirPath, 0755); err != nil {
-//		return "", fmt.Errorf("failed to create directory %s: %w", dirPath, err)
-//	}
-//
-//	// Create the file if it doesn't exist
-//	if !fr.rootManager.FileExists(filePath) {
-//		if err := fr.createMonthlyFile(filePath, timestamp); err != nil {
-//			return "", fmt.Errorf("failed to create dated file %s: %w", filePath, err)
-//		}
-//	}
-//
-//	return filePath, nil
-//}
+func (fr *FileRepository) DirectoryTree() *DirectoryNode {
+	fr.cacheMux.RLock()
+	defer fr.cacheMux.RUnlock()
+	return fr.directoryTree
+}
 
-//// createMonthlyFile creates a new monthly file with a header based on the timestamp
-//func (fr *FileRepository) createMonthlyFile(filePath string, timestamp time.Time) error {
-//	if fr.rootManager.FileExists(filePath) {
-//		return nil
-//	}
-//
-//	// Make sure the directory exists
-//	dirPath := filepath.Dir(filePath)
-//	if err := fr.rootManager.MkdirAll(dirPath, 0755); err != nil {
-//		return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
-//	}
-//
-//	//content := fmt.Sprintf("# %s\n\n", timestamp.Format("January 2006"))
-//	return fr.rootManager.WriteString(filePath, "\n")
-//}
+// buildDirectoryTree builds a directory tree from the root of the data directory. If the
+// directory is empty, it will use the root of the data directory.
+// It returns the root node and a map of all files in the tree, keyed by ID.
+func (fr *FileRepository) buildDirectoryTree(directory string) (*DirectoryNode, map[string]FileInfo) {
+	if directory == "" {
+		directory = "."
+	}
+
+	root := &DirectoryNode{
+		Name:        "",
+		Files:       []FileInfo{},
+		Directories: make(map[string]*DirectoryNode),
+	}
+
+	index := make(map[string]FileInfo)
+
+	results, err := fr.rootManager.Scan(directory, func(path string, d fs.DirEntry) bool {
+		// Skip directories and non-markdown files
+		if d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
+			return false
+		}
+
+		// Skip hidden files and temp files
+		if strings.HasPrefix(d.Name(), ".") || strings.HasPrefix(d.Name(), "~") {
+			return false
+		}
+
+		return true
+	})
+
+	if err != nil {
+		log.Printf("Error scanning resources directory: %v", err)
+		return root, index
+	}
+
+	// Process each file and add to the tree and index
+	for _, result := range results {
+		fileInfo := fr.fileInfoFromPath(result.Path)
+		fr.addFileToTree(root, fileInfo)
+		index[fileInfo.ID] = fileInfo
+	}
+
+	return root, index
+}
+
+func (fr *FileRepository) addFileToTree(node *DirectoryNode, fileInfo FileInfo) {
+	if fileInfo.DirectoryPath == "" {
+		// File is at the root of the tree, so add it to the root node
+		node.Files = append(node.Files, fileInfo)
+		return
+	}
+
+	// Navigate directory structure and add file to the tree
+	parts := strings.Split(fileInfo.DirectoryPath, string(filepath.Separator))
+	currentNode := node
+
+	for _, part := range parts {
+		if _, exists := currentNode.Directories[part]; !exists {
+			currentNode.Directories[part] = &DirectoryNode{
+				Name:        part,
+				Files:       []FileInfo{},
+				Directories: make(map[string]*DirectoryNode),
+			}
+		}
+		currentNode = currentNode.Directories[part]
+	}
+
+	currentNode.Files = append(currentNode.Files, fileInfo)
+}

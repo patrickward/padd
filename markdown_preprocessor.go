@@ -84,10 +84,10 @@ func (mp *MarkdownPreprocessor) processWikiLinkShortcodes(line string, wikiRe *r
 		// Check if the file exists
 		if file, err := mp.fileRepo.FileInfo(fileID); err == nil {
 			// File exists, return a link
-			return fmt.Sprintf(`[%s](/%s)`, file.Display, file.ID)
+			return fmt.Sprintf(`[%s](/%s)`, file.Title, file.ID)
 		} else if file, err := mp.fileRepo.FileInfo(filepath.Join(mp.fileRepo.Config().ResourcesDirectory, pageName)); err == nil {
 			// File exists in resources, return a link
-			return fmt.Sprintf(`[%s](/%s)`, file.Display, file.ID)
+			return fmt.Sprintf(`[%s](/%s)`, file.Title, file.ID)
 		}
 
 		return fmt.Sprintf(`<span class="text-color danger">!! [[%s]] not found !!</span>`, pageName)

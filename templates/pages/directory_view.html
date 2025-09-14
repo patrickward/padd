@@ -1,0 +1,33 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+    <article class="margin-end-6xl file-id-resources">
+        <header class="margin-start-5xl">
+
+            <!-- Breadcrumb Navigation -->
+            {{template "breadcrumbs" .}}
+
+            <div class="split align-center">
+                <div class="stack gap-4xs">
+                    <h1>{{.Title}}</h1>
+                    <p>
+                        Directories and files for {{.Title}}
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <hr>
+
+        <!-- List all Resource Files hierarchically -->
+        <section class="margin-start-5xl">
+            {{if .CurrentFile.DirectoryNode}}
+                {{template "directoryTree" .CurrentFile.DirectoryNode}}
+            {{else}}
+                <p>No resource files available.</p>
+            {{end}}
+        </section>
+
+    </article>
+{{end}}
+

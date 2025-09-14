@@ -5,7 +5,7 @@
             <ul>
                 {{range .NavMenuFiles}}
                     <li>
-                        <a href="/{{.ID}}" {{if .IsNavActive}}class="active"{{end}}>{{.Display}}</a>
+                        <a href="/{{.ID}}" {{if .IsNavActive}}class="active"{{end}}>{{.Title}}</a>
                     </li>
                 {{end}}
             </ul>

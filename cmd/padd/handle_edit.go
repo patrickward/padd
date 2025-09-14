@@ -21,7 +21,7 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := padd.PageData{
-		Title:        "Edit - " + doc.Info.Display,
+		Title:        "Edit - " + doc.Info.Title,
 		CurrentFile:  doc.Info,
 		RawContent:   content,
 		IsEditing:    true,

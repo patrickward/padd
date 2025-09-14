@@ -18,27 +18,21 @@ func (s *Server) handleTemporalArchive(w http.ResponseWriter, r *http.Request) {
 
 	fileType := parts[0]
 
-	// Get all available temporal files of the specified type
-	years, files, err := s.fileRepo.TemporalTree(fileType)
-	if err != nil {
-		s.showServerError(w, r, err)
-		return
-	}
+	directoryTree := s.fileRepo.DirectoryTreeFor(fileType)
 
 	archiveFile := padd.FileInfo{
-		ID:          fileType + "-archive",
-		Path:        fileType + "/archive",
-		Display:     padd.TitleCase(fileType) + " Archive",
-		DisplayBase: padd.TitleCase(fileType) + " Archive",
+		ID:        fileType + "-archive",
+		Path:      fileType + "/archive",
+		Title:     padd.TitleCase(fileType) + " Archive",
+		TitleBase: padd.TitleCase(fileType) + " Archive",
 	}
 
 	data := padd.PageData{
-		Title:         archiveFile.Display,
+		Title:         archiveFile.Title,
 		CurrentFile:   archiveFile,
 		NavMenuFiles:  s.navigationMenu(fileType),
-		TemporalYears: years,
-		TemporalFiles: files,
 		ArchiveType:   fileType,
+		DirectoryTree: directoryTree,
 	}
 
 	// Check for flash messages

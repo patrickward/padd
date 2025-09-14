@@ -1,0 +1,43 @@
+{{define "breadcrumbs"}}
+    <!-- Breadcrumb Navigation -->
+    {{if .CurrentFile.IsResource}}
+        <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
+            {{range .CurrentFile.BreadcrumbParts}}
+                {{if not .IsFirst}}<span class="text-muted">&raquo;</span>{{end}}
+                {{if .IsLast}}
+                    <strong>{{.Name}}</strong>
+                {{else}}
+                    <a href="{{.Path}}">{{.Name}}</a>
+                {{end}}
+            {{end}}
+        </nav>
+    {{else if hasPrefix .CurrentFile.Path "daily/"}}
+        <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
+            <a href="/daily/archive">Daily Archive</a>
+            {{range .CurrentFile.BreadcrumbParts}}
+                {{if not .IsFirst}}
+                    <span class="text-muted">&raquo;</span>
+                    {{if .IsLast}}
+                        <strong>{{.Name}}</strong>
+                    {{else}}
+                        <a href="{{.Path}}">{{.Name}}</a>
+                    {{end}}
+                {{end}}
+            {{end}}
+        </nav>
+    {{else if hasPrefix .CurrentFile.Path "journal/"}}
+        <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
+            <a href="/journal/archive">Journal Archive</a>
+            {{range .CurrentFile.BreadcrumbParts}}
+                {{if not .IsFirst}}
+                    <span class="text-muted">&raquo;</span>
+                    {{if .IsLast}}
+                        <strong>{{.Name}}</strong>
+                    {{else}}
+                        <a href="{{.Path}}">{{.Name}}</a>
+                    {{end}}
+                {{end}}
+            {{end}}
+        </nav>
+    {{end}}
+{{end}}

@@ -46,7 +46,7 @@ func TestFileRepository_ReloadCaches(t *testing.T) {
 	assert.True(t, fr.FilePathExists("resources/characters/roadrunner.md"))
 }
 
-func TestFileRepository_ReloadResource(t *testing.T) {
+func TestFileRepository_ReloadResources(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
 	fr, rm := setupTestFileRepo(t, tmp)
@@ -64,14 +64,14 @@ func TestFileRepository_ReloadResource(t *testing.T) {
 	assert.NotNil(t, err)
 
 	// Reload the resource and check the cache
-	fr.ReloadResource("resources/foobar.md")
+	fr.ReloadResources()
 	assert.True(t, fr.FilePathExists("resources/foobar.md"))
 	info, err := fr.FileInfo("resources/foobar")
 	assert.Nil(t, err)
 	assert.Equal(t, info.ID, "resources/foobar")
 	assert.Equal(t, info.Path, "resources/foobar.md")
-	assert.Equal(t, info.Display, "Foobar")
-	assert.Equal(t, info.DisplayBase, "Foobar")
+	assert.Equal(t, info.Title, "Foobar")
+	assert.Equal(t, info.TitleBase, "Foobar")
 }
 
 func TestFileRepository_FileInfo(t *testing.T) {
@@ -83,37 +83,37 @@ func TestFileRepository_FileInfo(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, file.ID, "inbox")
 	assert.Equal(t, file.Path, "inbox.md")
-	assert.Equal(t, file.Display, "Inbox")
+	assert.Equal(t, file.Title, "Inbox")
 
 	file, err = fr.FileInfo("active")
 	assert.Nil(t, err)
 	assert.Equal(t, file.ID, "active")
 	assert.Equal(t, file.Path, "active.md")
-	assert.Equal(t, file.Display, "Active")
+	assert.Equal(t, file.Title, "Active")
 
 	file, err = fr.FileInfo("resources/looney")
 	assert.Nil(t, err)
 	assert.Equal(t, file.ID, "resources/looney")
 	assert.Equal(t, file.Path, "resources/looney.md")
-	assert.Equal(t, file.Display, "Looney")
+	assert.Equal(t, file.Title, "Looney")
 
 	file, err = fr.FileInfo("resources/characters/wile")
 	assert.Nil(t, err)
 	assert.Equal(t, file.ID, "resources/characters/wile")
 	assert.Equal(t, file.Path, "resources/characters/wile.md")
-	assert.Equal(t, file.Display, "Characters/Wile")
+	assert.Equal(t, file.Title, "Characters/Wile")
 
 	file, err = fr.FileInfo("daily/2025/09-september")
 	assert.Nil(t, err)
 	assert.Equal(t, file.ID, "daily/2025/09-september")
 	assert.Equal(t, file.Path, "daily/2025/09-september.md")
-	assert.Equal(t, file.Display, "September 2025")
-	assert.Equal(t, file.DisplayBase, "September 2025")
+	assert.Equal(t, file.Title, "September 2025")
+	assert.Equal(t, file.TitleBase, "September 2025")
 	assert.Equal(t, file.IsTemporal, true)
-	assert.Equal(t, file.Directory, "daily/2025")
-	assert.Equal(t, file.Year, "2025")
-	assert.Equal(t, file.Month, "09")
-	assert.Equal(t, file.MonthName, "September")
+	assert.Equal(t, file.DirectoryPath, "daily/2025")
+	assert.Equal(t, file.Year(), "2025")
+	assert.Equal(t, file.Month(), "09")
+	assert.Equal(t, file.MonthName(), "September")
 
 	_, err = fr.FileInfo("nonexistent")
 	assert.NotNil(t, err)
@@ -125,9 +125,9 @@ func TestFileRepository_CoreFiles(t *testing.T) {
 	coreFiles := fr.CoreFiles()
 	assert.Equal(t, len(fr.CoreFiles()), 2)
 	assert.Equal(t, coreFiles["inbox"].Path, "inbox.md")
-	assert.Equal(t, coreFiles["inbox"].Display, "Inbox")
+	assert.Equal(t, coreFiles["inbox"].Title, "Inbox")
 	assert.Equal(t, coreFiles["active"].Path, "active.md")
-	assert.Equal(t, coreFiles["active"].Display, "Active")
+	assert.Equal(t, coreFiles["active"].Title, "Active")
 }
 
 func TestFileRepository_FileInfo_CoreFiles(t *testing.T) {
@@ -137,7 +137,7 @@ func TestFileRepository_FileInfo_CoreFiles(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, info.ID, "inbox")
 	assert.Equal(t, info.Path, "inbox.md")
-	assert.Equal(t, info.Display, "Inbox")
+	assert.Equal(t, info.Title, "Inbox")
 
 	_, err = fr.FileInfo("nonexistent.md")
 	assert.NotNil(t, err)
@@ -151,26 +151,26 @@ func TestFileRepository_FileInfo_ResourceFiles(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, info.ID, "resources/looney")
 	assert.Equal(t, info.Path, "resources/looney.md")
-	assert.Equal(t, info.Display, "Looney")
-	assert.Equal(t, info.DisplayBase, "Looney")
+	assert.Equal(t, info.Title, "Looney")
+	assert.Equal(t, info.TitleBase, "Looney")
 
 	info, err = fr.FileInfo("resources/characters/wile")
 	assert.Nil(t, err)
 	assert.Equal(t, info.ID, "resources/characters/wile")
 	assert.Equal(t, info.Path, "resources/characters/wile.md")
-	assert.Equal(t, info.Display, "Characters/Wile")
-	assert.Equal(t, info.DisplayBase, "Wile")
+	assert.Equal(t, info.Title, "Characters/Wile")
+	assert.Equal(t, info.TitleBase, "Wile")
 
 	_, err = fr.FileInfo("resources/nonexistent.md")
 	assert.NotNil(t, err)
 }
 
-func TestFileRepository_ResourcesDirectory(t *testing.T) {
+func TestFileRepository_DirectoryTreeFor(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
 	fr.ReloadCaches()
 
-	dir := fr.ResourcesTree()
+	dir := fr.DirectoryTreeFor(fr.Config().ResourcesDirectory)
 
 	assert.Equal(t, len(dir.Files), 1)
 	assert.Equal(t, dir.Files[0].Path, "resources/looney.md")
@@ -179,29 +179,6 @@ func TestFileRepository_ResourcesDirectory(t *testing.T) {
 	assert.Equal(t, dir.Directories["characters"].Files[1].Path, "resources/characters/wile.md")
 	assert.Equal(t, len(dir.Directories["characters"].Directories), 1)
 	assert.Equal(t, dir.Directories["characters"].Directories["minor"].Files[0].Path, "resources/characters/minor/michigan.md")
-}
-
-func TestFileRepository_TemporalTree(t *testing.T) {
-	t.Parallel()
-	fr, _ := setupTestFileRepo(t, "")
-	fr.ReloadCaches()
-
-	dirs := []string{"daily", "journal"}
-	for _, dir := range dirs {
-		years, files, err := fr.TemporalTree(dir)
-		assert.Nil(t, err)
-
-		assert.Equal(t, len(years), 2)
-		// Newest year first
-		assert.Equal(t, years[0], "2025")
-		assert.Equal(t, years[1], "2024")
-		assert.Equal(t, len(files["2025"]), 2)
-		assert.Equal(t, files["2025"][0].Path, dir+"/2025/09-september.md")
-		assert.Equal(t, files["2025"][1].Path, dir+"/2025/08-august.md")
-		assert.Equal(t, len(files["2024"]), 2)
-		assert.Equal(t, files["2024"][0].Path, dir+"/2024/12-december.md")
-		assert.Equal(t, files["2024"][1].Path, dir+"/2024/11-november.md")
-	}
 }
 
 func TestFileRepository_GetTemporalFile(t *testing.T) {
@@ -215,13 +192,13 @@ func TestFileRepository_GetTemporalFile(t *testing.T) {
 	file, found := fr.TemporalFileInfo("daily", current)
 	assert.True(t, found)
 	assert.Equal(t, file.Path, "daily/2025/09-september.md")
-	assert.Equal(t, file.Display, "September 2025")
-	assert.Equal(t, file.DisplayBase, "September 2025")
+	assert.Equal(t, file.Title, "September 2025")
+	assert.Equal(t, file.TitleBase, "September 2025")
 	assert.Equal(t, file.IsTemporal, true)
-	assert.Equal(t, file.Directory, "daily/2025")
-	assert.Equal(t, file.Year, "2025")
-	assert.Equal(t, file.Month, "09")
-	assert.Equal(t, file.MonthName, "September")
+	assert.Equal(t, file.DirectoryPath, "daily/2025")
+	assert.Equal(t, file.Year(), "2025")
+	assert.Equal(t, file.Month(), "09")
+	assert.Equal(t, file.MonthName(), "September")
 }
 
 func TestFileRepository_GetDocument(t *testing.T) {
@@ -233,13 +210,13 @@ func TestFileRepository_GetDocument(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, doc.Info.Path, "inbox.md")
-	assert.Equal(t, doc.Info.Display, "Inbox")
+	assert.Equal(t, doc.Info.Title, "Inbox")
 
 	doc, err = fr.GetDocument("resources/looney")
 	assert.Nil(t, err)
 	assert.Equal(t, doc.Info.Path, "resources/looney.md")
-	assert.Equal(t, doc.Info.Display, "Looney")
-	assert.Equal(t, doc.Info.DisplayBase, "Looney")
+	assert.Equal(t, doc.Info.Title, "Looney")
+	assert.Equal(t, doc.Info.TitleBase, "Looney")
 
 	_, err = fr.GetDocument("nonexistent")
 	assert.NotNil(t, err)
@@ -257,8 +234,8 @@ func TestFileRepository_GetOrCreateResourceDocument(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, fr.FilePathExists("resources/foobar.md"))
 	assert.Equal(t, doc.Info.Path, "resources/foobar.md")
-	assert.Equal(t, doc.Info.Display, "Foobar")
-	assert.Equal(t, doc.Info.DisplayBase, "Foobar")
+	assert.Equal(t, doc.Info.Title, "Foobar")
+	assert.Equal(t, doc.Info.TitleBase, "Foobar")
 	assert.Equal(t, doc.Info.ID, "resources/foobar")
 	assert.Equal(t, doc.Info.Path, "resources/foobar.md")
 }
@@ -273,13 +250,13 @@ func TestFileRepository_GetOrCreateTemporalDocument(t *testing.T) {
 	doc, err := fr.GetOrCreateTemporalDocument("daily", time.Date(2025, time.March, 3, 0, 0, 0, 0, time.UTC))
 	assert.Nil(t, err)
 	assert.Equal(t, doc.Info.Path, "daily/2025/03-march.md")
-	assert.Equal(t, doc.Info.Display, "March 2025")
-	assert.Equal(t, doc.Info.DisplayBase, "March 2025")
+	assert.Equal(t, doc.Info.Title, "March 2025")
+	assert.Equal(t, doc.Info.TitleBase, "March 2025")
 	assert.Equal(t, doc.Info.IsTemporal, true)
-	assert.Equal(t, doc.Info.Directory, "daily/2025")
-	assert.Equal(t, doc.Info.Year, "2025")
-	assert.Equal(t, doc.Info.Month, "03")
-	assert.Equal(t, doc.Info.MonthName, "March")
+	assert.Equal(t, doc.Info.DirectoryPath, "daily/2025")
+	assert.Equal(t, doc.Info.Year(), "2025")
+	assert.Equal(t, doc.Info.Month(), "03")
+	assert.Equal(t, doc.Info.MonthName(), "March")
 	assert.Equal(t, doc.Info.ID, "daily/2025/03-march")
 	assert.Equal(t, doc.Info.Path, "daily/2025/03-march.md")
 }

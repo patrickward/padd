@@ -43,6 +43,12 @@ func (s *Server) handleTemporalRoot(path string) func(w http.ResponseWriter, r *
 	}
 }
 
+func (s *Server) renderDirectoryView(w http.ResponseWriter, r *http.Request, data padd.PageData) {
+	if err := s.executePage(w, "directory_view.html", data); err != nil {
+		s.showServerError(w, r, err)
+	}
+}
+
 func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.PageData, bool) {
 	id := r.PathValue("id")
 	if id == "" {
@@ -55,9 +61,18 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 		return padd.PageData{}, true
 	}
 
+	if doc.Info.IsDirectory {
+		s.renderDirectoryView(w, r, padd.PageData{
+			Title:        doc.Info.TitleBase,
+			CurrentFile:  doc.Info,
+			NavMenuFiles: s.navigationMenu(doc.Info.ID),
+		})
+		return padd.PageData{}, true
+	}
+
 	content, err := doc.Content()
 	if err != nil {
-		s.showServerError(w, r, err)
+		s.showServerError(w, r, fmt.Errorf("failed to get document content: %w", err))
 		return padd.PageData{}, true
 	}
 
@@ -78,7 +93,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 	}
 
 	if renderedContent.Title == "" {
-		renderedContent.Title = doc.Info.DisplayBase
+		renderedContent.Title = doc.Info.TitleBase
 	}
 
 	data := padd.PageData{

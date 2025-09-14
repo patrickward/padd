@@ -1,0 +1,19 @@
+{{define "directoryTree"}}
+    <div class="directory-tree">
+        <ul class="margin-end-0 padding-xs">
+            {{range .Files}}
+                <li class="directory-file">
+                    <a href="/{{.ID}}">{{.TitleBase}}</a>
+                </li>
+            {{end}}
+        </ul>
+
+        {{range $dirName, $dirNode := .Directories}}
+            <details class="directory margin-end-4xs">
+                <summary class="margin-end-0"><strong>{{$dirName}}/</strong></summary>
+                {{template "directoryTree" $dirNode}}
+            </details>
+        {{end}}
+    </div>
+{{end}}
+

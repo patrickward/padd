@@ -1,33 +1,24 @@
 {{template "base.html" .}}
 
 {{define "content"}}
-    <article class="margin-end-6xl file-id-{{.CurrentFile.CSSClass}}">
+    <article class="margin-end-6xl">
         <header class="margin-start-5xl">
             <div class="split align-center">
-                <h1>{{.Title}}</h1>
+                <div class="stack gap-4xs">
+                    <h1>{{.Title}}</h1>
+                    <p>
+                        Directories and files for {{.Title}}
+                    </p>
+                </div>
             </div>
         </header>
 
         <hr>
 
-        {{if .TemporalYears}}
-            <h2>Available {{.ArchiveType}} entries:</h2>
-            <ul>
-                {{range .TemporalYears}}
-                    <li>
-                        <strong>{{.}}</strong>
-                        <ul>
-                            {{range $files := index $.TemporalFiles .}}
-                                <li>
-                                    <a href="/{{.ID}}">{{.Display}}</a>
-                                </li>
-                            {{end}}
-                        </ul>
-                    </li>
-                {{end}}
-            </ul>
+        {{if .DirectoryTree}}
+            {{template "directoryTree" .DirectoryTree}}
         {{else}}
-            <p>No {{.ArchiveType}} entries found.</p>
+            <p>No directory tree available.</p>
         {{end}}
     </article>
 {{end}}

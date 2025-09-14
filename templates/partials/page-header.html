@@ -1,26 +1,9 @@
 {{define "page-header"}}
     <header class="margin-start-5xl" hx-get="/page-header/{{.CurrentFile.ID}}" hx-trigger="padd:reload-header from:body"
             hx-swap="outerHTML">
+
         <!-- Breadcrumb Navigation -->
-        {{if .CurrentFile.IsResource}}
-            <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
-                <a href="/resources">Resources</a>
-                <span class="text-muted">&raquo;</span>
-                <strong>{{.CurrentFile.RelativePath}}</strong>
-            </nav>
-        {{else if hasPrefix .CurrentFile.Path "daily/"}}
-            <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
-                <a href="/daily/archive">Daily Archive</a>
-                <span class="text-muted">&raquo;</span>
-                <strong>{{.CurrentFile.RelativePath}}</strong>
-            </nav>
-        {{else if hasPrefix .CurrentFile.Path "journal/"}}
-            <nav aria-label="breadcrumb" class="flex align-center wrap gap-4xs margin-end-s size-xs">
-                <a href="/journal/archive">Journal Archive</a>
-                <span class="text-muted">&raquo;</span>
-                <strong>{{.CurrentFile.RelativePath}}</strong>
-            </nav>
-        {{end}}
+        {{template "breadcrumbs" .}}
 
         <!-- Title and Actions -->
         <div class="split align-center margin-end-s">

@@ -13,13 +13,13 @@ import (
 
 // handleResources shows a list of available resource files
 func (s *Server) handleResources(w http.ResponseWriter, r *http.Request) {
-	resourceTree := s.fileRepo.ResourcesTree()
+	tree := s.fileRepo.DirectoryTreeFor(s.fileRepo.Config().ResourcesDirectory)
 
 	data := padd.PageData{
-		Title:        "Resources",
-		NavMenuFiles: s.navigationMenu(r.URL.Path),
-		IsResources:  true,
-		ResourceTree: resourceTree,
+		Title:         "Resources",
+		NavMenuFiles:  s.navigationMenu(r.URL.Path),
+		IsResources:   true,
+		DirectoryTree: tree,
 	}
 
 	// Check for a flash message
@@ -115,9 +115,9 @@ func filenameIsValid(fileName string) bool {
 func (s *Server) handleResourcesAPI(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	resourceTree := s.fileRepo.ResourcesTree()
+	tree := s.fileRepo.DirectoryTreeFor(s.fileRepo.Config().ResourcesDirectory)
 
-	if err := json.NewEncoder(w).Encode(resourceTree); err != nil {
+	if err := json.NewEncoder(w).Encode(tree); err != nil {
 		s.showServerError(w, nil, err)
 	}
 }
