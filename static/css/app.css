@@ -90,11 +90,6 @@
         }
     }
 
-    .navbar details[name="subnav"] ul {
-        --color-background: var(--color-primary-fill-vivid);
-        --border-color: var(--color-primary-border-vivid);
-    }
-
     .icon {
         display: inline-block;
         fill: currentColor;
@@ -294,4 +289,11 @@
         }
     }
 
+}
+
+@layer kelp.effects {
+    .navbar details ul {
+        --color-background: var(--color-primary-fill-vivid);
+        --border-color: var(--color-primary-border-vivid);
+    }
 }

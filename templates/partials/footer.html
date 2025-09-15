@@ -1,9 +1,11 @@
 <footer class="container-xl margin-start-6xl" style="padding-block-end: 2em">
     <hr>
-    <div class="split">
-        <div class="cluster text-muted size-xs">
-            <span>PADD Version: {{.PADDVersion}}</span>
-            <span>DataDir: {{.PADDDataDir}}</span>
+    <div class="stack gap-l">
+        <div class="split">
+            <div class="cluster text-muted size-xs">
+                <span>PADD v{{.PADDVersion}}</span>
+                <span>Data: {{.PADDDataDir}}</span>
+            </div>
         </div>
         <div>
             <form action="/resources/refresh" method="post" class="inline">
