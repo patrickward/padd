@@ -39,6 +39,8 @@ type PageData struct {
 	ErrorMessage     string                   // Error message to display
 	SearchMatch      int                      // To indicate which match in the line to highlight
 	DirectoryTree    *DirectoryNode           // Directory tree for a page. For instance, resources or temporal archive pages.
+	PADDVersion      string                   // The current version of PADD
+	PADDDataDir      string                   // The current data directory for PADD
 }
 
 func (p PageData) HasTasks() bool {

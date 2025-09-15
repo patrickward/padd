@@ -1,62 +1,9 @@
 <footer class="container-xl margin-start-6xl" style="padding-block-end: 2em">
     <hr>
     <div class="split">
-        <div class="stack gap-l">
-            <details>
-                <summary class="text-muted size-xs">About PADD</summary>
-                <div class="size-xs text-muted">
-                    <p><strong>PADD - Personal Assistant for Daily Documentation</strong></p>
-
-                    <p><em>Or, in Star Trek terms, a "Personal Access Display Device"</em></p>
-
-                    <p>
-                        PADD is a simple, local, markdown-based personal information system for capturing and organizing
-                        your thoughts, tasks, and knowledge. Like the handheld devices in Star Trek, PADD serves as
-                        your personal command center - but instead of managing a starship, you're managing your daily
-                        workflow and information.
-                    </p>
-
-                    <p>
-                        The system uses a simple capture → process → execute → store workflow with three core files
-                        and a resources directory:
-                    </p>
-
-                    <ul>
-                        <li><code>inbox.md</code>: Quick capture point for notes, ideas, and tasks - dump everything here without thinking</li>
-                        <li><code>active.md</code>: Your dashboard of current commitments - what needs attention now</li>
-                        <li><code>daily/</code>: Daily log for activities, thoughts, and reflections - your temporal record</li>
-                        <li><code>journal/</code>: Personal reflections, ideas, and insights - your private space</li>
-                        <li><code>resources/</code>: Organized reference material by topic - where processed information lives long-term</li>
-                    </ul>
-
-                    <p>
-                        <strong>Resources Organization Examples:</strong>
-                    </p>
-                    <pre>
-resources/
-├── someday.md           # Ideas and projects for the future
-├── people/              # Notes about colleagues, contacts
-│   └── john-smith.md
-├── projects/            # Completed or reference project notes
-│   ├── website-redesign.md
-│   └── 2024-planning.md
-├── reference/           # General reference material
-│   ├── commands.md      # Useful commands and snippets
-│   └── workflows.md     # Process documentation
-├── learning/            # Course notes, articles, research
-│   └── python-notes.md
-└── meetings/            # Meeting notes and decisions
-    └── 2024-01-standup.md
-</pre>
-
-                    <p>
-                        <strong>Workflow:</strong> Everything starts in inbox.md. During regular processing, move items from
-                        inbox to either active.md (needs action), resources/ (reference material), or trash. Work from
-                        active.md as your command center. When done, move notes to the appropriate resources/ folder.
-                        Daily.md captures the journey - what happened and when - as a permanent chronological record.
-                    </p>
-                </div>
-            </details>
+        <div class="cluster text-muted size-xs">
+            <span>PADD Version: {{.PADDVersion}}</span>
+            <span>DataDir: {{.PADDDataDir}}</span>
         </div>
         <div>
             <form action="/resources/refresh" method="post" class="inline">

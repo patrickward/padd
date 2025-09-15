@@ -42,6 +42,10 @@ func parseTemplates() (*template.Template, error) {
 
 // executePage renders a full page template with the given data
 func (s *Server) executePage(w http.ResponseWriter, page string, data padd.PageData) error {
+	// Add the version and directory details to the data
+	data.PADDVersion = appVersion
+	data.PADDDataDir = s.dataDir
+
 	// Clone the base template to avoid altering it
 	tmpl, err := s.baseTempl.Clone()
 	if err != nil {
