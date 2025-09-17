@@ -3,6 +3,7 @@ module github.com/patrickward/padd
 go 1.24.5
 
 require (
+	filippo.io/age v1.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/yuin/goldmark v1.7.13
 	github.com/yuin/goldmark-meta v1.1.0
@@ -10,7 +11,6 @@ require (
 )
 
 require (
-	filippo.io/age v1.2.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
