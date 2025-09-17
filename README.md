@@ -1,6 +1,6 @@
 # PADD - Personal Assistant for Daily Documentation
 
-A super simple, local, markdown-based personal information system for capturing and organizing thoughts, tasks, and
+A simple, local, markdown-based personal information system for capturing and organizing thoughts, tasks, and
 knowledge. PADD serves as a personal command center for managing my daily workflow and information.
 
 ### Why?
@@ -27,20 +27,31 @@ PADD uses a simple capture → process → execute → store workflow with core 
 
 ## Encryption Features
 
-PADD supports encryption of files using the [age](https://github.com/FiloSottile/age) encryption tool. Enable encryption
-by creating a pair of public and private key files and specifying their locations to the application.
+PADD supports encryption of files using the [age](https://github.com/FiloSottile/age) encryption library. 
 
-You can use the `-generate-keys` flag to generate a new pair of keys within a given keys directory.
+While Go has excellent support for encryption, it also requires the user to consider other security and file handling
+concerns, such as key management and the format of the encrypted file. Age does a lot of that for you
+and it's well maintained by people much smarter than I am when it comes to cryptography. In addition, by using the `age`
+library to encrypt files, the files themselves are not tied to `padd`. You can use the `age` command line tool to
+decrypt any of the files that `padd` encrypts. So, if for some reason `padd` stops working, you can still decrypt
+files using the `age` command line tool. This is much simpler and more robust that building a `padd` specific approach
+to encryption.
+
+### Encryption Configuration
+
+You enable encryption by creating a pair of public and private key files and specifying their locations.
+
+Use the `-generate-keys` flag to generate a new pair of keys within the keys directory.
 
 The `keys-dir` flag is used to specify the directory where the public and private keys are stored. Or you can set the
 `PADD_KEYS_DIR` environment variable. If neither the flag nor the environment variable are set, PADD will attempt to
 find the keys directory in the default data directory location (e.g., `~/.local/share/padd/keys`).
 
 The `identity` flag is used to specify the path to the identity file. Or, you can set the `PADD_IDENTITIES_FILE`
-environment variable.
+environment variable. Note that this can be used to specify a single identity file outside of the keys directory.
 
 The `recipient` flag is used to specify the path to the recipient file. Or, you can set the `PADD_RECIPIENTS_FILE`
-environment variable.
+environment variable. Note that this can be used to specify a single recipient file outside of the keys directory.
 
 If no identity file or recipient file is specified, PADD will attempt to find the default identity and recipient files
 in the `keys-dir` directory. The default files are called `key.pub` for the recipient file and `key.txt` for the
