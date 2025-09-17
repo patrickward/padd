@@ -18,16 +18,15 @@ import (
 
 // Server holds the application state and configuration
 type Server struct {
-	dataDir           string
-	rootManager       *padd.RootManager
-	fileRepo          *padd.FileRepository
-	flashManager      *padd.FlashManager
-	backgroundRunner  *padd.BackgroundRunner
-	renderer          *padd.MarkdownRenderer
-	baseTempl         *template.Template // Common templates (layouts, partials)
-	httpServer        *http.Server
-	metadataConfig    MetadataConfig
-	encryptionManager *padd.EncryptionManager
+	dataDir          string
+	rootManager      *padd.RootManager
+	fileRepo         *padd.FileRepository
+	flashManager     *padd.FlashManager
+	backgroundRunner *padd.BackgroundRunner
+	renderer         *padd.MarkdownRenderer
+	baseTempl        *template.Template // Common templates (layouts, partials)
+	httpServer       *http.Server
+	metadataConfig   MetadataConfig
 }
 
 // ServerOption for configuring the server with functional options pattern
@@ -82,7 +81,6 @@ func NewServer(ctx context.Context, dataDir string, opts ...ServerOption) (*Serv
 // WithEncryptionManager sets the encryption manager for the server
 func WithEncryptionManager(manager *padd.EncryptionManager) ServerOption {
 	return func(s *Server) error {
-		s.encryptionManager = manager
 		s.fileRepo.SetEncryptionManager(manager)
 		return nil
 	}
