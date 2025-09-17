@@ -8,8 +8,8 @@ PADD_PORT="${PADD_PORT:-4242}"
 PADD_ADDR="${PADD_ADDR:-localhost}"
 PADD_DATA_DIR="${PADD_DATA_DIR:-$HOME/.local/share/padd}"
 PADD_BINARY="${PADD_BINARY:-$(which padd)}"
-PADD_PID_FILE="$PADD_DATA_DIR/padd.pid"
-PADD_LOG_FILE="$PADD_DATA_DIR/padd.log"
+PADD_PID_FILE="$PADD_DATA_DIR/service/padd.pid"
+PADD_LOG_FILE="$PADD_DATA_DIR/service/padd.log"
 
 # Colors for output
 RED='\033[0;31m'
@@ -176,7 +176,9 @@ show_usage() {
     cat << EOF
 PADD Service Management Script
 
-Usage: $0 {start|stop|restart|status|logs|config}
+Location: $0
+
+Usage: padd-service {start|stop|restart|status|logs|config}
 
 Commands:
   start     Start the PADD service
@@ -193,9 +195,9 @@ Environment Variables:
   PADD_BINARY     Path to PADD binary (default: auto-detect)
 
 Examples:
-  $0 start                    # Start with default settings
-  PADD_PORT=8080 $0 start     # Start on port 8080
-  $0 logs -f                  # Follow logs
+  padd-service start                    # Start with default settings
+  PADD_PORT=8080 padd-service start     # Start on port 8080
+  padd-service logs -f                  # Follow logs
 EOF
 }
 
@@ -220,6 +222,6 @@ case "$1" in
         ;;
     *)
         show_usage
-        exit 1
+        exit 0
         ;;
 esac
