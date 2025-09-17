@@ -19,7 +19,10 @@ func setupTestFileRepo(t *testing.T, path string) (*padd.FileRepository, *padd.R
 	rm, err := padd.NewRootManager(path)
 	assert.Nil(t, err)
 
-	return padd.NewFileRepository(rm, padd.DefaultFileConfig), rm
+	fr := padd.NewFileRepository(rm, padd.DefaultFileConfig)
+	fr.ReloadCaches()
+
+	return fr, rm
 }
 
 func TestFileRepository_Initialize(t *testing.T) {
@@ -39,7 +42,9 @@ func TestFileRepository_ReloadCaches(t *testing.T) {
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
+	// Explicitly reload caches, now that we've initialized
 	fr.ReloadCaches()
+
 	assert.True(t, fr.FilePathExists("inbox.md"))
 	assert.True(t, fr.FilePathExists("active.md"))
 	assert.True(t, fr.FilePathExists("resources/looney.md"))
@@ -52,6 +57,8 @@ func TestFileRepository_ReloadResources(t *testing.T) {
 	fr, rm := setupTestFileRepo(t, tmp)
 	err := fr.Initialize()
 	assert.Nil(t, err)
+
+	// Explicitly reload caches, now that we've initialized'
 	fr.ReloadCaches()
 
 	// Add a new resource directly for this test
@@ -77,7 +84,6 @@ func TestFileRepository_ReloadResources(t *testing.T) {
 func TestFileRepository_FileInfo(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
-	fr.ReloadCaches()
 
 	file, err := fr.FileInfo("inbox")
 	assert.Nil(t, err)
@@ -107,8 +113,8 @@ func TestFileRepository_FileInfo(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, file.ID, "daily/2025/09-september")
 	assert.Equal(t, file.Path, "daily/2025/09-september.md")
-	assert.Equal(t, file.Title, "September 2025")
-	assert.Equal(t, file.TitleBase, "September 2025")
+	assert.Equal(t, file.Title, "Daily/2025/09 September")
+	assert.Equal(t, file.TitleBase, "09 September")
 	assert.Equal(t, file.IsTemporal, true)
 	assert.Equal(t, file.DirectoryPath, "daily/2025")
 	assert.Equal(t, file.Year(), "2025")
@@ -122,6 +128,7 @@ func TestFileRepository_FileInfo(t *testing.T) {
 func TestFileRepository_CoreFiles(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
+
 	coreFiles := fr.CoreFiles()
 	assert.Equal(t, len(fr.CoreFiles()), 2)
 	assert.Equal(t, coreFiles["inbox"].Path, "inbox.md")
@@ -133,6 +140,7 @@ func TestFileRepository_CoreFiles(t *testing.T) {
 func TestFileRepository_FileInfo_CoreFiles(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
+
 	info, err := fr.FileInfo("inbox")
 	assert.Nil(t, err)
 	assert.Equal(t, info.ID, "inbox")
@@ -146,7 +154,6 @@ func TestFileRepository_FileInfo_CoreFiles(t *testing.T) {
 func TestFileRepository_FileInfo_ResourceFiles(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
-	fr.ReloadCaches()
 	info, err := fr.FileInfo("resources/looney")
 	assert.Nil(t, err)
 	assert.Equal(t, info.ID, "resources/looney")
@@ -168,7 +175,6 @@ func TestFileRepository_FileInfo_ResourceFiles(t *testing.T) {
 func TestFileRepository_DirectoryTreeFor(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
-	fr.ReloadCaches()
 
 	dir := fr.DirectoryTreeFor(fr.Config().ResourcesDirectory)
 
@@ -184,7 +190,6 @@ func TestFileRepository_DirectoryTreeFor(t *testing.T) {
 func TestFileRepository_GetTemporalFile(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
-	fr.ReloadCaches()
 
 	// Create time var for September 5, 2025
 	current := time.Date(2025, time.September, 5, 0, 0, 0, 0, time.UTC)
@@ -204,7 +209,6 @@ func TestFileRepository_GetTemporalFile(t *testing.T) {
 func TestFileRepository_GetDocument(t *testing.T) {
 	t.Parallel()
 	fr, _ := setupTestFileRepo(t, "")
-	fr.ReloadCaches()
 
 	doc, err := fr.GetDocument("inbox")
 	assert.Nil(t, err)
@@ -226,7 +230,6 @@ func TestFileRepository_GetOrCreateResourceDocument(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
 	fr, _ := setupTestFileRepo(t, tmp)
-	fr.ReloadCaches()
 
 	assert.False(t, fr.FilePathExists("resources/foobar.md"))
 

@@ -18,19 +18,23 @@ import (
 
 // Server holds the application state and configuration
 type Server struct {
-	dataDir          string
-	rootManager      *padd.RootManager
-	fileRepo         *padd.FileRepository
-	flashManager     *padd.FlashManager
-	backgroundRunner *padd.BackgroundRunner
-	renderer         *padd.MarkdownRenderer
-	baseTempl        *template.Template // Common templates (layouts, partials)
-	httpServer       *http.Server
-	metadataConfig   MetadataConfig
+	dataDir           string
+	rootManager       *padd.RootManager
+	fileRepo          *padd.FileRepository
+	flashManager      *padd.FlashManager
+	backgroundRunner  *padd.BackgroundRunner
+	renderer          *padd.MarkdownRenderer
+	baseTempl         *template.Template // Common templates (layouts, partials)
+	httpServer        *http.Server
+	metadataConfig    MetadataConfig
+	encryptionManager *padd.EncryptionManager
 }
 
+// ServerOption for configuring the server with functional options pattern
+type ServerOption func(*Server) error
+
 // NewServer initializes the server with the given data directory
-func NewServer(ctx context.Context, dataDir string) (*Server, error) {
+func NewServer(ctx context.Context, dataDir string, opts ...ServerOption) (*Server, error) {
 	rootManager, err := padd.NewRootManager(dataDir)
 	if err != nil {
 		return nil, err
@@ -66,7 +70,22 @@ func NewServer(ctx context.Context, dataDir string) (*Server, error) {
 	s.fileRepo.ReloadCaches()
 	s.setupBackgroundTasks()
 
+	for _, opt := range opts {
+		if err := opt(s); err != nil {
+			return nil, err
+		}
+	}
+
 	return s, nil
+}
+
+// WithEncryptionManager sets the encryption manager for the server
+func WithEncryptionManager(manager *padd.EncryptionManager) ServerOption {
+	return func(s *Server) error {
+		s.encryptionManager = manager
+		s.fileRepo.SetEncryptionManager(manager)
+		return nil
+	}
 }
 
 func (s *Server) setupBackgroundTasks() {

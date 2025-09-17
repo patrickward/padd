@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"strings"
 
 	"github.com/patrickward/padd"
 )
@@ -16,6 +17,7 @@ type MetadataConfig struct {
 }
 
 func (s *Server) addMetadataToPageData(data padd.PageData, metadata map[string]any) padd.PageData {
+	data.Encrypted = getMetadataBool(metadata, "encrypted", data.Encrypted)
 	data.Description = getMetadataString(metadata, "description", data.Description)
 	data.Category = getMetadataString(metadata, "category", data.Category)
 	status := getMetadataString(metadata, "status", data.Status)
@@ -139,6 +141,18 @@ func (s *Server) getContextColor() string {
 	}
 
 	return "secondary muted"
+}
+
+func getMetadataBool(metadata map[string]any, key string, defaultValue bool) bool {
+	if value, ok := metadata[key]; ok {
+		if str, ok := value.(string); ok {
+			return strings.TrimSpace(str) == "true" || str == "yes"
+		} else if boolVal, ok := value.(bool); ok {
+			return boolVal
+		}
+	}
+
+	return defaultValue
 }
 
 func getMetadataString(metadata map[string]any, key string, defaultValue string) string {

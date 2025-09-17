@@ -6,6 +6,7 @@ import "html/template"
 type PageData struct {
 	Title            string                   // Page title - if an H1 (#) is present, it will be used, otherwise a metadata title will be used, finally the file name
 	Description      string                   // Description from metadata
+	Encrypted        bool                     // Whether the current file is encrypted
 	Tags             []string                 // Tags from metadata (e.g. development, personal)
 	Category         string                   // Category from metadata (e.g. work, personal)
 	Status           string                   // Status from metadata (e.g. draft, in-progress, completed)

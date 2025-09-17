@@ -15,12 +15,13 @@ const emptyFilePath = "untitled"
 
 // FileRepository manages the core files and directories of the application.
 type FileRepository struct {
-	config        FileConfig
-	rootManager   *RootManager
-	cacheMux      sync.RWMutex
-	lastCacheTime time.Time
-	directoryTree *DirectoryNode
-	fileIndex     map[string]FileInfo
+	config            FileConfig
+	rootManager       *RootManager
+	cacheMux          sync.RWMutex
+	lastCacheTime     time.Time
+	directoryTree     *DirectoryNode
+	fileIndex         map[string]FileInfo
+	encryptionManager *EncryptionManager
 }
 
 // FileConfig holds the configuration for core files and directories.
@@ -50,11 +51,22 @@ func NewFileRepository(rootManager *RootManager, config FileConfig) *FileReposit
 	config.temporalDirectories = []string{config.DailyDirectory, config.JournalDirectory}
 
 	fr := &FileRepository{
-		config:      config,
-		rootManager: rootManager,
+		config:            config,
+		rootManager:       rootManager,
+		encryptionManager: NewEncryptionManager(),
 	}
 
 	return fr
+}
+
+// SetEncryptionManager sets the EncryptionManager for this FileRepository.
+func (fr *FileRepository) SetEncryptionManager(manager *EncryptionManager) {
+	fr.encryptionManager = manager
+}
+
+// EncryptionManager returns the EncryptionManager for this FileRepository.
+func (fr *FileRepository) EncryptionManager() *EncryptionManager {
+	return fr.encryptionManager
 }
 
 // Config returns the current FileConfig.
@@ -202,9 +214,8 @@ func (fr *FileRepository) ReloadResources() {
 	fr.cacheMux.Lock()
 	defer fr.cacheMux.Unlock()
 
-	// If the directory tree is nil, then reload all caches
+	// If the directory tree is nil, there are no resources, so do nothing
 	if fr.directoryTree == nil {
-		fr.ReloadCaches()
 		return
 	}
 

@@ -25,6 +25,47 @@ PADD uses a simple capture → process → execute → store workflow with core 
   deeper thoughts and insights
 - **resources/**: Organized reference material by topic - where processed information lives long-term
 
+## Encryption Features
+
+PADD supports encryption of files using the [age](https://github.com/FiloSottile/age) encryption tool. Enable encryption
+by creating a pair of public and private key files and specifying their locations to the application.
+
+You can use the `-generate-keys` flag to generate a new pair of keys within a given keys directory.
+
+The `keys-dir` flag is used to specify the directory where the public and private keys are stored. Or you can set the
+`PADD_KEYS_DIR` environment variable. If neither the flag nor the environment variable are set, PADD will attempt to
+find the keys directory in the default data directory location (e.g., `~/.local/share/padd/keys`).
+
+The `identity` flag is used to specify the path to the identity file. Or, you can set the `PADD_IDENTITIES_FILE`
+environment variable.
+
+The `recipient` flag is used to specify the path to the recipient file. Or, you can set the `PADD_RECIPIENTS_FILE`
+environment variable.
+
+If no identity file or recipient file is specified, PADD will attempt to find the default identity and recipient files
+in the `keys-dir` directory. The default files are called `key.pub` for the recipient file and `key.txt` for the
+identities file.
+
+Note that both the identity and recipient files can contain multiple keys. Each line in the file represents a key. Empty
+lines and lines starting with `#` are ignored.
+
+## Using Encryption
+
+- In a markdown file, set the `encrypted` metadata field to `true` to encrypt the file.
+
+```markdown
+---
+encrypted: true
+---
+
+# My Secret Note
+```
+
+This will tell the application to encrypt the file using the recipient file public keys when saving the file.
+
+When loading an encrypted file, the application will attempt to decrypt the file using any of the private keys in the
+identities file.
+
 ## Workflow
 
 1. Everything starts in `inbox.md` - capture first, organize later
@@ -71,6 +112,7 @@ Archived tasks appear in daily logs with source context:
 ### 14:32:15
 
 **Archived completed tasks** (from Active Tasks):
+
 - Fix login bug @done(2025-03-01)
 - Update project plan @done(2025-03-02)
 ```
@@ -262,9 +304,9 @@ hyphens and making the link lowercase.
 
 It currently assumes the target file exists as a core file (inbox.md, active.md, daily.md) or in the resources
 directory. Future enhancements may include more robust handling of nested directories and non-existent files, but this
-works for now. It also assumes you are using the normalized naming convention (lowercase, letters, and numbers, 
-with hyphens) for your markdown files. You do not have to add the `.md` extension in the link. It will be added 
-automatically. You also do not need to add the `resources/` prefix for files in that directory. It will first search 
+works for now. It also assumes you are using the normalized naming convention (lowercase, letters, and numbers,
+with hyphens) for your markdown files. You do not have to add the `.md` extension in the link. It will be added
+automatically. You also do not need to add the `resources/` prefix for files in that directory. It will first search
 the core files, then the resources directory.
 
 If a file does not exist, it will show a red error message where the link would be, but it will not break the rest of

@@ -64,7 +64,21 @@ func (d *Document) load() error {
 		return fmt.Errorf("failed to load document %s: %w", d.Info.Path, err)
 	}
 
-	d.content = string(content)
+	if d.repo.encryptionManager.IsActive() &&
+		d.repo.encryptionManager.HasIdentities() {
+		if IsAgeEncrypted(content) {
+			decrypted, err := d.repo.encryptionManager.Decrypt(content)
+			if err != nil {
+				return fmt.Errorf("failed to decrypt document %s: %w", d.Info.Path, err)
+			}
+			d.content = decrypted
+		} else {
+			d.content = string(content)
+		}
+	} else {
+		d.content = string(content)
+	}
+
 	d.loaded = true
 	return nil
 }
@@ -80,8 +94,23 @@ func (d *Document) Content() (string, error) {
 
 // Save writes the document to disk
 func (d *Document) Save(content string) error {
-	if err := d.repo.rootManager.WriteString(d.Info.Path, content); err != nil {
-		return fmt.Errorf("failed to save document %s: %w", d.Info.Path, err)
+
+	if d.repo.encryptionManager.IsActive() &&
+		d.repo.encryptionManager.HasRecipients() &&
+		HasEncryptedFrontmatter(content) {
+
+		encrypted, err := d.repo.encryptionManager.Encrypt(content)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt document %s: %w", d.Info.Path, err)
+		}
+
+		if err := d.repo.rootManager.WriteFile(d.Info.Path, encrypted, 0644); err != nil {
+			return fmt.Errorf("failed to save document %s: %w", d.Info.Path, err)
+		}
+	} else {
+		if err := d.repo.rootManager.WriteString(d.Info.Path, content); err != nil {
+			return fmt.Errorf("failed to save document %s: %w", d.Info.Path, err)
+		}
 	}
 
 	d.content = content

@@ -16,6 +16,9 @@ func TestDocument_AddEntry_InsertByTimestamp_NewerDate(t *testing.T) {
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
+
 	// Create a temporal document (daily) with existing content that has older dates
 	baseTime := time.Date(2025, 9, 15, 10, 0, 0, 0, time.UTC)
 	doc, err := fr.GetOrCreateTemporalDocument("daily", baseTime)
@@ -80,6 +83,9 @@ func TestDocument_AddEntry_InsertByTimestamp_MiddleDate(t *testing.T) {
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
+
 	baseTime := time.Date(2025, 9, 15, 10, 0, 0, 0, time.UTC)
 	doc, err := fr.GetOrCreateTemporalDocument("daily", baseTime)
 	assert.Nil(t, err)
@@ -140,6 +146,9 @@ func TestDocument_AddEntry_InsertByTimestamp_OlderDate(t *testing.T) {
 	fr, _ := setupTestFileRepo(t, tmp)
 	err := fr.Initialize()
 	assert.Nil(t, err)
+
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
 
 	baseTime := time.Date(2025, 9, 15, 10, 0, 0, 0, time.UTC)
 	doc, err := fr.GetOrCreateTemporalDocument("daily", baseTime)
@@ -202,6 +211,9 @@ func TestDocument_AddEntry_InsertByTimestamp_ExistingDate(t *testing.T) {
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
+
 	baseTime := time.Date(2025, 9, 15, 10, 0, 0, 0, time.UTC)
 	doc, err := fr.GetOrCreateTemporalDocument("daily", baseTime)
 	assert.Nil(t, err)
@@ -254,6 +266,9 @@ func TestDocument_AddEntry_InsertByTimestamp_EmptyFile(t *testing.T) {
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
+
 	doc, err := fr.GetOrCreateResourceDocument("empty-doc")
 	assert.Nil(t, err)
 
@@ -283,6 +298,9 @@ func TestDocument_AddEntry_InsertByTimestamp_NoMainHeader(t *testing.T) {
 	fr, _ := setupTestFileRepo(t, tmp)
 	err := fr.Initialize()
 	assert.Nil(t, err)
+
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
 
 	baseTime := time.Date(2025, 9, 15, 10, 0, 0, 0, time.UTC)
 	doc, err := fr.GetOrCreateTemporalDocument("daily", baseTime)
@@ -330,6 +348,9 @@ func TestDocument_AddEntry_PrependToFile(t *testing.T) {
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
+
 	doc, err := fr.GetOrCreateResourceDocument("test-doc")
 	assert.Nil(t, err)
 
@@ -363,6 +384,9 @@ func TestDocument_AddEntry_AppendToFile(t *testing.T) {
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
+
 	doc, err := fr.GetOrCreateResourceDocument("test-doc")
 	assert.Nil(t, err)
 
@@ -395,6 +419,9 @@ func TestDocument_AddEntry_InsertInSection_ExistingSection(t *testing.T) {
 	fr, _ := setupTestFileRepo(t, tmp)
 	err := fr.Initialize()
 	assert.Nil(t, err)
+
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
 
 	doc, err := fr.GetOrCreateResourceDocument("test-doc")
 	assert.Nil(t, err)
@@ -452,6 +479,9 @@ func TestDocument_AddEntry_InsertInSection_NewSection(t *testing.T) {
 	fr, _ := setupTestFileRepo(t, tmp)
 	err := fr.Initialize()
 	assert.Nil(t, err)
+
+	// Explicitly reload caches to ensure we've initialized
+	fr.ReloadCaches()
 
 	doc, err := fr.GetOrCreateResourceDocument("test-doc")
 	assert.Nil(t, err)

@@ -68,6 +68,8 @@ func TestDocument_Save_NewFile(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
 	fr, _ := setupTestFileRepo(t, tmp)
+	fr.ReloadCaches()
+
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
@@ -89,6 +91,8 @@ func TestDocument_Delete(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
 	fr, _ := setupTestFileRepo(t, tmp)
+	fr.ReloadCaches()
+
 	err := fr.Initialize()
 	assert.Nil(t, err)
 
