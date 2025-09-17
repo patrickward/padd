@@ -109,17 +109,10 @@ func getRecipientsFile(flagValue string) string {
 // If there is a keys directory, and it contains a key.pub and key.txt file,
 // those files will be returned as the default keys. Otherwise, an empty list is returned.
 // (e.g., ~/.local/share/padd/keys/key.pub and ~/.local/share/padd/keys/key.txt).
-func getDefaultKeys(dataDir string) (identitiesFile, recipientsFile string) {
+func getDefaultKeys(keysDir string) (identitiesFile, recipientsFile string) {
 	// Check if the data directory exists
-	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		log.Printf("default data directory %s does not exist", dataDir)
-		return "", ""
-	}
-
-	// Check if the keys directory exists
-	keysDir := filepath.Join(dataDir, "keys")
 	if _, err := os.Stat(keysDir); os.IsNotExist(err) {
-		log.Printf("default keys directory %s does not exist", keysDir)
+		log.Printf("the keys directory %s does not exist", keysDir)
 		return "", ""
 	}
 
@@ -165,8 +158,8 @@ func main() {
 	flagSet.StringVar(&identitiesFile, "i", "", "Use the identity file at the specified path for decryption.")
 	flagSet.StringVar(&recipientsFile, "recipient", "", "Use the recipient file at the specified path for encryption.")
 	flagSet.StringVar(&recipientsFile, "r", "", "Use the recipient file at the specified path for encryption.")
-	flagSet.BoolVar(&generateKeys, "generate-keys", false, "Generate new key pari and save to keys-dir.")
-	flagSet.BoolVar(&generateKeys, "g", false, "Generate new key pari and save to keys-dir.")
+	flagSet.BoolVar(&generateKeys, "generate-keys", false, "Generate a new key pair and save to keys-dir.")
+	flagSet.BoolVar(&generateKeys, "g", false, "Generate a new key pair and save to keys-dir.")
 
 	flagSet.IntVar(&port, "port", 8080, "Port to run the server on.")
 	flagSet.IntVar(&port, "p", 8080, "Port to run the server on.")
@@ -239,7 +232,7 @@ func main() {
 	identitiesFile = getIdentitiesFile(identitiesFile)
 	recipientsFile = getRecipientsFile(recipientsFile)
 	if identitiesFile == "" || recipientsFile == "" {
-		identitiesFile, recipientsFile = getDefaultKeys(dataDir)
+		identitiesFile, recipientsFile = getDefaultKeys(keysDir)
 	}
 
 	if err = encryptionManager.LoadEncryptionKeys(identitiesFile, recipientsFile); err != nil {
