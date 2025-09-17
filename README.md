@@ -27,7 +27,7 @@ PADD uses a simple capture → process → execute → store workflow with core 
 
 ## Encryption Features
 
-PADD supports encryption of files using the [age](https://github.com/FiloSottile/age) encryption library. 
+PADD supports encryption of files using the [age](https://github.com/FiloSottile/age) encryption library.
 
 While Go has excellent support for encryption, it also requires the user to consider other security and file handling
 concerns, such as key management and the format of the encrypted file. Age does a lot of that for you
@@ -36,6 +36,10 @@ library to encrypt files, the files themselves are not tied to `padd`. You can u
 decrypt any of the files that `padd` encrypts. So, if for some reason `padd` stops working, you can still decrypt
 files using the `age` command line tool. This is much simpler and more robust that building a `padd` specific approach
 to encryption.
+
+As for the utility of encryption, I was mainly concerned about storing sensitive information in plain text, especially
+when storing for backups or in a git repository, which is where I store my notes. Most files don't need to be encrypted,
+but some files, such as journal entries, do.
 
 ### Encryption Configuration
 
@@ -48,10 +52,10 @@ The `keys-dir` flag is used to specify the directory where the public and privat
 find the keys directory in the default data directory location (e.g., `~/.local/share/padd/keys`).
 
 The `identity` flag is used to specify the path to the identity file. Or, you can set the `PADD_IDENTITIES_FILE`
-environment variable. Note that this can be used to specify a single identity file outside of the keys directory.
+environment variable. Note that this can be used to specify a single identity file outside the keys directory.
 
 The `recipient` flag is used to specify the path to the recipient file. Or, you can set the `PADD_RECIPIENTS_FILE`
-environment variable. Note that this can be used to specify a single recipient file outside of the keys directory.
+environment variable. Note that this can be used to specify a single recipient file outside the keys directory.
 
 If no identity file or recipient file is specified, PADD will attempt to find the default identity and recipient files
 in the `keys-dir` directory. The default files are called `key.pub` for the recipient file and `key.txt` for the

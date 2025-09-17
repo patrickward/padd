@@ -300,8 +300,8 @@ func GenerateNewEncryptionPair(keysDir string) (publicKey, privateKey, publicPat
 }
 
 // LoadEncryptionKeys loads encryption keys from the specified files.
-// Identities are a comma-separated list of files.
-// Recipients are a comma-separated list of public keys.
+// identitiesFile: file containing one or more age identities as described in the age spec
+// recipientsFile: file containing one or more age recipient public keys
 func (em *EncryptionManager) LoadEncryptionKeys(identitiesFile, recipientsFile string) error {
 	// If identities is empty, return immediately
 	if identitiesFile == "" {
