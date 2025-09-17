@@ -65,7 +65,7 @@ run/live:
 	go run github.com/air-verse/air@v1.62.0 \
 		--build.cmd "make build" \
 		--build.bin "tmp/bin/padd" \
-		--build.args_bin "-data, ./data" \
+		--build.args_bin "-data, ./data, -keys-dir ./data/keys" \
 		--build.delay "250" \
 		--build.exclude_dir "data, node_modules" \
 		--build.include_ext "go, tpl, tmpl, html, css, scss, js, ts, sql, jpeg, jpg, gif, png, bmp, svg, webp, ico" \
@@ -86,11 +86,11 @@ install:
 ## install-service: install the service management script
 .PHONY: install-service
 install-service:
-	@mkdir -p $(HOME)/bin
-	@cp scripts/padd-service.sh $(HOME)/bin/padd-service
-	@chmod +x $(HOME)/bin/padd-service
-	@echo "Service script installed to $(HOME)/bin/padd-service"
-	@echo "Make sure $(HOME)/bin is in your PATH"
+	@mkdir -p $(HOME)/.local/bin
+	@cp scripts/padd-service.sh $(HOME)/.local/bin/padd-service
+	@chmod +x $(HOME)/.local/bin/padd-service
+	@echo "Service script installed to $(HOME)/.local/bin/padd-service"
+	@echo "Make sure $(HOME)/.local/bin is in your PATH"
 
 ## install-all: install both the application and service script
 .PHONY: install-all
@@ -102,48 +102,21 @@ install-all: install install-service
 # SERVICE MANAGEMENT
 # ==================================================================================== #
 
-## service-start: start the padd service
-.PHONY: service-start
-service-start:
-	@if [ -x $(HOME)/bin/padd-service ]; then \
-		$(HOME)/bin/padd-service start; \
+## service-info: information about padd-service
+.PHONY: service-info
+service-info:
+	@if [ -x $(HOME)/.local/bin/padd-service ]; then \
+  		$(HOME)/.local/bin/padd-service \
 	else \
 		echo "Service script not installed. Run 'make install-service' first."; \
 	fi
 
-## service-stop: stop the padd service
-.PHONY: service-stop
-service-stop:
-	@if [ -x $(HOME)/bin/padd-service ]; then \
-		$(HOME)/bin/padd-service stop; \
-	else \
-		echo "Service script not installed. Run 'make install-service' first."; \
-	fi
-
-## service-restart: restart the padd service
-.PHONY: service-restart
-service-restart:
-	@if [ -x $(HOME)/bin/padd-service ]; then \
-		$(HOME)/bin/padd-service restart; \
-	else \
-		echo "Service script not installed. Run 'make install-service' first."; \
-	fi
-
-## service-status: show padd service status
-.PHONY: service-status
-service-status:
-	@if [ -x $(HOME)/bin/padd-service ]; then \
-		$(HOME)/bin/padd-service status; \
-	else \
-		echo "Service script not installed. Run 'make install-service' first."; \
-	fi
-
-## update-and-restart: install updated binary and restart service
-.PHONY: update-and-restart
-update-and-restart: install
-	@if [ -x $(HOME)/bin/padd-service ]; then \
+## reinstall-and-restart: install an updated binary and restart service
+.PHONY: reinstall-and-restart
+reinstall-and-restart: install
+	@if [ -x $(HOME)/.local/bin/padd-service ]; then \
 		echo "Restarting service with updated binary..."; \
-		$(HOME)/bin/padd-service restart; \
+		$(HOME)/.local/bin/padd-service restart; \
 	else \
 		echo "Service script not installed. The binary has been updated, but you'll need to manually restart if running."; \
 	fi
