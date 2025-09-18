@@ -1,7 +1,11 @@
-# PADD - Personal Assistant for Daily Documentation
+# PADD - Personal Archives and Data Directory
 
 A simple, local, markdown-based personal information system for capturing and organizing thoughts, tasks, and
-knowledge. PADD serves as a personal command center for managing my daily workflow and information.
+knowledge. PADD serves as a personal command center for managing my daily workflow and information. 
+
+The name is a playful nod to Star Trek's _PADD (Personal Access Display Device)_. 
+
+Make it so.
 
 ### Why?
 
@@ -29,7 +33,7 @@ PADD uses a simple capture → process → execute → store workflow with core 
 
 PADD supports encryption of files using the [age](https://github.com/FiloSottile/age) encryption library.
 
-While Go has excellent support for encryption, it also requires the user to consider other security and file handling
+While Go has excellent support for encryption, it also requires you to consider other security and file handling
 concerns, such as key management and the format of the encrypted file. Age does a lot of that for you
 and it's well maintained by people much smarter than I am when it comes to cryptography. In addition, by using the `age`
 library to encrypt files, the files themselves are not tied to `padd`. You can use the `age` command line tool to
@@ -49,7 +53,7 @@ Use the `-generate-keys` flag to generate a new pair of keys within the keys dir
 
 The `keys-dir` flag is used to specify the directory where the public and private keys are stored. Or you can set the
 `PADD_KEYS_DIR` environment variable. If neither the flag nor the environment variable are set, PADD will attempt to
-find the keys directory in the default data directory location (e.g., `~/.local/share/padd/keys`).
+find the keys directory in the default keys-dir directory location (e.g., `~/.local/share/padd/keys`).
 
 The `identity` flag is used to specify the path to the identity file. Or, you can set the `PADD_IDENTITIES_FILE`
 environment variable. Note that this can be used to specify a single identity file outside the keys directory.
@@ -79,9 +83,13 @@ encrypted: true
 This will tell the application to encrypt the file using the recipient file public keys when saving the file.
 
 When loading an encrypted file, the application will attempt to decrypt the file using any of the private keys in the
-identities file.
+identities file. The loading process looks for files that have the `age-encryption.org/v1` header. If it finds one, it
+will attempt to decrypt the file using the identity file private keys. If it can't find a private key that matches the
+public key in the header, it will throw an error.
 
 ## Workflow
+
+My workflow is simple:
 
 1. Everything starts in `inbox.md` - capture first, organize later
 2. During regular processing, move items from inbox to either:
@@ -96,11 +104,11 @@ identities file.
 
 ## Task Management
 
-PADD provides interactive task management within any markdown file. Tasks use standard markdown checkbox syntax and a
+PADD provides interactive task management within any markdown file. Tasks use a simple checkbox syntax and a
 few additional features:
 
-- **Interactive Checkboxes**: Click to toggle completion status
-- **In-line Editing**: Edit task text directly in the browser
+- **Interactive Checkboxes**: Click a checkbox to toggle completion status
+- **In-line Editing**: Click on a tasks's label to edit its text directly in the browser
 - **Automatic Timestamping**: Completed tasks get `@done(YYYY-MM-DD)` tags
 - **Task Archiving**: Move completed tasks from any file to a current daily log entry
 - **Individual Operations**: Edit, delete, or toggle individual tasks
@@ -178,38 +186,35 @@ resources/
 ├── learning/            # Course notes, articles, research
 │   └── python-notes.md
 └── meetings/            # Meeting notes and decisions
-└── 2024-01-standup.md
+    └── 2024-01-standup.md
 ```
 
 ## Installation and Usage
 
 1. Clone or download the repository
 2. Build the application: `go build`
-3. Run the server: `./padd`
+3. Run the server: `./tmp/padd`
 4. Open <http://localhost:8080> in your browser
 
 ## There are some Makefile targets to help with development and local installation:
 
 ```text
 Usage of make:
-  version              print the version of the padd application
-  help                 print this help message
-  audit                run quality control checks
-  test                 run all tests
-  test/cover           run all tests and display coverage
-  upgradeable          list direct dependencies that have upgrades available
-  tidy                 tidy modfiles and format .go files
-  build                build the padd application
-  run                  run the padd application
-  run/live             run the application with reloading on file changes
-  install              install the padd application using go install
-  install-service      install the service management script
-  install-all          install both the application and service script
-  service-start        start the padd service
-  service-stop         stop the padd service
-  service-restart      restart the padd service
-  service-status       show padd service status
-  update-and-restart   install updated binary and restart service
+  version                 print the version of the padd application
+  help                    print this help message
+  audit                   run quality control checks
+  test                    run all tests
+  test/cover              run all tests and display coverage
+  upgradeable             list direct dependencies that have upgrades available
+  tidy                    tidy modfiles and format .go files
+  build                   build the padd application
+  run                     run the padd application
+  run/live                run the application with reloading on file changes
+  install                 install the padd application using go install
+  install-service         install the service management script
+  install-all             install both the application and service script
+  service-info            information on the current padd-service service
+  reinstall-and-restart   install the updated binary and restart service
 ```
 
 ## Data Directory Configuration
@@ -219,6 +224,8 @@ PADD uses a tiered approach to determine where to store markdown files:
 1. **Command-line flag** (`-data`) - highest precedence
 2. **Environment variable** (`PADD_DATA_DIR`) - if flag not set and variable is defined
 3. **XDG standard location** - fallback to `$XDG_DATA_HOME/padd` or `$HOME/.local/share/padd`
+
+You should use a full path to the data directory.
 
 Examples:
 
@@ -237,11 +244,15 @@ export PADD_DATA_DIR=/path/to/my/notes
 ## Command Line Options
 
 ```
--data, -d string    Directory to store markdown files
--port, -p int       Port to run the server on (default 8080)
--addr, -a string    Address to bind the server to (default "localhost")
--version, -v       Show version information
--help, -h          Show help message
+-addr, -a string        Address to bind the server to (default "localhost")
+-data, -d string        Directory to store markdown files
+-generate-keys, -g      Generate new public and private keys in the keys directory
+-identity, -i string    Identity file to use for encryption (default "$XDG_DATA_HOME/padd/keys/key.pub")
+-keys-dir, -k string    Directory to store public and private keys (default "$XDG_DATA_HOME/padd/keys")
+-port, -p int           Port to run the server on (default 8080)
+-recipient, -r string   Recipient file to use for encryption (default "$XDG_DATA_HOME/padd/keys/key.txt")
+-version, -v            Show version information
+-help, -h               Show help message
 ```
 
 ## Image and SVG Handling
@@ -279,7 +290,7 @@ For example, to use the Heart icon, you can include it in your markdown like thi
 
 ### SVGs are Inlined
 
-PADD inlines SVG files for better performance and styling flexibility. When you reference an SVG file in your markdown
+PADD inlines SVG files for better performance and styling. When you reference an SVG file in your markdown
 using markdown syntax, PADD will embed the SVG content directly into the HTML output instead of linking to it as an
 external file. This allows for easier customization with CSS and ensures that the SVG scales properly with your layout.
 
@@ -294,10 +305,10 @@ PADD will inline the SVG content when rendering the markdown, allowing you to st
 
 ### Icon Shortcodes
 
-Because icons often need some styling and used frequently, PADD supports a simple shortcode syntax for including icons
+Because icons are used frequently, PADD supports a simple shortcode syntax for including icons
 in your markdown files. The shortcode format is as follows: `::icon-name::`. This will render the specified icon with
 default styling by looking for the corresponding SVG file in the `images/icons/` directory, either in the embedded
-resources or your data directory.
+resources or your data directory. **There is not currently any support for custom styling of icons using shortcodes.**
 
 For example, to include the Heart icon, you can use the following shortcode in your markdown:
 
@@ -317,12 +328,11 @@ PADD supports a simple wiki-style link syntax for linking between markdown files
 `[[page-name]]`. This will create a link to the corresponding markdown file in your data directory, converting spaces to
 hyphens and making the link lowercase.
 
-It currently assumes the target file exists as a core file (inbox.md, active.md, daily.md) or in the resources
-directory. Future enhancements may include more robust handling of nested directories and non-existent files, but this
-works for now. It also assumes you are using the normalized naming convention (lowercase, letters, and numbers,
-with hyphens) for your markdown files. You do not have to add the `.md` extension in the link. It will be added
-automatically. You also do not need to add the `resources/` prefix for files in that directory. It will first search
-the core files, then the resources directory.
+It currently supports linking to any file in the data directory, including core files, temporal files, and resources.
+
+You do not need to add the `.md` extension in the link. It will be added automatically. You also do not need to add the
+`resources/` prefix for files in that directory. It will first search the core files, then the resources directory. Any
+other files, sucha s core and temporal files, require the full path.
 
 If a file does not exist, it will show a red error message where the link would be, but it will not break the rest of
 the markdown rendering.
@@ -380,11 +390,13 @@ properties that can be used in rendering and organization. The currently support
 - `author`: The author of the document.
 - `tags`: A list of tags associated with the document.
 - `contexts`: A list of contexts associated with the document.
+- `encrypted`: A boolean value indicating whether the document should be encrypted on save. Positive values accepted are
+  `true` or `yes`.
 
 ### Status and Priority Colors
 
-There are default colors associated with common status and priority values. You can customize these colors in the source
-code if desired.
+There are default colors associated with common status and priority values. You can customize these colors using the
+the `metadata.json` file in your data directory.
 
 The colors use the KelpUI color scheme. See [KelpUI](https://kelpui.com/) for details.
 
@@ -437,6 +449,10 @@ Example `metadata.json`:
 
 ## Limitations
 
+PADD is intentionally simple and designed for single-user, local operation. Several features are deliberately omitted or
+handled manually. Some of this may be improved in future versions, but many limitations are by design to keep the system
+lightweight and maintainable. 
+
 See [limitations.md](limitations.md)
 
 ## Possible Future Enhancements
@@ -464,6 +480,7 @@ See [limitations.md](limitations.md)
 
 ## Credits
 
+- Encryption support: [age](https://github.com/FiloSottile/age)
 - CSS framework: [KelpUI](https://kelpui.com)
 - Markdown rendering: [Goldmark](https://github.com/yuin/goldmark)
 - Embedded icons: [Remix Icon](https://remixicon.com/)
