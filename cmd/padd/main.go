@@ -12,9 +12,13 @@ import (
 )
 
 const (
-	appName      = "PADD"
-	appVersion   = "0.1.0"
-	resourcesDir = "resources"
+	appName           = "PADD"
+	appVersion        = "0.1.0"
+	resourcesDir      = "resources"
+	envPaddData       = "PADD_DATA_DIR"
+	envPaddKeys       = "PADD_KEYS_DIR"
+	envPaddIdentities = "PADD_IDENTITIES_FILE"
+	envPaddRecipients = "PADD_RECIPIENTS_FILE"
 )
 
 // getXDGDataHome determines the XDG_DATA_HOME directory.
@@ -31,17 +35,17 @@ func getXDGDataHome() (string, error) {
 	return xdgDataHome, nil
 }
 
-// getDataDirectory determines the data directory using a tiered approach:
-// 1. the command-line flag (-data) takes the highest precedence.
-// 2. Environment variable PADD_DATA_DIR if a flag is not set.
-// 3. XDG_DATA_HOME/padd or $HOME/.local/share/padd as fallback.
-func getDataDirectory(flagValue string) (string, error) {
+// getConfigDataDirectory determines the data directory using a tiered approach:
+// 1. The command-line flag value (e.g., -some-flag) takes the highest precedence.
+// 2. The environment variable (e.g., PADD_SOME_VAR) if a flag is not set.
+// 3. XDG_DATA_HOME/padd/subdirectory as a fallback.
+func getConfigDataDirectory(flagValue, envVar, subdirectory string) (string, error) {
 	if flagValue != "" {
 		return flagValue, nil
 	}
 
-	if envDir := os.Getenv("PADD_DATA_DIR"); envDir != "" {
-		return envDir, nil
+	if envValue := os.Getenv(envVar); envValue != "" {
+		return envValue, nil
 	}
 
 	xdgDataHome, err := getXDGDataHome()
@@ -49,60 +53,23 @@ func getDataDirectory(flagValue string) (string, error) {
 		return "", fmt.Errorf("unable to determine XDG_DATA_HOME: %v", err)
 	}
 
-	return filepath.Join(xdgDataHome, "padd"), nil
+	return filepath.Join(xdgDataHome, "padd", subdirectory), nil
 }
 
-// getKeysDirectory determines the keys directory using a tiered approach:
-// 1. The command-line flag (-keys-dir) takes the highest precedence.
-// 2. Environment variable PADD_KEYS_DIR if a flag is not set.
-// 3. XDG_DATA_HOME/padd/keys or $HOME/.local/share/padd/keys as fallback.
-func getKeysDirectory(flagValue string) (string, error) {
-	if flagValue != "" {
-		return flagValue, nil
-	}
-
-	if keysDir := os.Getenv("PADD_KEYS_DIR"); keysDir != "" {
-		return keysDir, nil
-	}
-
-	xdgDataHome, err := getXDGDataHome()
-	if err != nil {
-		return "", fmt.Errorf("unable to determine XDG_DATA_HOME: %v", err)
-	}
-
-	return filepath.Join(xdgDataHome, "padd", "keys"), nil
-}
-
-// getIdentitiesFile determines the identities file using a tiered approach:
-// 1. The command-line flag (-identity) takes the highest precedence.
-// 2. Environment variable PADD_IDENTITIES_FILE if a flag is not set.
-// 3. Empty string as fallback.
-func getIdentitiesFile(flagValue string) string {
+// getConfigValue determines the value using a tiered approach:
+// 1. The command-line flag value (e.g., -some-flag) takes the highest precedence.
+// 2. The environment variable PADD_<ENV_VAR> if a flag is not set.
+// 3. The default value as a fallback.
+func getConfigValue(flagValue, envVar, defaultValue string) string {
 	if flagValue != "" {
 		return flagValue
 	}
 
-	if file := os.Getenv("PADD_IDENTITIES_FILE"); file != "" {
-		return file
+	if envValue := os.Getenv(envVar); envValue != "" {
+		return envValue
 	}
 
-	return ""
-}
-
-// getRecipientsFile determines the recipients file using a tiered approach:
-// 1. The command-line flag (-recipient) takes the highest precedence.
-// 2. Environment variable PADD_RECIPIENTS_FILE if a flag is not set.
-// 3. Empty string as fallback.
-func getRecipientsFile(flagValue string) string {
-	if flagValue != "" {
-		return flagValue
-	}
-
-	if file := os.Getenv("PADD_RECIPIENTS_FILE"); file != "" {
-		return file
-	}
-
-	return ""
+	return defaultValue
 }
 
 // getDefaultKeys returns any default keys found in the data directory
@@ -195,7 +162,7 @@ func main() {
 	}
 
 	// Resolve the keys directory.
-	keysDir, err := getKeysDirectory(keysDirFlag)
+	keysDir, err := getConfigDataDirectory(keysDirFlag, envPaddKeys, "keys")
 	if err != nil {
 		log.Fatal(fmt.Errorf("error determining keys directory: %v", err))
 	}
@@ -222,15 +189,15 @@ func main() {
 	}
 
 	// Resolve the data directory.
-	dataDir, err := getDataDirectory(dataDirFlag)
+	dataDir, err := getConfigDataDirectory(dataDirFlag, envPaddData, "data")
 	if err != nil {
 		log.Fatal(fmt.Errorf("error determining data directory: %v", err))
 	}
 
 	// Set up the encryption config
 	encryptionManager := padd.NewEncryptionManager()
-	identitiesFile = getIdentitiesFile(identitiesFile)
-	recipientsFile = getRecipientsFile(recipientsFile)
+	identitiesFile = getConfigValue(identitiesFile, envPaddIdentities, "")
+	recipientsFile = getConfigValue(recipientsFile, envPaddRecipients, "")
 	if identitiesFile == "" || recipientsFile == "" {
 		identitiesFile, recipientsFile = getDefaultKeys(keysDir)
 	}
