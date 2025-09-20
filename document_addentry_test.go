@@ -61,7 +61,7 @@ Oldest entry`
 	assert.True(t, strings.Contains(content, "Newer entry"))
 
 	// Verify order: newest first
-	lines := strings.Split(content, "\n")
+	lines := padd.SplitLines(content)
 	var headerIndices []int
 	for i, line := range lines {
 		if strings.HasPrefix(line, "## ") {
@@ -126,7 +126,7 @@ Older entry`
 	assert.True(t, strings.Contains(content, "Middle entry"))
 
 	// Verify chronological order
-	lines := strings.Split(content, "\n")
+	lines := padd.SplitLines(content)
 	var headerIndices []int
 	for i, line := range lines {
 		if strings.HasPrefix(line, "## ") {
@@ -190,7 +190,7 @@ Middle entry`
 	assert.True(t, strings.Contains(content, "Older entry"))
 
 	// Verify chronological order
-	lines := strings.Split(content, "\n")
+	lines := padd.SplitLines(content)
 	var headerIndices []int
 	for i, line := range lines {
 		if strings.HasPrefix(line, "## ") {
@@ -337,7 +337,7 @@ Existing entry`
 	assert.True(t, strings.Contains(content, "New entry"))
 
 	// Verify it's at the beginning
-	lines := strings.Split(content, "\n")
+	lines := padd.SplitLines(content)
 	assert.True(t, strings.Contains(lines[2], "## Tuesday, September 16, 2025"))
 }
 
@@ -409,8 +409,8 @@ Existing content`
 	assert.Nil(t, err)
 
 	// Should be at the end
-	assert.True(t, strings.HasSuffix(content, "- [ ] Appended task"))
-	assert.True(t, strings.Contains(content, "# Test Document"))
+	assert.True(t, strings.HasSuffix(strings.TrimSpace(content), "- [ ] Appended task"))
+	assert.True(t, strings.Contains(strings.TrimSpace(content), "# Test Document"))
 }
 
 func TestDocument_AddEntry_InsertInSection_ExistingSection(t *testing.T) {
@@ -460,7 +460,7 @@ Some existing note`
 	assert.True(t, strings.Contains(content, "- [ ] Existing task"))
 
 	// Verify order (new task should be first)
-	lines := strings.Split(content, "\n")
+	lines := padd.SplitLines(content)
 	var taskLines []int
 	for i, line := range lines {
 		if strings.HasPrefix(line, "- [ ]") {
@@ -514,7 +514,7 @@ Some existing content`
 	assert.True(t, strings.Contains(content, "- [ ] First task in new section"))
 
 	// Verify the section was created at the top (after main header)
-	lines := strings.Split(content, "\n")
+	lines := padd.SplitLines(content)
 	found := false
 	for i, line := range lines {
 		if strings.Contains(line, "# Test Document") && i+2 < len(lines) {

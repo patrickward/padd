@@ -69,7 +69,7 @@ func (s *Server) searchFile(file padd.FileInfo, query string) []padd.SearchMatch
 		return matches
 	}
 
-	lines := strings.Split(string(content), "\n")
+	lines := padd.SplitLines(string(content))
 	matchIndex := 1 // To track the occurrence of matches in a line
 	queryLower := strings.ToLower(query)
 	for i, line := range lines {

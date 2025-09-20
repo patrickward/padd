@@ -222,7 +222,7 @@ func IsAgeEncrypted(content []byte) bool {
 
 // HasEncryptedFrontmatter checks if content has encrypted: true in frontmatter
 func HasEncryptedFrontmatter(content string) bool {
-	lines := strings.Split(content, "\n")
+	lines := SplitLines(content)
 
 	bounds := findFrontmatter(lines)
 	if !bounds.Found {

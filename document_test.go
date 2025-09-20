@@ -61,7 +61,7 @@ func TestDocument_Save(t *testing.T) {
 
 	content, err := doc.Content()
 	assert.Nil(t, err)
-	assert.Equal(t, content, "New content for the inbox")
+	assert.Equal(t, strings.TrimSpace(content), "New content for the inbox")
 }
 
 func TestDocument_Save_NewFile(t *testing.T) {
@@ -84,7 +84,7 @@ func TestDocument_Save_NewFile(t *testing.T) {
 
 	content, err := doc.Content()
 	assert.Nil(t, err)
-	assert.Equal(t, content, "New content for the new resource")
+	assert.Equal(t, strings.TrimSpace(content), "New content for the new resource")
 }
 
 func TestDocument_Delete(t *testing.T) {

@@ -130,7 +130,7 @@ func (mr *MarkdownRenderer) renderWithOptions(content string, opts RenderOptions
 
 // applySearchHighlighting applies search highlighting to the given content.
 func (mr *MarkdownRenderer) applySearchHighlighting(content string, opts RenderOptions) string {
-	lines := strings.Split(content, "\n")
+	lines := SplitLines(content)
 	queryLower := strings.ToLower(opts.SearchQuery)
 	matchIndex := 1
 

@@ -25,7 +25,7 @@ func NewMarkdownPreprocessor(fileRepo *FileRepository) *MarkdownPreprocessor {
 }
 
 func (mp *MarkdownPreprocessor) Process(content string) PreprocessingResult {
-	lines := strings.Split(content, "\n")
+	lines := SplitLines(content)
 
 	// Compile regexes once for efficiency
 	titleRe := regexp.MustCompile(`^#\s+(.+)$`)

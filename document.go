@@ -102,7 +102,6 @@ func (d *Document) Save(content string) error {
 		d.repo.encryptionManager.HasRecipients() &&
 		HasEncryptedFrontmatter(content) {
 
-		log.Println("!! @ Encrypting document")
 		encrypted, err := d.repo.encryptionManager.Encrypt(content)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt document %s: %w", d.Info.Path, err)
@@ -112,7 +111,6 @@ func (d *Document) Save(content string) error {
 			return fmt.Errorf("failed to save document %s: %w", d.Info.Path, err)
 		}
 	} else {
-		log.Println("!! @ Not encrypting document")
 		if err := d.repo.rootManager.WriteString(d.Info.Path, content); err != nil {
 			return fmt.Errorf("failed to save document %s: %w", d.Info.Path, err)
 		}
@@ -141,7 +139,7 @@ func (d *Document) AddEntry(entry string, config EntryInsertionConfig) error {
 		return nil
 	}
 
-	lines := strings.Split(d.content, "\n")
+	lines := SplitLines(d.content)
 	formattedEntry := config.EntryFormatter(entry, config.Timestamp())
 
 	var result []string
