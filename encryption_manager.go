@@ -233,8 +233,8 @@ func HasEncryptedFrontmatter(content string) bool {
 	for i := bounds.Start + 1; i < bounds.End; i++ {
 		line := strings.TrimSpace(lines[i])
 		if strings.HasPrefix(line, "encrypted:") {
-			value := strings.TrimPrefix(line, "encrypted:")
-			return strings.ToLower(value) == "true" || strings.ToLower(value) == "yes"
+			value := strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "encrypted:")))
+			return value == "true" || value == "yes"
 		}
 	}
 
