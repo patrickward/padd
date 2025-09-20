@@ -222,24 +222,19 @@ func IsAgeEncrypted(content []byte) bool {
 
 // HasEncryptedFrontmatter checks if content has encrypted: true in frontmatter
 func HasEncryptedFrontmatter(content string) bool {
-	if !strings.HasPrefix(content, "---\n") {
+	lines := strings.Split(content, "\n")
+
+	bounds := findFrontmatter(lines)
+	if !bounds.Found {
 		return false
 	}
-
-	endIdx := strings.Index(content[4:], "\n---\n")
-	if endIdx == -1 {
-		return false
-	}
-
-	frontmatter := content[4 : endIdx+4]
 
 	// Parse frontmatter lines
-	scanner := bufio.NewScanner(strings.NewReader(frontmatter))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	for i := bounds.Start + 1; i < bounds.End; i++ {
+		line := strings.TrimSpace(lines[i])
 		if strings.HasPrefix(line, "encrypted:") {
-			value := strings.TrimSpace(strings.TrimPrefix(line, "encrypted:"))
-			return value == "true" || value == "yes"
+			value := strings.TrimPrefix(line, "encrypted:")
+			return strings.ToLower(value) == "true" || strings.ToLower(value) == "yes"
 		}
 	}
 

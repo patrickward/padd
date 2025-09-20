@@ -94,11 +94,15 @@ func (d *Document) Content() (string, error) {
 
 // Save writes the document to disk
 func (d *Document) Save(content string) error {
+	// Remove space at the front of the content
+	content = strings.TrimSpace(content)
+	content += "\n"
 
 	if d.repo.encryptionManager.IsActive() &&
 		d.repo.encryptionManager.HasRecipients() &&
 		HasEncryptedFrontmatter(content) {
 
+		log.Println("!! @ Encrypting document")
 		encrypted, err := d.repo.encryptionManager.Encrypt(content)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt document %s: %w", d.Info.Path, err)
@@ -108,6 +112,7 @@ func (d *Document) Save(content string) error {
 			return fmt.Errorf("failed to save document %s: %w", d.Info.Path, err)
 		}
 	} else {
+		log.Println("!! @ Not encrypting document")
 		if err := d.repo.rootManager.WriteString(d.Info.Path, content); err != nil {
 			return fmt.Errorf("failed to save document %s: %w", d.Info.Path, err)
 		}
@@ -222,8 +227,15 @@ func (d *Document) insertInSection(lines []string, formattedEntry string, config
 func (d *Document) insertByTimestamp(lines []string, formattedEntry string, timestamp time.Time) []string {
 	dayHeader := fmt.Sprintf("## %s", timestamp.Format("Monday, January 2, 2006"))
 
-	// Find the insertion point after the main header
+	// Find the insertion point after any frontmatter and the main header
 	insertPos := 0
+
+	// Look for frontmatter and skip it
+	bounds := findFrontmatter(lines)
+	if bounds.Found {
+		insertPos = bounds.End + 1
+	}
+
 	for i, line := range lines {
 		if strings.HasPrefix(strings.TrimSpace(line), "# ") {
 			insertPos = i + 1
@@ -312,8 +324,16 @@ func (d *Document) insertByTimestamp(lines []string, formattedEntry string, time
 
 // createNewSection creates a new section and adds the entry
 func (d *Document) createNewSection(lines []string, formattedEntry string, config SectionInsertionConfig) []string {
-	// Find where to insert the new section (after main header)
+	// Find the insertion point after any frontmatter and the main header
 	insertPos := 0
+
+	// Look for frontmatter and skip it
+	bounds := findFrontmatter(lines)
+	if bounds.Found {
+		insertPos = bounds.End + 1
+	}
+
+	// Look for main header
 	for i, line := range lines {
 		if strings.HasPrefix(line, "# ") {
 			insertPos = i + 1
