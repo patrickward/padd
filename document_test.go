@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/patrickward/padd/assert"
+	"github.com/patrickward/padd/internal/assert"
 )
 
 func TestDocument_Content(t *testing.T) {

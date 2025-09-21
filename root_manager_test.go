@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/patrickward/padd"
-	"github.com/patrickward/padd/assert"
+	"github.com/patrickward/padd/internal/assert"
 )
 
 const defaultDataDir = "./testdata/data"

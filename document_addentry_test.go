@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/patrickward/padd"
-	"github.com/patrickward/padd/assert"
+	"github.com/patrickward/padd/internal/assert"
 )
 
 func TestDocument_AddEntry_InsertByTimestamp_NewerDate(t *testing.T) {
