@@ -35,8 +35,6 @@ func (s *Server) addMetadataToPageData(data padd.PageData, metadata map[string]a
 	data.Author = getMetadataString(metadata, "author", data.Author)
 	data.Tags = getMetadataStringSlice(metadata, "tags")
 	data.Contexts = getMetadataStringSlice(metadata, "contexts")
-	data.PADDVersion = appVersion
-	data.PADDDataDir = s.dataDir
 	return data
 }
 

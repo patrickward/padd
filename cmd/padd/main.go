@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 
 	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/version"
 )
 
 const (
 	appName           = "PADD"
-	appVersion        = "0.1.0"
 	resourcesDir      = "resources"
 	envPaddData       = "PADD_DATA_DIR"
 	envPaddKeys       = "PADD_KEYS_DIR"
@@ -156,7 +156,7 @@ func main() {
 	}
 
 	if showVersion {
-		fmt.Printf("PADD version %s\n", appVersion)
+		fmt.Printf("version: %s\n", version.Get())
 		os.Exit(0)
 		return
 	}
