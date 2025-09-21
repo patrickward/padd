@@ -337,9 +337,6 @@
 
         const result = await response.json()
 
-        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        console.log(result)
-
         if (result.success) {
           urlInput.value = result.dataUri
 

@@ -1,7 +1,8 @@
 package main
 
 import (
-	"encoding/base64"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/patrickward/padd"
 )
@@ -138,6 +140,7 @@ type ImageUploadResponse struct {
 	Error   string `json:"error,omitempty"`
 }
 
+// handleImageUpload handles image uploads
 func (s *Server) handleImageUpload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -176,7 +179,7 @@ func (s *Server) handleImageUpload(w http.ResponseWriter, r *http.Request) {
 	if contentType == "" {
 		response := ImageUploadResponse{
 			Success: false,
-			Error:   fmt.Sprintf("Unsupported file type: %s", ext),
+			Error:   fmt.Sprintf("Unsupported file type: %s. Accepted types: .svg, .png, .jpg, .jpeg, .gif, .webp, .ico", ext),
 		}
 		s.respondWithJSONError(w, response, http.StatusBadRequest)
 		return
@@ -193,15 +196,40 @@ func (s *Server) handleImageUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Encode to base64
-	base64Content := base64.StdEncoding.EncodeToString(fileContent)
-	dataURI := fmt.Sprintf("data:%s;base64,%s", contentType, base64Content)
+	filename := s.generateImageFilename(fileContent, ext)
 
+	uploadsDir := "images/uploads"
+	if err := s.rootManager.MkdirAll(uploadsDir, 0755); err != nil {
+		s.respondWithJSONError(w, ImageUploadResponse{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to create uploads directory: %v", err),
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	imagePath := filepath.Join(uploadsDir, filename)
+	if err := s.rootManager.WriteFile(imagePath, fileContent, 0644); err != nil {
+		s.respondWithJSONError(w, ImageUploadResponse{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to save uploaded file: %v", err),
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	imageURL := fmt.Sprintf("/images/uploads/%s", filename)
 	response := ImageUploadResponse{
 		Success: true,
-		DataURI: dataURI,
+		DataURI: imageURL,
 	}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		s.showServerError(w, r, err)
 	}
+}
+
+// generateImageFilename generates a unique filename for an image based on its content
+func (s *Server) generateImageFilename(content []byte, ext string) string {
+	hash := sha256.Sum256(content)
+	hashStr := hex.EncodeToString(hash[:])[:12] // Use first 12 characters of the hash
+	timestamp := time.Now().Format("20060102-150405")
+	return fmt.Sprintf("%s-%s%s", timestamp, hashStr, ext)
 }
