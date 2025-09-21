@@ -1,12 +1,13 @@
-package padd_test
+package files_test
 
 import (
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/patrickward/padd"
 	"github.com/patrickward/padd/internal/assert"
+	"github.com/patrickward/padd/internal/contentutil"
+	"github.com/patrickward/padd/internal/files"
 )
 
 func TestDocument_AddEntry_InsertByTimestamp_NewerDate(t *testing.T) {
@@ -43,10 +44,10 @@ Oldest entry`
 
 	// Add entry with newer timestamp (should go at the top)
 	newerTime := time.Date(2025, 9, 16, 14, 30, 0, 0, time.UTC)
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertByTimestamp,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertByTimestamp,
 		EntryTimestamp: newerTime,
-		EntryFormatter: padd.TimestampEntryFormatter,
+		EntryFormatter: files.TimestampEntryFormatter,
 	}
 
 	err = doc.AddEntry("Newer entry", config)
@@ -61,7 +62,7 @@ Oldest entry`
 	assert.True(t, strings.Contains(content, "Newer entry"))
 
 	// Verify order: newest first
-	lines := padd.SplitLines(content)
+	lines := contentutil.SplitLines(content)
 	var headerIndices []int
 	for i, line := range lines {
 		if strings.HasPrefix(line, "## ") {
@@ -109,10 +110,10 @@ Older entry`
 
 	// Add entry with middle timestamp (should go between existing dates)
 	middleTime := time.Date(2025, 9, 16, 12, 0, 0, 0, time.UTC)
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertByTimestamp,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertByTimestamp,
 		EntryTimestamp: middleTime,
-		EntryFormatter: padd.TimestampEntryFormatter,
+		EntryFormatter: files.TimestampEntryFormatter,
 	}
 
 	err = doc.AddEntry("Middle entry", config)
@@ -126,7 +127,7 @@ Older entry`
 	assert.True(t, strings.Contains(content, "Middle entry"))
 
 	// Verify chronological order
-	lines := padd.SplitLines(content)
+	lines := contentutil.SplitLines(content)
 	var headerIndices []int
 	for i, line := range lines {
 		if strings.HasPrefix(line, "## ") {
@@ -173,10 +174,10 @@ Middle entry`
 
 	// Add entry with older timestamp (should go at the bottom)
 	olderTime := time.Date(2025, 9, 14, 8, 0, 0, 0, time.UTC)
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertByTimestamp,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertByTimestamp,
 		EntryTimestamp: olderTime,
-		EntryFormatter: padd.TimestampEntryFormatter,
+		EntryFormatter: files.TimestampEntryFormatter,
 	}
 
 	err = doc.AddEntry("Older entry", config)
@@ -190,7 +191,7 @@ Middle entry`
 	assert.True(t, strings.Contains(content, "Older entry"))
 
 	// Verify chronological order
-	lines := padd.SplitLines(content)
+	lines := contentutil.SplitLines(content)
 	var headerIndices []int
 	for i, line := range lines {
 		if strings.HasPrefix(line, "## ") {
@@ -237,10 +238,10 @@ Second entry`
 
 	// Add entry to existing date (should be added under existing header)
 	existingTime := time.Date(2025, 9, 15, 15, 30, 0, 0, time.UTC)
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertByTimestamp,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertByTimestamp,
 		EntryTimestamp: existingTime,
-		EntryFormatter: padd.TimestampEntryFormatter,
+		EntryFormatter: files.TimestampEntryFormatter,
 	}
 
 	err = doc.AddEntry("Another entry for same day", config)
@@ -274,10 +275,10 @@ func TestDocument_AddEntry_InsertByTimestamp_EmptyFile(t *testing.T) {
 
 	// Add entry to empty file
 	timestamp := time.Date(2025, 9, 15, 10, 0, 0, 0, time.UTC)
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertByTimestamp,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertByTimestamp,
 		EntryTimestamp: timestamp,
-		EntryFormatter: padd.TimestampEntryFormatter,
+		EntryFormatter: files.TimestampEntryFormatter,
 	}
 
 	err = doc.AddEntry("First entry", config)
@@ -320,10 +321,10 @@ Existing entry`
 
 	// Add entry with newer timestamp
 	newerTime := time.Date(2025, 9, 16, 14, 30, 0, 0, time.UTC)
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertByTimestamp,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertByTimestamp,
 		EntryTimestamp: newerTime,
-		EntryFormatter: padd.TimestampEntryFormatter,
+		EntryFormatter: files.TimestampEntryFormatter,
 	}
 
 	err = doc.AddEntry("New entry", config)
@@ -337,7 +338,7 @@ Existing entry`
 	assert.True(t, strings.Contains(content, "New entry"))
 
 	// Verify it's at the beginning
-	lines := padd.SplitLines(content)
+	lines := contentutil.SplitLines(content)
 	assert.True(t, strings.Contains(lines[2], "## Tuesday, September 16, 2025"))
 }
 
@@ -361,9 +362,9 @@ Existing content`
 	err = doc.Save(initialContent)
 	assert.Nil(t, err)
 
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.PrependToFile,
-		EntryFormatter: padd.NoteEntryFormatter,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.PrependToFile,
+		EntryFormatter: files.NoteEntryFormatter,
 	}
 
 	err = doc.AddEntry("Prepended entry", config)
@@ -397,9 +398,9 @@ Existing content`
 	err = doc.Save(initialContent)
 	assert.Nil(t, err)
 
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.AppendToFile,
-		EntryFormatter: padd.TaskEntryFormatter,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.AppendToFile,
+		EntryFormatter: files.TaskEntryFormatter,
 	}
 
 	err = doc.AddEntry("Appended task", config)
@@ -439,10 +440,10 @@ Some existing note`
 	err = doc.Save(initialContent)
 	assert.Nil(t, err)
 
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertInSection,
-		EntryFormatter: padd.TaskEntryFormatter,
-		SectionConfig: &padd.SectionInsertionConfig{
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertInSection,
+		EntryFormatter: files.TaskEntryFormatter,
+		SectionConfig: &files.SectionInsertionConfig{
 			SectionHeader:  "## Tasks",
 			InsertAtTop:    true,
 			BlankLineAfter: false,
@@ -460,7 +461,7 @@ Some existing note`
 	assert.True(t, strings.Contains(content, "- [ ] Existing task"))
 
 	// Verify order (new task should be first)
-	lines := padd.SplitLines(content)
+	lines := contentutil.SplitLines(content)
 	var taskLines []int
 	for i, line := range lines {
 		if strings.HasPrefix(line, "- [ ]") {
@@ -493,10 +494,10 @@ Some existing content`
 	err = doc.Save(initialContent)
 	assert.Nil(t, err)
 
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertInSection,
-		EntryFormatter: padd.TaskEntryFormatter,
-		SectionConfig: &padd.SectionInsertionConfig{
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertInSection,
+		EntryFormatter: files.TaskEntryFormatter,
+		SectionConfig: &files.SectionInsertionConfig{
 			SectionHeader:  "## New Tasks",
 			InsertAtTop:    true,
 			BlankLineAfter: true,
@@ -514,7 +515,7 @@ Some existing content`
 	assert.True(t, strings.Contains(content, "- [ ] First task in new section"))
 
 	// Verify the section was created at the top (after main header)
-	lines := padd.SplitLines(content)
+	lines := contentutil.SplitLines(content)
 	found := false
 	for i, line := range lines {
 		if strings.Contains(line, "# Test Document") && i+2 < len(lines) {

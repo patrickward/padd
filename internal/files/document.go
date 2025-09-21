@@ -1,4 +1,4 @@
-package padd
+package files
 
 import (
 	"fmt"
@@ -6,6 +6,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/patrickward/padd/internal/contentutil"
+	"github.com/patrickward/padd/internal/crypto"
 )
 
 // EntryInsertionStrategy defines how to insert entries into a file
@@ -66,7 +69,7 @@ func (d *Document) load() error {
 
 	if d.repo.encryptionManager.IsActive() &&
 		d.repo.encryptionManager.HasIdentities() {
-		if IsAgeEncrypted(content) {
+		if crypto.IsAgeEncrypted(content) {
 			decrypted, err := d.repo.encryptionManager.Decrypt(content)
 			if err != nil {
 				return fmt.Errorf("failed to decrypt document %s: %w", d.Info.Path, err)
@@ -100,7 +103,7 @@ func (d *Document) Save(content string) error {
 
 	if d.repo.encryptionManager.IsActive() &&
 		d.repo.encryptionManager.HasRecipients() &&
-		HasEncryptedFrontmatter(content) {
+		crypto.HasEncryptedFrontmatter(content) {
 
 		encrypted, err := d.repo.encryptionManager.Encrypt(content)
 		if err != nil {
@@ -139,7 +142,7 @@ func (d *Document) AddEntry(entry string, config EntryInsertionConfig) error {
 		return nil
 	}
 
-	lines := SplitLines(d.content)
+	lines := contentutil.SplitLines(d.content)
 	formattedEntry := config.EntryFormatter(entry, config.Timestamp())
 
 	var result []string
@@ -229,7 +232,7 @@ func (d *Document) insertByTimestamp(lines []string, formattedEntry string, time
 	insertPos := 0
 
 	// Look for frontmatter and skip it
-	bounds := findFrontmatter(lines)
+	bounds := contentutil.FindFrontmatter(lines)
 	if bounds.Found {
 		insertPos = bounds.End + 1
 	}
@@ -326,7 +329,7 @@ func (d *Document) createNewSection(lines []string, formattedEntry string, confi
 	insertPos := 0
 
 	// Look for frontmatter and skip it
-	bounds := findFrontmatter(lines)
+	bounds := contentutil.FindFrontmatter(lines)
 	if bounds.Found {
 		insertPos = bounds.End + 1
 	}

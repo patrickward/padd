@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/web"
 )
 
 type MetadataConfig struct {
@@ -16,7 +16,7 @@ type MetadataConfig struct {
 	ContextColor   string
 }
 
-func (s *Server) addMetadataToPageData(data padd.PageData, metadata map[string]any) padd.PageData {
+func (s *Server) addMetadataToPageData(data web.PageData, metadata map[string]any) web.PageData {
 	data.Encrypted = getMetadataBool(metadata, "encrypted", data.Encrypted)
 	data.Description = getMetadataString(metadata, "description", data.Description)
 	data.Category = getMetadataString(metadata, "category", data.Category)

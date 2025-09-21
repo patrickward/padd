@@ -1,4 +1,4 @@
-package padd_test
+package files_test
 
 import (
 	"strings"

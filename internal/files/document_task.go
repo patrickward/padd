@@ -1,4 +1,4 @@
-package padd
+package files
 
 import (
 	"fmt"

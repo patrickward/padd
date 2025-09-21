@@ -13,18 +13,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/crypto"
+	"github.com/patrickward/padd/internal/files"
 	"github.com/patrickward/padd/internal/flash"
+	"github.com/patrickward/padd/internal/rendering"
+	"github.com/patrickward/padd/internal/workers"
 )
 
 // Server holds the application state and configuration
 type Server struct {
 	dataDir          string
-	rootManager      *padd.RootManager
-	fileRepo         *padd.FileRepository
+	rootManager      *files.RootManager
+	fileRepo         *files.FileRepository
 	flashManager     *flash.Manager
-	backgroundRunner *padd.BackgroundRunner
-	renderer         *padd.MarkdownRenderer
+	backgroundRunner *workers.BackgroundWorker
+	renderer         *rendering.MarkdownRenderer
 	baseTempl        *template.Template // Common templates (layouts, partials)
 	httpServer       *http.Server
 	metadataConfig   MetadataConfig
@@ -35,21 +38,21 @@ type ServerOption func(*Server) error
 
 // NewServer initializes the server with the given data directory
 func NewServer(ctx context.Context, dataDir string, opts ...ServerOption) (*Server, error) {
-	rootManager, err := padd.NewRootManager(dataDir)
+	rootManager, err := files.NewRootManager(dataDir)
 	if err != nil {
 		return nil, err
 	}
 
-	fileRepo := padd.NewFileRepository(rootManager, padd.DefaultFileConfig)
+	fileRepo := files.NewFileRepository(rootManager, files.DefaultFileConfig)
 
-	renderer := padd.NewMarkdownRenderer(rootManager, fileRepo)
+	renderer := rendering.NewMarkdownRenderer(rootManager, fileRepo)
 	tmpl, err := parseTemplates()
 	if err != nil {
 		return nil, err
 	}
 
 	// Initialize background task runner
-	backgroundRunner := padd.NewBackgroundRunner(ctx)
+	backgroundRunner := workers.NewBackgroundWorker(ctx)
 
 	s := &Server{
 		dataDir:          dataDir,
@@ -80,7 +83,7 @@ func NewServer(ctx context.Context, dataDir string, opts ...ServerOption) (*Serv
 }
 
 // WithEncryptionManager sets the encryption manager for the server
-func WithEncryptionManager(manager *padd.EncryptionManager) ServerOption {
+func WithEncryptionManager(manager *crypto.EncryptionManager) ServerOption {
 	return func(s *Server) error {
 		s.fileRepo.SetEncryptionManager(manager)
 		return nil
@@ -197,14 +200,14 @@ func (s *Server) Shutdown() error {
 
 // navigationMenu returns the list of navigation menu items
 // TODO: Make this configurable
-func (s *Server) navigationMenu(current string) []padd.FileInfo {
+func (s *Server) navigationMenu(current string) []files.FileInfo {
 
 	current = strings.TrimPrefix(current, "/")
 	if current == "" {
 		current = "inbox"
 	}
 
-	files := []padd.FileInfo{
+	files := []files.FileInfo{
 		{
 			ID:          "inbox",
 			Path:        "inbox.md",

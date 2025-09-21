@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/files"
 )
 
 // EntryConfig defines how to handle adding entries to a file
@@ -15,7 +15,7 @@ type EntryConfig struct {
 	FileID         string
 	RedirectPath   string
 	EntryFormatter func(entry string, timestamp time.Time) string
-	SectionConfig  *padd.SectionInsertionConfig // nil means use date insertion logic
+	SectionConfig  *files.SectionInsertionConfig // nil means use date insertion logic
 }
 
 func (s *Server) handleAddTemporalEntry(directory string) func(w http.ResponseWriter, r *http.Request) {
@@ -42,9 +42,9 @@ func (s *Server) handleAddTemporalEntry(directory string) func(w http.ResponseWr
 			return
 		}
 
-		config := padd.EntryInsertionConfig{
-			Strategy:       padd.InsertByTimestamp,
-			EntryFormatter: padd.TimestampEntryFormatter,
+		config := files.EntryInsertionConfig{
+			Strategy:       files.InsertByTimestamp,
+			EntryFormatter: files.TimestampEntryFormatter,
 		}
 
 		if err := doc.AddEntry(entry, config); err != nil {
@@ -79,9 +79,9 @@ func (s *Server) handleAddEntry(w http.ResponseWriter, r *http.Request) {
 	// Determine entry formatter based on "as_task" form field
 	var entryFormatter func(string, time.Time) string
 	if r.FormValue("as_task") == "true" {
-		entryFormatter = padd.TaskEntryFormatter
+		entryFormatter = files.TaskEntryFormatter
 	} else {
-		entryFormatter = padd.NoteEntryFormatter
+		entryFormatter = files.NoteEntryFormatter
 	}
 
 	redirectPath := r.Referer()
@@ -90,7 +90,7 @@ func (s *Server) handleAddEntry(w http.ResponseWriter, r *http.Request) {
 		FileID:         fileID,
 		RedirectPath:   redirectPath,
 		EntryFormatter: entryFormatter,
-		SectionConfig: &padd.SectionInsertionConfig{
+		SectionConfig: &files.SectionInsertionConfig{
 			SectionHeader:  header,
 			InsertAtTop:    true,
 			BlankLineAfter: false,
@@ -121,15 +121,15 @@ func (s *Server) addEntry(w http.ResponseWriter, r *http.Request, config EntryCo
 		return
 	}
 
-	insertionConfig := padd.EntryInsertionConfig{
+	insertionConfig := files.EntryInsertionConfig{
 		EntryFormatter: config.EntryFormatter,
 	}
 
 	if config.SectionConfig != nil {
-		insertionConfig.Strategy = padd.InsertInSection
+		insertionConfig.Strategy = files.InsertInSection
 		insertionConfig.SectionConfig = config.SectionConfig
 	} else {
-		insertionConfig.Strategy = padd.InsertByTimestamp
+		insertionConfig.Strategy = files.InsertByTimestamp
 	}
 
 	if err := doc.AddEntry(entry, insertionConfig); err != nil {

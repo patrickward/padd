@@ -1,6 +1,8 @@
-package padd
+package files
 
-import "strings"
+import (
+	"strings"
+)
 
 // DirectoryNode represents a node in the directory tree
 type DirectoryNode struct {

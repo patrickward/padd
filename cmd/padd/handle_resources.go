@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/web"
 )
 
 // handleResources shows a list of available resource files
 func (s *Server) handleResources(w http.ResponseWriter, r *http.Request) {
 	tree := s.fileRepo.DirectoryTreeFor(s.fileRepo.Config().ResourcesDirectory)
 
-	data := padd.PageData{
+	data := web.PageData{
 		Title:         "Resources",
 		NavMenuFiles:  s.navigationMenu(r.URL.Path),
 		IsResources:   true,

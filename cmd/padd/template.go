@@ -8,6 +8,7 @@ import (
 
 	"github.com/patrickward/padd"
 	"github.com/patrickward/padd/internal/version"
+	"github.com/patrickward/padd/internal/web"
 )
 
 func customFuncs() template.FuncMap {
@@ -42,7 +43,7 @@ func parseTemplates() (*template.Template, error) {
 }
 
 // executePage renders a full page template with the given data
-func (s *Server) executePage(w http.ResponseWriter, page string, data padd.PageData) error {
+func (s *Server) executePage(w http.ResponseWriter, page string, data web.PageData) error {
 	// Add the version and directory details to the data
 	data.PADDVersion = version.Get()
 	data.PADDDataDir = s.dataDir

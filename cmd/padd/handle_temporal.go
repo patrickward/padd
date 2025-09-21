@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/contentutil"
+	"github.com/patrickward/padd/internal/files"
+	"github.com/patrickward/padd/internal/web"
 )
 
 func (s *Server) handleTemporalArchive(w http.ResponseWriter, r *http.Request) {
@@ -20,14 +22,14 @@ func (s *Server) handleTemporalArchive(w http.ResponseWriter, r *http.Request) {
 
 	directoryTree := s.fileRepo.DirectoryTreeFor(fileType)
 
-	archiveFile := padd.FileInfo{
+	archiveFile := files.FileInfo{
 		ID:        fileType + "-archive",
 		Path:      fileType + "/archive",
-		Title:     padd.TitleCase(fileType) + " Archive",
-		TitleBase: padd.TitleCase(fileType) + " Archive",
+		Title:     contentutil.TitleCase(fileType) + " Archive",
+		TitleBase: contentutil.TitleCase(fileType) + " Archive",
 	}
 
-	data := padd.PageData{
+	data := web.PageData{
 		Title:         archiveFile.Title,
 		CurrentFile:   archiveFile,
 		NavMenuFiles:  s.navigationMenu(fileType),

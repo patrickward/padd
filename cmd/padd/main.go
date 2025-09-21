@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/crypto"
 	"github.com/patrickward/padd/internal/version"
 )
 
@@ -173,7 +173,7 @@ func main() {
 			log.Fatal(fmt.Errorf("error determining keys directory: %v", err))
 		}
 
-		publicKey, _, publicPath, privatePath, err := padd.GenerateNewEncryptionPair(keysDir)
+		publicKey, _, publicPath, privatePath, err := crypto.GenerateNewEncryptionPair(keysDir)
 		if err != nil {
 			log.Fatal(fmt.Errorf("error generating new encryption identity: %v", err))
 		}
@@ -195,7 +195,7 @@ func main() {
 	}
 
 	// Set up the encryption config
-	encryptionManager := padd.NewEncryptionManager()
+	encryptionManager := crypto.NewEncryptionManager()
 	identitiesFile = getConfigValue(identitiesFile, envPaddIdentities, "")
 	recipientsFile = getConfigValue(recipientsFile, envPaddRecipients, "")
 	if identitiesFile == "" || recipientsFile == "" {

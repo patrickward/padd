@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/files"
 )
 
 var reloadPageHeaderTrigger = map[string]string{
@@ -179,9 +179,9 @@ func (s *Server) handleArchiveDoneTasks(w http.ResponseWriter, r *http.Request) 
 	archivedContent := "**Archived completed tasks (from " + doc.Info.Path + "):**\n\n"
 	archivedContent += strings.Join(completedTasks, "\n")
 
-	config := padd.EntryInsertionConfig{
-		Strategy:       padd.InsertByTimestamp,
-		EntryFormatter: padd.TimestampEntryFormatter,
+	config := files.EntryInsertionConfig{
+		Strategy:       files.InsertByTimestamp,
+		EntryFormatter: files.TimestampEntryFormatter,
 	}
 
 	if err := dailyDoc.AddEntry(archivedContent, config); err != nil {
@@ -200,7 +200,7 @@ func (s *Server) handleArchiveDoneTasks(w http.ResponseWriter, r *http.Request) 
 }
 
 // taskDocumentFromRequest returns the document and checkbox ID from the request.
-func (s *Server) taskDocumentFromRequest(w http.ResponseWriter, r *http.Request) (*padd.Document, int, bool) {
+func (s *Server) taskDocumentFromRequest(w http.ResponseWriter, r *http.Request) (*files.Document, int, bool) {
 	fileID := r.Header.Get("X-PADD-File-ID")
 	if fileID == "" {
 		http.Error(w, "Missing file ID", http.StatusBadRequest)

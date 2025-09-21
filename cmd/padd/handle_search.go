@@ -4,10 +4,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/contentutil"
+	"github.com/patrickward/padd/internal/files"
+	"github.com/patrickward/padd/internal/rendering"
+	"github.com/patrickward/padd/internal/web"
 )
 
-type searchResults map[string][]padd.SearchMatch
+type searchResults map[string][]web.SearchMatch
 
 func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -36,7 +39,7 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		s.searchDirectory(query, node, results)
 	}
 
-	data := padd.PageData{
+	data := web.PageData{
 		Title:         "Search Results",
 		IsSearching:   true,
 		SearchQuery:   query,
@@ -50,7 +53,7 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 // searchDirectory recursively searches a directory for matches to a query and adds to the results map
-func (s *Server) searchDirectory(query string, directory *padd.DirectoryNode, results searchResults) {
+func (s *Server) searchDirectory(query string, directory *files.DirectoryNode, results searchResults) {
 	for _, file := range directory.Files {
 		if matches := s.searchFile(file, query); len(matches) > 0 {
 			results[file.ID] = matches
@@ -62,22 +65,22 @@ func (s *Server) searchDirectory(query string, directory *padd.DirectoryNode, re
 	}
 }
 
-func (s *Server) searchFile(file padd.FileInfo, query string) []padd.SearchMatch {
-	var matches []padd.SearchMatch
+func (s *Server) searchFile(file files.FileInfo, query string) []web.SearchMatch {
+	var matches []web.SearchMatch
 	content, err := s.rootManager.ReadFile(file.Path)
 	if err != nil {
 		return matches
 	}
 
-	lines := padd.SplitLines(string(content))
+	lines := contentutil.SplitLines(string(content))
 	matchIndex := 1 // To track the occurrence of matches in a line
 	queryLower := strings.ToLower(query)
 	for i, line := range lines {
 		if strings.Contains(strings.ToLower(line), queryLower) {
 
-			cleanedLine := padd.StripMarkdownMarkers(line)
+			cleanedLine := rendering.StripMarkdownMarkers(line)
 			renderedContent := s.renderer.Render(cleanedLine)
-			matches = append(matches, padd.SearchMatch{
+			matches = append(matches, web.SearchMatch{
 				LineNum:    i + 1,
 				Line:       line,
 				Rendered:   renderedContent.HTML,

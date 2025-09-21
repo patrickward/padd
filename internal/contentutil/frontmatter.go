@@ -1,4 +1,4 @@
-package padd
+package contentutil
 
 import "strings"
 
@@ -8,8 +8,8 @@ type FrontmatterBounds struct {
 	Found bool
 }
 
-// findFrontmatter finds the bounds of the frontmatter section in the given lines
-func findFrontmatter(lines []string) FrontmatterBounds {
+// FindFrontmatter finds the bounds of the frontmatter section in the given lines
+func FindFrontmatter(lines []string) FrontmatterBounds {
 	if len(lines) == 0 {
 		return FrontmatterBounds{}
 	}

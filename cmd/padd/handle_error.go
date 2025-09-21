@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/web"
 )
 
 // redirectTo redirects the request to the given URL based on the request headers.
@@ -23,7 +23,7 @@ func (s *Server) redirectTo(w http.ResponseWriter, r *http.Request, url string) 
 // showPageNotFound shows a 404 page.
 func (s *Server) showPageNotFound(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
-	if err := s.executePage(w, "404.html", padd.PageData{
+	if err := s.executePage(w, "404.html", web.PageData{
 		Title:        "Page Not Found",
 		NavMenuFiles: s.navigationMenu(""),
 	}); err != nil {
@@ -63,7 +63,7 @@ func (s *Server) showServerError(w http.ResponseWriter, r *http.Request, err err
 
 	// Otherwise, send the generic 500 page
 	w.WriteHeader(http.StatusInternalServerError)
-	if err := s.executePage(w, "500.html", padd.PageData{
+	if err := s.executePage(w, "500.html", web.PageData{
 		Title:        "Server Error",
 		NavMenuFiles: s.navigationMenu(""),
 		ErrorMessage: err.Error(),

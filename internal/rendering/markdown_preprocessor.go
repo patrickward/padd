@@ -1,10 +1,13 @@
-package padd
+package rendering
 
 import (
 	"fmt"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/patrickward/padd/internal/contentutil"
+	"github.com/patrickward/padd/internal/files"
 )
 
 type PreprocessingResult struct {
@@ -16,16 +19,16 @@ type PreprocessingResult struct {
 // MarkdownPreprocessor represents a Markdown preprocessor for markdown files
 // NOTE: some of this could be in an extension, but it's good enough for now
 type MarkdownPreprocessor struct {
-	fileRepo *FileRepository
+	fileRepo *files.FileRepository
 }
 
 // NewMarkdownPreprocessor creates a new MarkdownPreprocessor for the given RootManager
-func NewMarkdownPreprocessor(fileRepo *FileRepository) *MarkdownPreprocessor {
+func NewMarkdownPreprocessor(fileRepo *files.FileRepository) *MarkdownPreprocessor {
 	return &MarkdownPreprocessor{fileRepo: fileRepo}
 }
 
 func (mp *MarkdownPreprocessor) Process(content string) PreprocessingResult {
-	lines := SplitLines(content)
+	lines := contentutil.SplitLines(content)
 
 	// Compile regexes once for efficiency
 	titleRe := regexp.MustCompile(`^#\s+(.+)$`)

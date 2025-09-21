@@ -1,7 +1,9 @@
-package padd
+package files
 
 import (
 	"strings"
+
+	"github.com/patrickward/padd/internal/contentutil"
 )
 
 // FileInfo represents metadata about a markdown file
@@ -60,7 +62,7 @@ func (f FileInfo) BreadcrumbParts() []Breadcrumb {
 		isLast := i == len(parts)-1
 		breadcrumbs = append(breadcrumbs, Breadcrumb{
 			Path:    "/" + strings.Join(parts[:i+1], "/"),
-			Name:    TitleCase(part),
+			Name:    contentutil.TitleCase(part),
 			IsFirst: i == 0,
 			IsLast:  isLast,
 		})
@@ -113,7 +115,7 @@ func (f FileInfo) MonthName() string {
 		monthFile := strings.TrimSuffix(parts[2], ".md")
 		monthParts := strings.SplitN(monthFile, "-", 2)
 		if len(monthParts) >= 2 {
-			return TitleCase(monthParts[1]) // 09-september -> September
+			return contentutil.TitleCase(monthParts[1]) // 09-september -> September
 		}
 	}
 

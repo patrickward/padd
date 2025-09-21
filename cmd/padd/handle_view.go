@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/rendering"
+	"github.com/patrickward/padd/internal/web"
 )
 
 func (s *Server) handlePageHeader(w http.ResponseWriter, r *http.Request) {
@@ -43,13 +44,13 @@ func (s *Server) handleTemporalRoot(path string) func(w http.ResponseWriter, r *
 	}
 }
 
-func (s *Server) renderDirectoryView(w http.ResponseWriter, r *http.Request, data padd.PageData) {
+func (s *Server) renderDirectoryView(w http.ResponseWriter, r *http.Request, data web.PageData) {
 	if err := s.executePage(w, "directory_view.html", data); err != nil {
 		s.showServerError(w, r, err)
 	}
 }
 
-func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.PageData, bool) {
+func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (web.PageData, bool) {
 	id := r.PathValue("id")
 	if id == "" {
 		id = "inbox"
@@ -58,22 +59,22 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 	doc, err := s.fileRepo.GetDocument(id)
 	if err != nil {
 		s.showPageNotFound(w, r)
-		return padd.PageData{}, true
+		return web.PageData{}, true
 	}
 
 	if doc.Info.IsDirectory {
-		s.renderDirectoryView(w, r, padd.PageData{
+		s.renderDirectoryView(w, r, web.PageData{
 			Title:        doc.Info.TitleBase,
 			CurrentFile:  doc.Info,
 			NavMenuFiles: s.navigationMenu(doc.Info.ID),
 		})
-		return padd.PageData{}, true
+		return web.PageData{}, true
 	}
 
 	content, err := doc.Content()
 	if err != nil {
 		s.showServerError(w, r, fmt.Errorf("failed to get document content: %w", err))
-		return padd.PageData{}, true
+		return web.PageData{}, true
 	}
 
 	// Get the search query and match parameters
@@ -84,7 +85,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 	}
 
 	// Render content with search highlighting if needed
-	var renderedContent padd.RenderedContent
+	var renderedContent rendering.RenderedContent
 	if searchQuery != "" {
 		renderedContent = s.renderer.RenderWithHighlight(string(content), searchQuery, searchMatch)
 	} else {
@@ -96,7 +97,7 @@ func (s *Server) processPageView(w http.ResponseWriter, r *http.Request) (padd.P
 		renderedContent.Title = doc.Info.TitleBase
 	}
 
-	data := padd.PageData{
+	data := web.PageData{
 		Title:          renderedContent.Title,
 		SectionHeaders: renderedContent.SectionHeaders,
 		TasksTotal:     renderedContent.TasksTotal,

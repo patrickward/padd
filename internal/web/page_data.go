@@ -1,6 +1,10 @@
-package padd
+package web
 
-import "html/template"
+import (
+	"html/template"
+
+	"github.com/patrickward/padd/internal/files"
+)
 
 // PageData holds data passed to templates for rendering
 type PageData struct {
@@ -22,7 +26,7 @@ type PageData struct {
 	Author           string                   // Author from metadata (if any)
 	Contexts         []string                 // Contexts from metadata (e.g. @home, @work)
 	SectionHeaders   []string                 // H2 headers in the current file for TOC
-	CurrentFile      FileInfo                 // The current file info
+	CurrentFile      files.FileInfo           // The current file info
 	Content          template.HTML            // The rendered HTML content
 	TasksTotal       int                      // Total number of tasks in the current file
 	TasksCompleted   int                      // Total number of completed tasks in the current file
@@ -31,7 +35,7 @@ type PageData struct {
 	IsEditing        bool                     // Whether the user is currently editing the file
 	IsSearching      bool                     // Whether the user is currently searching the file
 	IsResources      bool                     // Whether the current file is in the resources/ directory
-	NavMenuFiles     []FileInfo               // List of file info objects for the navigation menu
+	NavMenuFiles     []files.FileInfo         // List of file info objects for the navigation menu
 	ArchiveType      string                   // "daily" or "journal" for archive pages
 	SearchQuery      string                   // The current search query, if any
 	SearchResults    map[string][]SearchMatch // Search results for the current query
@@ -39,7 +43,7 @@ type PageData struct {
 	FlashMessageType string                   // Flash message type
 	ErrorMessage     string                   // Error message to display
 	SearchMatch      int                      // To indicate which match in the line to highlight
-	DirectoryTree    *DirectoryNode           // Directory tree for a page. For instance, resources or temporal archive pages.
+	DirectoryTree    *files.DirectoryNode     // Directory tree for a page. For instance, resources or temporal archive pages.
 	PADDVersion      string                   // The current version of PADD
 	PADDDataDir      string                   // The current data directory for PADD
 }

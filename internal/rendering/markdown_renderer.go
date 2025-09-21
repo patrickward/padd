@@ -1,4 +1,4 @@
-package padd
+package rendering
 
 import (
 	"bytes"
@@ -13,14 +13,17 @@ import (
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
 
+	"github.com/patrickward/padd"
 	pextension "github.com/patrickward/padd/extension"
+	"github.com/patrickward/padd/internal/contentutil"
+	"github.com/patrickward/padd/internal/files"
 )
 
 type MarkdownRenderer struct {
 	md            goldmark.Markdown
 	sanitizer     *bluemonday.Policy
-	fileRepo      *FileRepository
-	rootManager   *RootManager
+	fileRepo      *files.FileRepository
+	rootManager   *files.RootManager
 	preprocessor  *MarkdownPreprocessor
 	postprocessor *MarkdownPostprocessor
 }
@@ -42,7 +45,7 @@ type RenderOptions struct {
 }
 
 // NewMarkdownRenderer creates a new MarkdownRenderer instance.
-func NewMarkdownRenderer(rootManager *RootManager, fileRepo *FileRepository) *MarkdownRenderer {
+func NewMarkdownRenderer(rootManager *files.RootManager, fileRepo *files.FileRepository) *MarkdownRenderer {
 	md := goldmark.New(
 		goldmark.WithExtensions(
 			//extension.GFM,
@@ -52,7 +55,7 @@ func NewMarkdownRenderer(rootManager *RootManager, fileRepo *FileRepository) *Ma
 			extension.Typographer,
 			extension.DefinitionList,
 			pextension.TaskList,
-			pextension.NewIconExtension(pextension.NewDefaultIconChecker(rootManager, StaticFS)),
+			pextension.NewIconExtension(pextension.NewDefaultIconChecker(rootManager, padd.StaticFS)),
 			meta.Meta,
 		),
 		goldmark.WithParserOptions(
@@ -130,7 +133,7 @@ func (mr *MarkdownRenderer) renderWithOptions(content string, opts RenderOptions
 
 // applySearchHighlighting applies search highlighting to the given content.
 func (mr *MarkdownRenderer) applySearchHighlighting(content string, opts RenderOptions) string {
-	lines := SplitLines(content)
+	lines := contentutil.SplitLines(content)
 	queryLower := strings.ToLower(opts.SearchQuery)
 	matchIndex := 1
 

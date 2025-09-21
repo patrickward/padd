@@ -1,24 +1,24 @@
-package padd_test
+package files_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/patrickward/padd"
 	"github.com/patrickward/padd/internal/assert"
+	"github.com/patrickward/padd/internal/files"
 )
 
-func setupTestFileRepo(t *testing.T, path string) (*padd.FileRepository, *padd.RootManager) {
+func setupTestFileRepo(t *testing.T, path string) (*files.FileRepository, *files.RootManager) {
 	t.Helper()
 
 	if path == "" {
 		path = "./testdata/data"
 	}
 
-	rm, err := padd.NewRootManager(path)
+	rm, err := files.NewRootManager(path)
 	assert.Nil(t, err)
 
-	fr := padd.NewFileRepository(rm, padd.DefaultFileConfig)
+	fr := files.NewFileRepository(rm, files.DefaultFileConfig)
 	fr.ReloadCaches()
 
 	return fr, rm

@@ -1,4 +1,4 @@
-package padd
+package files
 
 import (
 	"fmt"
@@ -9,6 +9,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/patrickward/padd/internal/contentutil"
+	"github.com/patrickward/padd/internal/crypto"
 )
 
 const emptyFilePath = "untitled"
@@ -21,7 +24,7 @@ type FileRepository struct {
 	lastCacheTime     time.Time
 	directoryTree     *DirectoryNode
 	fileIndex         map[string]FileInfo
-	encryptionManager *EncryptionManager
+	encryptionManager *crypto.EncryptionManager
 }
 
 // FileConfig holds the configuration for core files and directories.
@@ -53,19 +56,19 @@ func NewFileRepository(rootManager *RootManager, config FileConfig) *FileReposit
 	fr := &FileRepository{
 		config:            config,
 		rootManager:       rootManager,
-		encryptionManager: NewEncryptionManager(),
+		encryptionManager: crypto.NewEncryptionManager(),
 	}
 
 	return fr
 }
 
 // SetEncryptionManager sets the EncryptionManager for this FileRepository.
-func (fr *FileRepository) SetEncryptionManager(manager *EncryptionManager) {
+func (fr *FileRepository) SetEncryptionManager(manager *crypto.EncryptionManager) {
 	fr.encryptionManager = manager
 }
 
 // EncryptionManager returns the EncryptionManager for this FileRepository.
-func (fr *FileRepository) EncryptionManager() *EncryptionManager {
+func (fr *FileRepository) EncryptionManager() *crypto.EncryptionManager {
 	return fr.encryptionManager
 }
 
@@ -79,7 +82,7 @@ func (fr *FileRepository) Initialize() error {
 	// Create the core files if they do not exist
 	for _, file := range fr.config.CoreFiles {
 		// Remove the md extension for CreateFileIfNotExists
-		fileTitle := TitleCase(strings.TrimSuffix(file, ".md"))
+		fileTitle := contentutil.TitleCase(strings.TrimSuffix(file, ".md"))
 		// Create the default frontmatter content
 		frontmatter := "---\n" +
 			"title: " + fileTitle + "\n" +
@@ -319,7 +322,7 @@ func (fr *FileRepository) DisplayName(relPath string) (string, string) {
 	for i, part := range parts {
 		part = strings.ReplaceAll(part, "-", " ")
 		part = strings.ReplaceAll(part, "_", " ")
-		parts[i] = TitleCase(part)
+		parts[i] = contentutil.TitleCase(part)
 	}
 
 	// Title is the full path with title-cased parts joined by "/"

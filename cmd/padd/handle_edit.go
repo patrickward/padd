@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/web"
 )
 
 func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +20,7 @@ func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
 		s.showServerError(w, r, err)
 	}
 
-	data := padd.PageData{
+	data := web.PageData{
 		Title:        "Edit - " + doc.Info.Title,
 		CurrentFile:  doc.Info,
 		RawContent:   content,

@@ -1,4 +1,4 @@
-package padd
+package crypto
 
 import (
 	"bufio"
@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"filippo.io/age"
+
+	"github.com/patrickward/padd/internal/contentutil"
 )
 
 // EncryptionManager handles age encryption/decryption operations
@@ -222,9 +224,9 @@ func IsAgeEncrypted(content []byte) bool {
 
 // HasEncryptedFrontmatter checks if content has encrypted: true in frontmatter
 func HasEncryptedFrontmatter(content string) bool {
-	lines := SplitLines(content)
+	lines := contentutil.SplitLines(content)
 
-	bounds := findFrontmatter(lines)
+	bounds := contentutil.FindFrontmatter(lines)
 	if !bounds.Found {
 		return false
 	}

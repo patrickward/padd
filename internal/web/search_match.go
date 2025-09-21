@@ -1,4 +1,4 @@
-package padd
+package web
 
 import "html/template"
 

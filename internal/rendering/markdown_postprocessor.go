@@ -1,4 +1,4 @@
-package padd
+package rendering
 
 import (
 	"io"
@@ -6,16 +6,19 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/files"
 )
 
 // MarkdownPostprocessor represents a postprocessor for markdown files
 // NOTE: some of this could be in an extension, but it's good enough for now
 type MarkdownPostprocessor struct {
-	rootManager *RootManager
+	rootManager *files.RootManager
 }
 
 // NewMarkdownPostprocessor creates a new MarkdownPostprocessor for the given RootManager
-func NewMarkdownPostprocessor(rootManager *RootManager) *MarkdownPostprocessor {
+func NewMarkdownPostprocessor(rootManager *files.RootManager) *MarkdownPostprocessor {
 	return &MarkdownPostprocessor{rootManager: rootManager}
 }
 
@@ -57,7 +60,7 @@ func (mp *MarkdownPostprocessor) getInlineSVG(iconPath string) string {
 
 	// Fallback to static embedded files
 	staticPath := "static/images/" + iconPath
-	if file, err := StaticFS.Open(staticPath); err == nil {
+	if file, err := padd.StaticFS.Open(staticPath); err == nil {
 		defer func(file fs.File) {
 			_ = file.Close()
 		}(file)

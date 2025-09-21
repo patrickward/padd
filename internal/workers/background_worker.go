@@ -1,4 +1,4 @@
-package padd
+package workers
 
 import (
 	"context"
@@ -14,8 +14,8 @@ type BackgroundTask struct {
 	Interval time.Duration // For periodic tasks, 0 means run once
 }
 
-// BackgroundRunner manages and runs background tasks with graceful shutdown
-type BackgroundRunner struct {
+// BackgroundWorker manages and runs background tasks with graceful shutdown
+type BackgroundWorker struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
@@ -23,10 +23,10 @@ type BackgroundRunner struct {
 	mu     sync.Mutex
 }
 
-// NewBackgroundRunner creates a new BackgroundRunner
-func NewBackgroundRunner(ctx context.Context) *BackgroundRunner {
+// NewBackgroundWorker creates a new BackgroundWorker
+func NewBackgroundWorker(ctx context.Context) *BackgroundWorker {
 	cctx, cancel := context.WithCancel(ctx)
-	return &BackgroundRunner{
+	return &BackgroundWorker{
 		ctx:    cctx,
 		cancel: cancel,
 		tasks:  make([]BackgroundTask, 0),
@@ -34,14 +34,14 @@ func NewBackgroundRunner(ctx context.Context) *BackgroundRunner {
 }
 
 // AddTask adds a new background task to the runner
-func (br *BackgroundRunner) AddTask(task BackgroundTask) {
+func (br *BackgroundWorker) AddTask(task BackgroundTask) {
 	br.mu.Lock()
 	defer br.mu.Unlock()
 	br.tasks = append(br.tasks, task)
 }
 
 // AddPeriodicTask adds a new periodic background task to the runner
-func (br *BackgroundRunner) AddPeriodicTask(name string, interval time.Duration, handler func(ctx context.Context) error) {
+func (br *BackgroundWorker) AddPeriodicTask(name string, interval time.Duration, handler func(ctx context.Context) error) {
 	task := BackgroundTask{
 		Name:     name,
 		Handler:  handler,
@@ -52,7 +52,7 @@ func (br *BackgroundRunner) AddPeriodicTask(name string, interval time.Duration,
 }
 
 // StartOneTimeTask adds a new one-time background task to the runner and starts it immediately
-func (br *BackgroundRunner) StartOneTimeTask(name string, handler func(ctx context.Context) error) {
+func (br *BackgroundWorker) StartOneTimeTask(name string, handler func(ctx context.Context) error) {
 	br.AddTask(BackgroundTask{
 		Name:    name,
 		Handler: handler,
@@ -61,7 +61,7 @@ func (br *BackgroundRunner) StartOneTimeTask(name string, handler func(ctx conte
 }
 
 // Start begins executing all added background tasks
-func (br *BackgroundRunner) Start() {
+func (br *BackgroundWorker) Start() {
 	br.mu.Lock()
 	defer br.mu.Unlock()
 
@@ -71,7 +71,7 @@ func (br *BackgroundRunner) Start() {
 }
 
 // startTask starts a single background task
-func (br *BackgroundRunner) startTask(task BackgroundTask) {
+func (br *BackgroundWorker) startTask(task BackgroundTask) {
 	br.wg.Add(1)
 	go func(t BackgroundTask) {
 		defer br.wg.Done()
@@ -111,7 +111,7 @@ func (br *BackgroundRunner) startTask(task BackgroundTask) {
 }
 
 // Shutdown gracefully stops all background tasks
-func (br *BackgroundRunner) Shutdown() {
+func (br *BackgroundWorker) Shutdown() {
 	log.Println("Shutting down background tasks...")
 	br.cancel()
 	br.wg.Wait()

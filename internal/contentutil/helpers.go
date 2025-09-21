@@ -1,4 +1,4 @@
-package padd
+package contentutil
 
 import (
 	"strings"
@@ -11,6 +11,11 @@ func TitleCase(s string) string {
 	return cases.Title(language.English).String(s)
 }
 
+// SplitLines splits a string into lines, normalizing line endings.
+func SplitLines(content string) []string {
+	return strings.Split(normalizeLineEndings(content), "\n")
+}
+
 // normalizeLineEndings normalizes line endings in a string.
 func normalizeLineEndings(content string) string {
 	// Replace Windows CRLF
@@ -19,9 +24,4 @@ func normalizeLineEndings(content string) string {
 	// Replace legacy Mac CR
 	content = strings.ReplaceAll(content, "\r", "\n")
 	return content
-}
-
-// SplitLines splits a string into lines, normalizing line endings.
-func SplitLines(content string) []string {
-	return strings.Split(normalizeLineEndings(content), "\n")
 }

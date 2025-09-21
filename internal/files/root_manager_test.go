@@ -1,4 +1,4 @@
-package padd_test
+package files_test
 
 import (
 	"io/fs"
@@ -6,16 +6,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/patrickward/padd"
 	"github.com/patrickward/padd/internal/assert"
+	"github.com/patrickward/padd/internal/files"
 )
 
 const defaultDataDir = "./testdata/data"
 
-func setupRootManager(t *testing.T, dataDir string) *padd.RootManager {
+func setupRootManager(t *testing.T, dataDir string) *files.RootManager {
 	t.Helper()
 
-	rm, err := padd.NewRootManager(dataDir)
+	rm, err := files.NewRootManager(dataDir)
 	assert.Nil(t, err)
 
 	return rm
