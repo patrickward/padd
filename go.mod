@@ -8,6 +8,7 @@ require (
 	github.com/yuin/goldmark v1.7.13
 	github.com/yuin/goldmark-meta v1.1.0
 	golang.org/x/text v0.29.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (

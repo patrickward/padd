@@ -194,6 +194,12 @@ func main() {
 		log.Fatal(fmt.Errorf("error determining data directory: %v", err))
 	}
 
+	// Set up log rotation
+	logConfig := DefaultLogConfig(dataDir)
+	if err := SetupLogging(logConfig); err != nil {
+		log.Fatal(fmt.Errorf("error setting up logging: %v", err))
+	}
+
 	// Set up the encryption config
 	encryptionManager := crypto.NewEncryptionManager()
 	identitiesFile = getConfigValue(identitiesFile, envPaddIdentities, "")

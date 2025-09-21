@@ -127,7 +127,7 @@ func (s *Server) backgroundTask(name string, fn func() error) {
 		defer func() {
 			if r := recover(); r != nil {
 				// Handle panic
-				fmt.Printf("Background task %s panicked: %v\n", name, r)
+				log.Printf("Background task %s panicked: %v", name, r)
 			}
 		}()
 
@@ -157,8 +157,8 @@ func (s *Server) Start(add string, port int) error {
 	// Start the http server in a separate goroutine
 	serverErrors := make(chan error, 1)
 	go func() {
-		fmt.Printf("Starting server on %s\n", serverAddr)
-		fmt.Printf("Data directory: %s\n", s.dataDir)
+		log.Printf("Server started on %s\n", serverAddr)
+		log.Printf("Data directory: %s\n", s.dataDir)
 		serverErrors <- s.httpServer.ListenAndServe()
 	}()
 
@@ -169,7 +169,7 @@ func (s *Server) Start(add string, port int) error {
 			return fmt.Errorf("could not start server: %w", err)
 		}
 	case sig := <-sigChan:
-		fmt.Printf("Received signal %v, initiating shutdown\n", sig)
+		log.Printf("Received signal %v, initiating shutdown\n", sig)
 	}
 
 	return s.Shutdown()

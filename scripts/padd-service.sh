@@ -74,7 +74,7 @@ start_service() {
         -port "$PADD_PORT" \
         -addr "$PADD_ADDR" \
         -data "$PADD_DATA_DIR" \
-        > "$PADD_LOG_FILE" 2>&1 &
+        > /dev/null 2>&1 &
 
     local pid=$!
     echo "$pid" > "$PADD_PID_FILE"
