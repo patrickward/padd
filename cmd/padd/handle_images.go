@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/fs"
+	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"sort"
@@ -126,5 +129,79 @@ func getImageContentType(ext string) string {
 		return "image/x-icon"
 	default:
 		return ""
+	}
+}
+
+type ImageUploadResponse struct {
+	Success bool   `json:"success"`
+	DataURI string `json:"dataUri,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
+func (s *Server) handleImageUpload(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Limit the size of uplaoded images
+	const maxFileSize = 10 << 20 // 10 MB
+	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
+
+	// Pares the multipart form
+	if err := r.ParseMultipartForm(maxFileSize); err != nil {
+		response := ImageUploadResponse{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to parse multipart form: %v", err),
+		}
+		s.respondWithJSONError(w, response, http.StatusBadRequest)
+		return
+	}
+
+	// Get the uploaded file
+	file, fileHeader, err := r.FormFile("image")
+	if err != nil {
+		response := ImageUploadResponse{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to get uploaded file: %v", err),
+		}
+		s.respondWithJSONError(w, response, http.StatusBadRequest)
+		return
+	}
+
+	defer func(file multipart.File) {
+		_ = file.Close()
+	}(file)
+
+	// validate the file
+	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+	contentType := getImageContentType(ext)
+	if contentType == "" {
+		response := ImageUploadResponse{
+			Success: false,
+			Error:   fmt.Sprintf("Unsupported file type: %s", ext),
+		}
+		s.respondWithJSONError(w, response, http.StatusBadRequest)
+		return
+	}
+
+	// Read the file content
+	fileContent, err := io.ReadAll(file)
+	if err != nil {
+		response := ImageUploadResponse{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to read uploaded file: %v", err),
+		}
+		s.respondWithJSONError(w, response, http.StatusBadRequest)
+		return
+	}
+
+	// Encode to base64
+	base64Content := base64.StdEncoding.EncodeToString(fileContent)
+	dataURI := fmt.Sprintf("data:%s;base64,%s", contentType, base64Content)
+
+	response := ImageUploadResponse{
+		Success: true,
+		DataURI: dataURI,
+	}
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		s.showServerError(w, r, err)
 	}
 }

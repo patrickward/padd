@@ -15,9 +15,8 @@ func (s *Server) setupRoutes() http.Handler {
 
 	// Serve images (both embedded defaults and user-provided)
 	mux.Handle("GET /images/", s.handleImages())
-
-	// Icons JSON
 	mux.HandleFunc("GET /api/icons", s.handleIconsAPI)
+	mux.HandleFunc("POST /api/images/upload", s.handleImageUpload)
 
 	// Tasks
 	mux.HandleFunc("PATCH /tasks/toggle/{id...}", s.handleTaskToggle)

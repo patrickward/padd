@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/patrickward/padd/internal/web"
@@ -70,4 +71,9 @@ func (s *Server) showServerError(w http.ResponseWriter, r *http.Request, err err
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (s *Server) respondWithJSONError(w http.ResponseWriter, payload any, code int) {
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(payload)
 }

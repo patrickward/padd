@@ -282,11 +282,24 @@
             <label for="image-url">Image URL:</label>
             <input type="url" id="image-url" placeholder="/images/example.jpg">
         </div>
+        <div class="field">
+            <label for="image-upload">Or, upload an image:</label>
+            <input type="file" id="image-upload" accept="image/*">
+            <div class="size-xs text-muted">Image will get converted to a base64 data-uri.</div>
+        </div>
+        <div id="upload-status" class="upload-status" style="display: none;"></div>
         <div class="cluster gap-xs">
             <button type="button" class="btn primary" id="insert-image">Insert</button>
             <button type="button" class="btn outline" command="close" commandfor="image-dialog">Cancel</button>
         </div>
       `)
+
+      document.getElementById('image-upload').addEventListener('change', async (e) => {
+        const file = e.target.files[0]
+        if (file) {
+          await this.#handleImageUpload(file, dialog)
+        }
+      })
 
       // Add event listener for the insert button - this is what was missing!
       document.getElementById('insert-image').addEventListener('click', () => {
@@ -297,6 +310,56 @@
       })
 
       this.#showDialog(dialog)
+    }
+
+    /**
+     * Handle image upload
+     */
+    async #handleImageUpload (file, dialog) {
+      const statusEL = document.getElementById('upload-status')
+      const urlInput = document.getElementById('image-url')
+      const altInput = document.getElementById('image-alt')
+
+      try {
+        statusEL.style.display = 'block'
+        statusEL.textContent = 'Uploading...'
+        statusEL.className = 'upload-status uploading'
+
+        // Create form
+        const formData = new FormData()
+        formData.append('image', file)
+
+        // Upload the file
+        const response = await fetch('/api/images/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        const result = await response.json()
+
+        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        console.log(result)
+
+        if (result.success) {
+          urlInput.value = result.dataUri
+
+          if (!altInput.value) {
+            altInput.value = file.name.replace(/\.[^/.]+$/, '')
+          }
+
+          statusEL.textContent = 'Upload successful!'
+          statusEL.className = 'upload-status success'
+
+          document.getElementById('image-upload').value = ''
+        } else {
+          throw new Error(result.message || 'Upload failed')
+        }
+      } catch(error) {
+        statusEL.textContent = `Error: ${error.message}`
+        statusEL.className = 'upload-status error'
+      } finally {
+        statusEL.style.display = 'block'
+      }
     }
 
     /**
@@ -433,7 +496,7 @@
 
       this.#textarea.setRangeText(text, start, end)
 
-      // Set cursor position after inserted text
+      // Set the cursor position after inserted text
       const newPosition = start + text.length
       this.#textarea.setSelectionRange(newPosition, newPosition)
       this.#textarea.focus()
