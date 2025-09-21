@@ -38,7 +38,7 @@
                     </button>
                 {{else}}
                     {{if .HasCompletedTasks}}
-                        <button hx-post="/api/tasks/complete/{{.CurrentFile.ID}}"
+                        <button hx-post="/tasks/complete/{{.CurrentFile.ID}}"
                                 hx-swap="none"
                                 hx-confirm="This will move completed tasks to a daily entry for today. Are you sure?"
                                 class="btn danger outline size-2xs">

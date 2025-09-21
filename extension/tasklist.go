@@ -165,7 +165,7 @@ func (r *TaskCheckBoxHTMLRenderer) renderTaskCheckBox(
 	}
 
 	// Add the line number as a data attribute for potential use in the frontend
-	_, _ = w.WriteString(fmt.Sprintf(` hx-patch="/api/tasks/toggle/%d" hx-swap="innerHTML" hx-target="#tasklist-label-%d" data-checkbox-id="%d"`, n.CheckboxID, n.CheckboxID, n.CheckboxID))
+	_, _ = w.WriteString(fmt.Sprintf(` hx-patch="/tasks/toggle/%d" hx-swap="innerHTML" hx-target="#tasklist-label-%d" data-checkbox-id="%d"`, n.CheckboxID, n.CheckboxID, n.CheckboxID))
 
 	if r.XHTML {
 		_, _ = w.WriteString(" /> ")
@@ -174,7 +174,7 @@ func (r *TaskCheckBoxHTMLRenderer) renderTaskCheckBox(
 	}
 
 	// Add the label
-	_, _ = w.WriteString(fmt.Sprintf(`<span hx-get="/api/tasks/edit/%d" hx-swap="innerHTML" hx-target="#tasklist-item-%d" id="tasklist-label-%d" class="tasklist-label fade-in">%s</span>`, n.CheckboxID, n.CheckboxID, n.CheckboxID, n.Label))
+	_, _ = w.WriteString(fmt.Sprintf(`<span hx-get="/tasks/edit/%d" hx-swap="innerHTML" hx-target="#tasklist-item-%d" id="tasklist-label-%d" class="tasklist-label fade-in">%s</span>`, n.CheckboxID, n.CheckboxID, n.CheckboxID, n.Label))
 
 	_, _ = w.WriteString(`</div>`)
 

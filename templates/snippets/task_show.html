@@ -6,10 +6,10 @@
         <input type="checkbox"
                id="tasklist-checkbox-{{.ID}}"
                {{if .IsChecked}}checked{{end}}
-               hx-patch="/api/tasks/toggle/{{.ID}}"
+               hx-patch="/tasks/toggle/{{.ID}}"
                hx-target="#tasklist-label-{{.ID}}" />
     {{end}}
-    <span hx-get="/api/tasks/edit/{{.ID}}"
+    <span hx-get="/tasks/edit/{{.ID}}"
           hx-swap="innerHTML"
           hx-target="#tasklist-item-{{.ID}}"
           id="tasklist-label-{{.ID}}"

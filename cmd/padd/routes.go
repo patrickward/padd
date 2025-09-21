@@ -16,16 +16,18 @@ func (s *Server) setupRoutes() http.Handler {
 	// Serve images (both embedded defaults and user-provided)
 	mux.Handle("GET /images/", s.handleImages())
 
-	// API routes
+	// Icons JSON
 	mux.HandleFunc("GET /api/icons", s.handleIconsAPI)
-	//mux.HandleFunc("GET /api/resources", s.handleResourcesAPI)
-	mux.HandleFunc("PATCH /api/tasks/toggle/{id...}", s.handleTaskToggle)
-	mux.HandleFunc("GET /api/tasks/edit/{id...}", s.handleTaskEdit)
-	mux.HandleFunc("GET /api/tasks/show/{id...}", s.handleTaskShow)
-	mux.HandleFunc("POST /api/tasks/complete/{id...}", s.handleArchiveDoneTasks)
-	mux.HandleFunc("PATCH /api/tasks/{id...}", s.handleTaskUpdate)
-	mux.HandleFunc("DELETE /api/tasks/{id...}", s.handleTaskDelete)
 
+	// Tasks
+	mux.HandleFunc("PATCH /tasks/toggle/{id...}", s.handleTaskToggle)
+	mux.HandleFunc("GET /tasks/edit/{id...}", s.handleTaskEdit)
+	mux.HandleFunc("GET /tasks/show/{id...}", s.handleTaskShow)
+	mux.HandleFunc("POST /tasks/complete/{id...}", s.handleArchiveDoneTasks)
+	mux.HandleFunc("PATCH /tasks/{id...}", s.handleTaskUpdate)
+	mux.HandleFunc("DELETE /tasks/{id...}", s.handleTaskDelete)
+
+	// Content
 	mux.HandleFunc("GET /edit/{id...}", s.handleEdit)
 	mux.HandleFunc("GET /daily/archive", s.handleTemporalArchive)
 	mux.HandleFunc("GET /daily", s.handleTemporalRoot("daily"))
