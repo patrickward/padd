@@ -1,4 +1,4 @@
-package padd
+package flash
 
 import (
 	"encoding/json"
@@ -12,16 +12,16 @@ type Flash struct {
 	Message string `json:"message"`
 }
 
-// FlashManager handles flash message operations using cookies
-type FlashManager struct {
+// Manager handles flash message operations using cookies
+type Manager struct {
 	cookieName string
 	maxAge     int
 	path       string
 }
 
-// NewFlashManager creates a new FlashManager with sensible defaults
-func NewFlashManager() *FlashManager {
-	return &FlashManager{
+// NewManager creates a new Manager with sensible defaults
+func NewManager() *Manager {
+	return &Manager{
 		cookieName: "padd_flash_message",
 		maxAge:     300, // 5 minutes
 		path:       "/",
@@ -29,7 +29,7 @@ func NewFlashManager() *FlashManager {
 }
 
 // Set stores a flash message in a cookie
-func (fm *FlashManager) Set(w http.ResponseWriter, msgType, message string) {
+func (fm *Manager) Set(w http.ResponseWriter, msgType, message string) {
 	flash := Flash{
 		Type:    msgType,
 		Message: message,
@@ -56,17 +56,17 @@ func (fm *FlashManager) Set(w http.ResponseWriter, msgType, message string) {
 }
 
 // SetSuccess is a convenience method for success messages
-func (fm *FlashManager) SetSuccess(w http.ResponseWriter, message string) {
+func (fm *Manager) SetSuccess(w http.ResponseWriter, message string) {
 	fm.Set(w, "success", message)
 }
 
 // SetError is a convenience method for error messages
-func (fm *FlashManager) SetError(w http.ResponseWriter, message string) {
+func (fm *Manager) SetError(w http.ResponseWriter, message string) {
 	fm.Set(w, "danger", message)
 }
 
 // Get retrieves and clears a flash message from cookies
-func (fm *FlashManager) Get(w http.ResponseWriter, r *http.Request) *Flash {
+func (fm *Manager) Get(w http.ResponseWriter, r *http.Request) *Flash {
 	cookie, err := r.Cookie(fm.cookieName)
 	if err != nil {
 		return nil
@@ -103,13 +103,13 @@ func (fm *FlashManager) Get(w http.ResponseWriter, r *http.Request) *Flash {
 }
 
 // HasFlash checks if there's a flash message without consuming it
-func (fm *FlashManager) HasFlash(r *http.Request) bool {
+func (fm *Manager) HasFlash(r *http.Request) bool {
 	_, err := r.Cookie(fm.cookieName)
 	return err == nil
 }
 
 // Peek gets a flash message without clearing it (useful for debugging)
-func (fm *FlashManager) Peek(r *http.Request) *Flash {
+func (fm *Manager) Peek(r *http.Request) *Flash {
 	cookie, err := r.Cookie(fm.cookieName)
 	if err != nil {
 		return nil

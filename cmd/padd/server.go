@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/patrickward/padd"
+	"github.com/patrickward/padd/internal/flash"
 )
 
 // Server holds the application state and configuration
@@ -21,7 +22,7 @@ type Server struct {
 	dataDir          string
 	rootManager      *padd.RootManager
 	fileRepo         *padd.FileRepository
-	flashManager     *padd.FlashManager
+	flashManager     *flash.Manager
 	backgroundRunner *padd.BackgroundRunner
 	renderer         *padd.MarkdownRenderer
 	baseTempl        *template.Template // Common templates (layouts, partials)
@@ -56,7 +57,7 @@ func NewServer(ctx context.Context, dataDir string, opts ...ServerOption) (*Serv
 		fileRepo:         fileRepo,
 		renderer:         renderer,
 		baseTempl:        tmpl,
-		flashManager:     padd.NewFlashManager(),
+		flashManager:     flash.NewManager(),
 		backgroundRunner: backgroundRunner,
 	}
 
