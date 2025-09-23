@@ -1,371 +1,376 @@
-/*! Markdown Toolbar for kelp.js integration */
+/*! Markdown Toolbar for PADD
+ * This is a simple Markdown toolbar that can assist in writing Markdown content for PADD.
+ *
+ * To add a new toolbar button:
+ * 1. add a new entry to the TOOLBAR_CONFIG object
+ * 2. add a new method to the ActionHandlers class
+ * 3. You may need to add a new CSS class to the toolbar for the icon
+ */
 'use strict';
 
 (() => {
-  // Template constants to avoid string concatenation in methods
-  const TOOLBAR_TEMPLATE = `
-    <div class="toolbar-group">
-        <button type="button" class="plain" data-action="link" title="Add Link">
-            <span class="toolbar-icon toolbar-icon-link"></span>
-            <span class="toolbar-label">Link</span>
-        </button>
-        <button type="button" class="plain" data-action="image" title="Add Image">
-            <span class="toolbar-icon toolbar-icon-image"></span>
-            <span class="toolbar-label">Image</span>
-        </button>
-        <button type="button" class="plain" data-action="icon" title="Add Icon">
-            <span class="toolbar-icon toolbar-icon-star"></span>
-            <span class="toolbar-label">Icon</span>
-        </button>
-        <button type="button" class="plain" data-action="bold" title="Bold Text (Ctrl+B)">
-            <span class="toolbar-icon toolbar-icon-bold"></span>
-            <span class="toolbar-label">Bold</span>
-        </button>
-        <button type="button" class="plain" data-action="italic" title="Italic Text (Ctrl+I)">
-            <span class="toolbar-icon toolbar-icon-italic"></span>
-            <span class="toolbar-label">Italic</span>
-        </button>
-        <button type="button" class="plain" data-action="code" title="Code">
-            <span class="toolbar-icon toolbar-icon-code"></span>
-            <span class="toolbar-label">Code</span>
-        </button>
-    </div>
-    <div class="toolbar-group">
-        <button type="button" class="plain primary" data-action="save" title="Save File (Ctrl+S)">
-            <span class="toolbar-icon toolbar-icon-save"></span>
-            <span class="toolbar-label">Save</span>
-        </button>
-        <button type="button" class="plain" data-action="cancel" title="Cancel">
-            <span class="toolbar-icon toolbar-icon-cancel"></span>
-            <span class="toolbar-label">Cancel</span>
-        </button>
-    </div>
-  `
-
-  customElements.define('markdown-toolbar', class extends HTMLElement {
-    /** @type HTMLTextAreaElement | null */
-    #textarea
-    /** @type HTMLElement | null */
-    #toolbar
-    /** @type HTMLElement | null */
-    #autogrowElement
-    /** @type IntersectionObserver | null */
-    #observer
-    /** @type Array<string> */
-    #availableIcons = []
-    /** @type string */
-    #cancelUrl
-    /** @type string */
-    #iconsApiUrl
-
-    // Initialize on connect
-    connectedCallback () {
-      this.init()
-    }
-
-    // Cleanup on disconnect
-    disconnectedCallback () {
-      if (this.#observer) {
-        this.#observer.disconnect()
+  /**
+   * Configuration object for toolbar buttons
+   */
+  const TOOLBAR_CONFIG = {
+    groups: [
+      {
+        name: 'formatting',
+        buttons: [
+          {
+            action: 'link',
+            title: 'Add Link',
+            icon: 'link',
+            label: 'Link',
+            shortcut: 'k'
+          },
+          {
+            action: 'image',
+            title: 'Add Image',
+            icon: 'image',
+            label: 'Image'
+          },
+          {
+            action: 'icon',
+            title: 'Add Icon',
+            icon: 'star',
+            label: 'Icon'
+          },
+          {
+            action: 'bold',
+            title: 'Bold Text (Ctrl+B)',
+            icon: 'bold',
+            label: 'Bold',
+            shortcut: 'b',
+            markdown: { before: '**', after: '**' }
+          },
+          {
+            action: 'italic',
+            title: 'Italic Text (Ctrl+I)',
+            icon: 'italic',
+            label: 'Italic',
+            shortcut: 'i',
+            markdown: { before: '*', after: '*' }
+          },
+          {
+            action: 'code',
+            title: 'Code',
+            icon: 'code',
+            label: 'Code',
+            shortcut: '`',
+            markdown: { before: '`', after: '`' }
+          }
+        ]
+      },
+      {
+        name: 'actions',
+        buttons: [
+          {
+            action: 'save',
+            title: 'Save File (Ctrl+S)',
+            icon: 'save',
+            label: 'Save',
+            class: 'primary',
+            shortcut: 's'
+          },
+          {
+            action: 'cancel',
+            title: 'Cancel',
+            icon: 'cancel',
+            label: 'Cancel'
+          }
+        ]
       }
+    ]
+  };
+
+  /**
+   * Action handlers for toolbar buttons
+   */
+  class ActionHandlers {
+    constructor(toolbar) {
+      this.toolbar = toolbar;
     }
 
-    // Initialize the component
-    async init () {
-      if (this.hasAttribute('is-ready')) return
+    // Simple markdown formatting actions
+    bold() { this.toolbar.wrapSelection('**', '**'); }
+    italic() { this.toolbar.wrapSelection('*', '*'); }
+    code() { this.toolbar.wrapSelection('`', '`'); }
 
-      this.#textarea = this.querySelector('textarea')
-      this.#autogrowElement = this.querySelector('kelp-autogrow')
-      this.#cancelUrl = this.getAttribute('cancel-url') || '/'
-      this.#iconsApiUrl = this.getAttribute('icons-api') || '/api/icons'
+    // Dialog-based actions
+    link() { this.toolbar.showDialog('link'); }
+    image() { this.toolbar.showDialog('image'); }
+    icon() { this.toolbar.showDialog('icon'); }
+
+    // Form actions
+    save() { this.toolbar.handleFormAction('save'); }
+    cancel() { this.toolbar.handleFormAction('cancel'); }
+  }
+
+  /**
+   * Dialog configurations
+   */
+  const DIALOG_CONFIGS = {
+    link: {
+      title: 'Add Link',
+      fields: [
+        { id: 'text', label: 'Link Text', type: 'text', placeholder: 'Enter link text', autofocus: true },
+        { id: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com' }
+      ],
+      onInsert: (fields) => `[${fields.text || 'Link'}](${fields.url || '#'})`
+    },
+
+    image: {
+      title: 'Add Image',
+      fields: [
+        { id: 'alt', label: 'Alt Text', type: 'text', placeholder: 'Describe the image', autofocus: true },
+        { id: 'url', label: 'Image URL', type: 'url', placeholder: '/images/example.jpg' },
+        {
+          id: 'upload',
+          label: 'Or, upload an image',
+          type: 'file',
+          accept: 'image/*',
+          help: 'Image will get converted to a base64 data-uri.',
+          handler: 'handleImageUpload'
+        }
+      ],
+      onInsert: (fields) => `![${fields.alt || 'Image'}](${fields.url || '/images/example.jpg'})`
+    },
+
+    icon: {
+      title: 'Add Icon',
+      custom: true, // Uses custom rendering
+      onInsert: (iconName) => `::${iconName}::`
+    }
+  };
+
+  /**
+   * Main MarkdownToolbar class
+   */
+  class MarkdownToolbar extends HTMLElement {
+    #textarea = null;
+    #toolbar = null;
+    #autogrowElement = null;
+    #observer = null;
+    #availableIcons = [];
+    #config = {
+      cancelUrl: '/',
+      iconsApiUrl: '/api/icons'
+    };
+
+    constructor() {
+      super();
+      this.actions = new ActionHandlers(this);
+    }
+
+    connectedCallback() {
+      this.init();
+    }
+
+    disconnectedCallback() {
+      this.#observer?.disconnect();
+    }
+
+    async init() {
+      if (this.hasAttribute('is-ready')) return;
+
+      this.#initializeElements();
+      this.#loadConfig();
 
       if (!this.#textarea || !this.#autogrowElement) {
-        console.warn('markdown-toolbar: No textarea or kelp-autogrow found')
-        return
+        console.warn('markdown-toolbar: Required elements not found');
+        return;
       }
 
-      // Load available icons
-      await this.#loadAvailableIcons()
-
-      this.render()
-      this.#setupStickyBehavior()
-      this.#setupKeyboardShortcuts()
-      this.addEventListener('click', this)
-      this.setAttribute('is-ready', '')
+      await this.#loadAvailableIcons();
+      this.#render();
+      this.#setupBehaviors();
+      this.setAttribute('is-ready', '');
     }
 
-    /**
-     * Setup keyboard shortcuts for common markdown operations
-     */
-    #setupKeyboardShortcuts () {
-      this.#textarea.addEventListener('keydown', (e) => {
-        // Handle Ctrl/Cmd shortcuts
-        if (e.ctrlKey || e.metaKey) {
-          const actions = {
-            'b': () => this.#wrapSelection('**', '**'),
-            'i': () => this.#wrapSelection('*', '*'),
-            'k': () => this.#showLinkDialog(),
-            's': () => this.#handleSave()
-          }
-
-          const action = actions[e.key]
-          if (action && (e.key !== 'k' || !document.querySelector('input[name="q"]'))) {
-            e.preventDefault()
-            action()
-          }
-        } else if (e.key === 'Tab') {
-          e.preventDefault()
-          this.#insertAtCursor('  ') // 2 spaces for indentation
-        }
-      })
+    #initializeElements() {
+      this.#textarea = this.querySelector('textarea');
+      this.#autogrowElement = this.querySelector('kelp-autogrow');
     }
 
-    /**
-     * Load available icons from the API
-     */
-    async #loadAvailableIcons () {
+    #loadConfig() {
+      this.#config.cancelUrl = this.getAttribute('cancel-url') || '/';
+      this.#config.iconsApiUrl = this.getAttribute('icons-api-url') || '/api/icons';
+    }
+
+    async #loadAvailableIcons() {
       try {
-        const response = await fetch(this.#iconsApiUrl)
+        const response = await fetch(this.#config.iconsApiUrl);
         if (response.ok) {
-          this.#availableIcons = await response.json()
+          this.#availableIcons = await response.json();
         }
       } catch (error) {
-        console.warn('Failed to load icons:', error)
-        this.#availableIcons = []
+        console.warn('Failed to load icons:', error);
       }
     }
 
-    // Render the toolbar
-    render () {
-      this.#toolbar = document.createElement('div')
-      this.#toolbar.className = 'markdown-toolbar'
-      this.#toolbar.innerHTML = TOOLBAR_TEMPLATE
-
-      // Insert toolbar before the kelp-autogrow element
-      this.insertBefore(this.#toolbar, this.#autogrowElement)
+    #render() {
+      this.#toolbar = document.createElement('div');
+      this.#toolbar.className = 'markdown-toolbar';
+      this.#toolbar.innerHTML = this.#generateToolbarHTML();
+      this.insertBefore(this.#toolbar, this.#autogrowElement);
     }
 
-    /**
-     * Setup sticky behavior for the toolbar
-     */
-    #setupStickyBehavior () {
-      // Create a sentinel element to detect when toolbar should stick
-      const sentinel = document.createElement('div')
-      sentinel.className = 'toolbar-sentinel'
-      this.insertBefore(sentinel, this.#toolbar)
+    #generateToolbarHTML() {
+      return TOOLBAR_CONFIG.groups.map(group =>
+        `<div class="toolbar-group">
+          ${group.buttons.map(button => this.#generateButtonHTML(button)).join('')}
+        </div>`
+      ).join('');
+    }
 
-      this.#observer = new IntersectionObserver((entries) => {
+    #generateButtonHTML(button) {
+      const className = `plain ${button.class || ''}`.trim();
+      return `
+        <button type="button" class="${className}" data-action="${button.action}" title="${button.title}">
+          <span class="toolbar-icon toolbar-icon-${button.icon}"></span>
+          <span class="toolbar-label">${button.label}</span>
+        </button>
+      `;
+    }
+
+    #setupBehaviors() {
+      this.#setupStickyBehavior();
+      this.#setupKeyboardShortcuts();
+      this.addEventListener('click', this.#handleClick.bind(this));
+    }
+
+    #setupStickyBehavior() {
+      const sentinel = document.createElement('div');
+      sentinel.className = 'toolbar-sentinel';
+      this.insertBefore(sentinel, this.#toolbar);
+
+      this.#observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            this.#toolbar.classList.remove('toolbar-sticky')
-          } else {
-            this.#toolbar.classList.add('toolbar-sticky')
+          this.#toolbar.classList.toggle('toolbar-sticky', !entry.isIntersecting);
+        });
+      });
+
+      this.#observer.observe(sentinel);
+    }
+
+    #setupKeyboardShortcuts() {
+      const shortcutMap = this.#buildShortcutMap();
+
+      this.#textarea.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          const action = shortcutMap[e.key];
+          if (action && (e.key !== 'k' || !document.querySelector('input[name="q"]'))) {
+            e.preventDefault();
+            this.executeAction(action);
           }
-        })
-      }, {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0
-      })
-
-      this.#observer.observe(sentinel)
-    }
-
-    /**
-     * Handle events using event delegation
-     * @param {Event} event The event object
-     */
-    handleEvent (event) {
-      if (event.type === 'click') {
-        this.#onClick(event)
-      }
-    }
-
-    /**
-     * Handle click events
-     * @param {Event} event The event object
-     */
-    #onClick (event) {
-      const toolbarBtn = event.target.closest('[data-action]')
-
-      if (toolbarBtn) {
-        event.preventDefault()
-        this.#executeAction(toolbarBtn.getAttribute('data-action'))
-      }
-    }
-
-    /**
-     * Execute toolbar action
-     * @param {string} action The action to execute
-     */
-    #executeAction (action) {
-      const actions = {
-        'link': () => this.#showLinkDialog(),
-        'image': () => this.#showImageDialog(),
-        'icon': () => this.#showIconDialog(),
-        'bold': () => this.#wrapSelection('**', '**'),
-        'italic': () => this.#wrapSelection('*', '*'),
-        'code': () => this.#wrapSelection('`', '`'),
-        'save': () => this.#handleSave(),
-        'cancel': () => this.#handleCancel()
-      }
-
-      const actionFn = actions[action]
-      if (actionFn) {
-        actionFn()
-      }
-    }
-
-    /**
-     * Handle save action
-     */
-    #handleSave () {
-      const form = this.closest('form')
-      if (form) {
-        // If the form element has a hx-post, hx-put, or hx-patch attribute,
-        if (form.hasAttribute('hx-post') || form.hasAttribute('hx-put') || form.hasAttribute('hx-patch')) {
-          window.htmx.trigger(form, 'submit')
-          return
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          this.insertAtCursor('  ');
         }
-
-        form.submit()
-      }
+      });
     }
 
-    /**
-     * Handle cancel action
-     */
-    #handleCancel () {
-      window.location.href = this.#cancelUrl
-    }
-
-    /**
-     * Show link dialog
-     */
-    #showLinkDialog () {
-      const dialog = this.#createDialog('link-dialog', 'Add Link', `
-        <div class="field">
-            <label for="link-text">Link Text:</label>
-            <input type="text" id="link-text" placeholder="Enter link text" autofocus>
-        </div>
-        <div class="field">
-            <label for="link-url">URL:</label>
-            <input type="url" id="link-url" placeholder="https://example.com">
-        </div>
-        <div class="cluster gap-xs">
-            <button type="button" class="btn primary" id="insert-link">Insert</button>
-            <button type="button" class="btn outline" command="close" commandfor="link-dialog">Cancel</button>
-        </div>
-      `)
-
-      // Add event listener for the insert button - this is what was missing!
-      document.getElementById('insert-link').addEventListener('click', () => {
-        const text = document.getElementById('link-text').value || 'Link'
-        const url = document.getElementById('link-url').value || '#'
-        this.#insertAtCursor(`[${text}](${url})`)
-        this.#hideDialog('link-dialog')
-      })
-
-      this.#showDialog(dialog)
-    }
-
-    /**
-     * Show image dialog
-     */
-    #showImageDialog () {
-      const dialog = this.#createDialog('image-dialog', 'Add Image', `
-        <div class="field">
-            <label for="image-alt">Alt Text:</label>
-            <input type="text" id="image-alt" placeholder="Describe the image" autofocus>
-        </div>
-        <div class="field">
-            <label for="image-url">Image URL:</label>
-            <input type="url" id="image-url" placeholder="/images/example.jpg">
-        </div>
-        <div class="field">
-            <label for="image-upload">Or, upload an image:</label>
-            <input type="file" id="image-upload" accept="image/*">
-            <div class="size-xs text-muted">Image will get converted to a base64 data-uri.</div>
-        </div>
-        <div id="upload-status" class="upload-status" style="display: none;"></div>
-        <div class="cluster gap-xs">
-            <button type="button" class="btn primary" id="insert-image">Insert</button>
-            <button type="button" class="btn outline" command="close" commandfor="image-dialog">Cancel</button>
-        </div>
-      `)
-
-      document.getElementById('image-upload').addEventListener('change', async (e) => {
-        const file = e.target.files[0]
-        if (file) {
-          await this.#handleImageUpload(file, dialog)
-        }
-      })
-
-      // Add event listener for the insert button - this is what was missing!
-      document.getElementById('insert-image').addEventListener('click', () => {
-        const alt = document.getElementById('image-alt').value || 'Image'
-        const url = document.getElementById('image-url').value || '/images/example.jpg'
-        this.#insertAtCursor(`![${alt}](${url})`)
-        this.#hideDialog('image-dialog')
-      })
-
-      this.#showDialog(dialog)
-    }
-
-    /**
-     * Handle image upload
-     */
-    async #handleImageUpload (file, dialog) {
-      const statusEL = document.getElementById('upload-status')
-      const urlInput = document.getElementById('image-url')
-      const altInput = document.getElementById('image-alt')
-
-      try {
-        statusEL.style.display = 'block'
-        statusEL.textContent = 'Uploading...'
-        statusEL.className = 'upload-status uploading'
-
-        // Create form
-        const formData = new FormData()
-        formData.append('image', file)
-
-        // Upload the file
-        const response = await fetch('/api/images/upload', {
-          method: 'POST',
-          body: formData
-        })
-
-        const result = await response.json()
-
-        if (result.success) {
-          urlInput.value = result.dataUri
-
-          if (!altInput.value) {
-            altInput.value = file.name.replace(/\.[^/.]+$/, '')
+    #buildShortcutMap() {
+      const shortcuts = {};
+      TOOLBAR_CONFIG.groups.forEach(group => {
+        group.buttons.forEach(button => {
+          if (button.shortcut) {
+            shortcuts[button.shortcut] = button.action;
           }
+        });
+      });
+      return shortcuts;
+    }
 
-          statusEL.textContent = 'Upload successful!'
-          statusEL.className = 'upload-status success'
-
-          document.getElementById('image-upload').value = ''
-        } else {
-          throw new Error(result.message || 'Upload failed')
-        }
-      } catch(error) {
-        statusEL.textContent = `Error: ${error.message}`
-        statusEL.className = 'upload-status error'
-      } finally {
-        statusEL.style.display = 'block'
+    #handleClick(event) {
+      const button = event.target.closest('[data-action]');
+      if (button) {
+        event.preventDefault();
+        this.executeAction(button.getAttribute('data-action'));
       }
     }
 
-    /**
-     * Show icon dialog
-     */
-    #showIconDialog () {
+    executeAction(action) {
+      const handler = this.actions[action];
+      if (handler) {
+        handler.call(this.actions);
+      }
+    }
+
+    // Public API methods
+    wrapSelection(before, after) {
+      const { selectionStart: start, selectionEnd: end, value } = this.#textarea;
+      const selectedText = value.substring(start, end);
+      const replacement = before + selectedText + after;
+
+      this.#textarea.setRangeText(replacement, start, end);
+
+      const newPosition = start + before.length + selectedText.length;
+      this.#textarea.setSelectionRange(newPosition, newPosition);
+      this.#textarea.focus();
+    }
+
+    insertAtCursor(text) {
+      const { selectionStart: start, selectionEnd: end } = this.#textarea;
+
+      this.#textarea.setRangeText(text, start, end);
+
+      const newPosition = start + text.length;
+      this.#textarea.setSelectionRange(newPosition, newPosition);
+      this.#textarea.focus();
+    }
+
+    showDialog(type) {
+      const config = DIALOG_CONFIGS[type];
+      if (!config) return;
+
+      if (config.custom) {
+        this.#showCustomDialog(type, config);
+      } else {
+        this.#showFieldDialog(type, config);
+      }
+    }
+
+    #showFieldDialog(type, config) {
+      const dialog = this.#createDialog(`${type}-dialog`, config.title,
+        this.#generateDialogContent(type, config));
+
+      // Setup field handlers
+      config.fields.forEach(field => {
+        if (field.handler) {
+          const element = document.getElementById(`${type}-${field.id}`);
+          if (element && this[field.handler]) {
+            element.addEventListener('change', (e) => {
+              if (e.target.files?.[0]) {
+                this[field.handler](e.target.files[0], dialog);
+              }
+            });
+          }
+        }
+      });
+
+      // Setup insert button
+      document.getElementById(`insert-${type}`).addEventListener('click', () => {
+        const fields = this.#collectDialogFields(type, config.fields);
+        const markdown = config.onInsert(fields);
+        this.insertAtCursor(markdown);
+        this.#hideDialog(`${type}-dialog`);
+      });
+
+      this.#showDialogElement(dialog);
+    }
+
+    #showCustomDialog(type, config) {
+      if (type === 'icon') {
+        this.#showIconDialog(config);
+      }
+    }
+
+    #showIconDialog(config) {
       if (!this.#availableIcons.length) {
-        alert('No icons available')
-        return
+        alert('No icons available');
+        return;
       }
 
       const iconGrid = this.#availableIcons.map(icon =>
@@ -373,130 +378,171 @@
           <img src="/images/icons/${icon}.svg" alt="${icon}" width="20" height="20">
           <span>${icon}</span>
         </button>`
-      ).join('')
+      ).join('');
 
-      const dialog = this.#createDialog('icon-dialog', 'Add Icon', `
+      const dialog = this.#createDialog('icon-dialog', config.title, `
         <div class="field">
-            <label for="icon-search">Search Icons:</label>
-            <input type="text" id="icon-search" placeholder="Type to filter icons..." autofocus>
+          <label for="icon-search">Search Icons:</label>
+          <input type="text" id="icon-search" placeholder="Type to filter icons..." autofocus>
         </div>
-        <div class="markdown-icon-grid">
-            ${iconGrid}
-        </div>
+        <div class="markdown-icon-grid">${iconGrid}</div>
         <div class="cluster gap-xs">
-            <button type="button" class="btn outline" command="close" commandfor="icon-dialog">Cancel</button>
+          <button type="button" class="btn outline" command="close" commandfor="icon-dialog">Cancel</button>
         </div>
-      `)
+      `);
 
-      // Add search functionality
-      const searchInput = document.getElementById('icon-search')
-      const iconOptions = dialog.querySelectorAll('.markdown-icon-option')
+      this.#setupIconDialogBehavior(dialog, config);
+      this.#showDialogElement(dialog);
+    }
 
+    #setupIconDialogBehavior(dialog, config) {
+      const searchInput = dialog.querySelector('#icon-search');
+      const iconOptions = dialog.querySelectorAll('.markdown-icon-option');
+
+      // Search functionality
       searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase()
+        const searchTerm = e.target.value.toLowerCase();
         iconOptions.forEach(option => {
-          const iconName = option.getAttribute('data-icon').toLowerCase()
-          option.style.display = iconName.includes(searchTerm) ? 'flex' : 'none'
-        })
-      })
+          const iconName = option.getAttribute('data-icon').toLowerCase();
+          option.style.display = iconName.includes(searchTerm) ? 'flex' : 'none';
+        });
+      });
 
-      // Add click handlers for icon selection
+      // Icon selection
       iconOptions.forEach(option => {
         option.addEventListener('click', () => {
-          const iconName = option.getAttribute('data-icon')
-          this.#insertAtCursor(`::${iconName}::`)
-          this.#hideDialog('icon-dialog')
-        })
-      })
-
-      this.#showDialog(dialog)
+          const iconName = option.getAttribute('data-icon');
+          const markdown = config.onInsert(iconName);
+          this.insertAtCursor(markdown);
+          this.#hideDialog('icon-dialog');
+        });
+      });
     }
 
-    /**
-     * Create a dialog element
-     * @param {string} id Dialog ID
-     * @param {string} title Dialog title
-     * @param {string} content Dialog content HTML
-     * @returns {HTMLDialogElement}
-     */
-    #createDialog (id, title, content) {
-      // Remove existing dialog if present
-      const existing = document.getElementById(id)
-      if (existing) existing.remove()
+    #generateDialogContent(type, config) {
+      const fieldsHTML = config.fields.map(field => {
+        const fieldId = `${type}-${field.id}`;
+        let fieldHTML = `
+          <div class="field">
+            <label for="${fieldId}">${field.label}:</label>
+        `;
 
-      const dialog = document.createElement('dialog')
-      dialog.id = id
-      dialog.className = 'markdown-toolbar-dialog'
-      dialog.setAttribute('closedby', 'any')
-      dialog.innerHTML = `
-        <header>
-            <h3>${title}</h3>
-        </header>
-        <div class="dialog-content">
-            ${content}
+        if (field.type === 'file') {
+          fieldHTML += `
+            <input type="${field.type}" id="${fieldId}" accept="${field.accept || ''}" ${field.autofocus ? 'autofocus' : ''}>
+            ${field.help ? `<div class="size-xs text-muted">${field.help}</div>` : ''}
+          `;
+        } else {
+          fieldHTML += `
+            <input type="${field.type}" id="${fieldId}" placeholder="${field.placeholder || ''}" ${field.autofocus ? 'autofocus' : ''}>
+          `;
+        }
+
+        return fieldHTML + '</div>';
+      }).join('');
+
+      return `
+        ${fieldsHTML}
+        ${config.fields.some(f => f.type === 'file') ? '<div id="upload-status" class="upload-status" style="display: none;"></div>' : ''}
+        <div class="cluster gap-xs">
+          <button type="button" class="btn primary" id="insert-${type}">Insert</button>
+          <button type="button" class="btn outline" command="close" commandfor="${type}-dialog">Cancel</button>
         </div>
-      `
-
-      document.body.appendChild(dialog)
-      return dialog
+      `;
     }
 
-    /**
-     * Show dialog
-     * @param {HTMLDialogElement} dialog
-     */
-    #showDialog (dialog) {
-      dialog.showModal()
-      // Focus first input if available
-      const firstInput = dialog.querySelector('input')
-      if (firstInput) firstInput.focus()
+    #collectDialogFields(type, fieldConfigs) {
+      const fields = {};
+      fieldConfigs.forEach(field => {
+        const element = document.getElementById(`${type}-${field.id}`);
+        if (element) {
+          fields[field.id] = element.value;
+        }
+      });
+      return fields;
     }
 
-    /**
-     * Hide dialog
-     * @param {string} id Dialog ID
-     */
-    #hideDialog (id) {
-      const dialog = document.getElementById(id)
+    #createDialog(id, title, content) {
+      // Remove existing dialog
+      document.getElementById(id)?.remove();
+
+      const dialog = document.createElement('dialog');
+      dialog.id = id;
+      dialog.className = 'markdown-toolbar-dialog';
+      dialog.setAttribute('closedby', 'any');
+      dialog.innerHTML = `
+        <header><h3>${title}</h3></header>
+        <div class="dialog-content">${content}</div>
+      `;
+
+      document.body.appendChild(dialog);
+      return dialog;
+    }
+
+    #showDialogElement(dialog) {
+      dialog.showModal();
+      dialog.querySelector('input')?.focus();
+    }
+
+    #hideDialog(id) {
+      const dialog = document.getElementById(id);
       if (dialog) {
-        dialog.close()
-        dialog.remove()
+        dialog.close();
+        dialog.remove();
       }
     }
 
-    /**
-     * Wrap selected text with given strings
-     * @param {string} before Text to add before selection
-     * @param {string} after Text to add after selection
-     */
-    #wrapSelection (before, after) {
-      const start = this.#textarea.selectionStart
-      const end = this.#textarea.selectionEnd
-      const selectedText = this.#textarea.value.substring(start, end)
-      const replacement = before + selectedText + after
-
-      this.#textarea.setRangeText(replacement, start, end)
-
-      // Set cursor position
-      const newPosition = start + before.length + selectedText.length
-      this.#textarea.setSelectionRange(newPosition, newPosition)
-      this.#textarea.focus()
+    handleFormAction(action) {
+      if (action === 'save') {
+        const form = this.closest('form');
+        if (form?.hasAttribute('hx-post') || form?.hasAttribute('hx-put') || form?.hasAttribute('hx-patch')) {
+          window.htmx?.trigger(form, 'submit');
+        } else {
+          form?.submit();
+        }
+      } else if (action === 'cancel') {
+        window.location.href = this.#config.cancelUrl;
+      }
     }
 
-    /**
-     * Insert text at cursor position
-     * @param {string} text Text to insert
-     */
-    #insertAtCursor (text) {
-      const start = this.#textarea.selectionStart
-      const end = this.#textarea.selectionEnd
+    // Keep existing image upload handler for compatibility
+    async handleImageUpload(file, dialog) {
+      const statusEl = document.getElementById('upload-status');
+      const urlInput = document.getElementById('image-url');
+      const altInput = document.getElementById('image-alt');
 
-      this.#textarea.setRangeText(text, start, end)
+      try {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Uploading...';
+        statusEl.className = 'upload-status uploading';
 
-      // Set the cursor position after inserted text
-      const newPosition = start + text.length
-      this.#textarea.setSelectionRange(newPosition, newPosition)
-      this.#textarea.focus()
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('/api/images/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          urlInput.value = result.dataUri;
+          if (!altInput.value) {
+            altInput.value = file.name.replace(/\.[^/.]+$/, '');
+          }
+          statusEl.textContent = 'Upload successful!';
+          statusEl.className = 'upload-status success';
+          document.getElementById('image-upload').value = '';
+        } else {
+          throw new Error(result.message || 'Upload failed');
+        }
+      } catch (error) {
+        statusEl.textContent = `Error: ${error.message}`;
+        statusEl.className = 'upload-status error';
+      }
     }
-  })
-})()
+  }
+
+  customElements.define('markdown-toolbar', MarkdownToolbar);
+})();
