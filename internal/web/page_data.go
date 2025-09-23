@@ -46,6 +46,7 @@ type PageData struct {
 	DirectoryTree    *files.DirectoryNode     // Directory tree for a page. For instance, resources or temporal archive pages.
 	PADDVersion      string                   // The current version of PADD
 	PADDDataDir      string                   // The current data directory for PADD
+	CSVData          *CSVData                 // CSV data for a page
 }
 
 func (p PageData) HasTasks() bool {
@@ -54,4 +55,11 @@ func (p PageData) HasTasks() bool {
 
 func (p PageData) HasCompletedTasks() bool {
 	return p.TasksCompleted > 0
+}
+
+type CSVData struct {
+	Records     [][]string
+	Metadata    *files.CSVMetadata
+	RecordCount int
+	ColumnCount int
 }

@@ -47,6 +47,11 @@ func (f FileInfo) RelativePathParts() []string {
 	return strings.Split(f.RelativePath(), "/")
 }
 
+// IsCSV returns true if the file is a CSV file
+func (f FileInfo) IsCSV() bool {
+	return strings.HasSuffix(f.Path, ".csv")
+}
+
 type Breadcrumb struct {
 	Path    string
 	Name    string

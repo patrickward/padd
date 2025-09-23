@@ -16,6 +16,8 @@ import (
 
 const emptyFilePath = "untitled"
 
+var fileExtensions = []string{".md", ".csv"}
+
 // FileRepository manages the core files and directories of the application.
 type FileRepository struct {
 	config            FileConfig
@@ -198,6 +200,8 @@ func (fr *FileRepository) ReloadCaches() {
 	fr.fileIndex = index
 	fr.lastCacheTime = time.Now()
 	log.Printf("Cache refreshed with %d files", len(fr.fileIndex))
+	log.Println("Cache:")
+	fr.printDirectoryTree(tree, "  ")
 }
 
 // printDirectoryTree prints the directory tree to a log.
@@ -463,6 +467,20 @@ func (fr *FileRepository) GetDocument(id string) (*Document, error) {
 	}, nil
 }
 
+// GetCSVDocument retrieves a CSV document by ID
+func (fr *FileRepository) GetCSVDocument(id string) (*CSVDocument, error) {
+	doc, err := fr.GetDocument(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if !strings.HasSuffix(doc.Info.Path, ".csv") {
+		return nil, fmt.Errorf("file is not a CSV file")
+	}
+
+	return NewCSVDocument(doc), nil
+}
+
 // GetOrCreateResourceDocument retrieves a document by ID, or creates a new one if it doesn't exist.
 // If the file doesn't exist, it will be created with default content. Files are always created
 // in the ResourcesDirectory. You can omit the ResourcesDirectory prefix in the ID and it will be
@@ -601,7 +619,18 @@ func (fr *FileRepository) buildDirectoryTree(directory string) (*DirectoryNode, 
 
 	results, err := fr.rootManager.Scan(directory, func(path string, d fs.DirEntry) bool {
 		// Skip directories and non-markdown files
-		if d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
+		//if d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
+		//	return false
+		//}
+
+		// Skip directories
+		if d.IsDir() {
+			return false
+		}
+
+		// Skip files that do not have one of the valid file extensions
+		ext := strings.ToLower(filepath.Ext(d.Name()))
+		if !slices.Contains(fileExtensions, ext) {
 			return false
 		}
 

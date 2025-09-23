@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/patrickward/padd/internal/files"
 	"github.com/patrickward/padd/internal/web"
 )
 
@@ -76,4 +77,18 @@ func (s *Server) showServerError(w http.ResponseWriter, r *http.Request, err err
 func (s *Server) respondWithJSONError(w http.ResponseWriter, payload any, code int) {
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func (s *Server) showDocumentError(w http.ResponseWriter, r *http.Request, doc *files.Document, err error) {
+	w.WriteHeader(http.StatusInternalServerError)
+
+	w.WriteHeader(http.StatusInternalServerError)
+	if err := s.executePage(w, "500.html", web.PageData{
+		Title:        "Server Error",
+		CurrentFile:  doc.Info,
+		NavMenuFiles: s.navigationMenu(""),
+		ErrorMessage: err.Error(),
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

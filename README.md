@@ -189,6 +189,41 @@ resources/
     └── 2024-01-standup.md
 ```
 
+## CSV Files 
+
+PADD has a simple approaching to reading and writing CSV files. It uses the standard library `encoding/csv` package
+to read and write CSV files.
+
+- Any file that ends with `.csv` is treated as a CSV file.
+- The first row of the file is treated as the header row. **A header is expected.**
+- If an associated `*.csv.meta.json` file exists in the same directory, it can be used to store some metadata, such as a title, description, headers, and sorting. For example, if the file is named `my-data.csv`, then the associated `my-data.csv.meta.json` can be used to store metadata. 
+
+### CSV Metadata
+
+
+```json
+{
+  "title": "My CSV Data",
+  "description": "This is a CSV file with some metadata.",
+  "sort_column": "date",
+  "sort_desc": true,
+  "headers": [
+    "date",
+    "number",
+    "string"
+  ],
+  "custom": {
+    "custom_field": "custom_value"
+  },
+  "column_types": {
+    "1": "date",
+    "2": "number",
+    "3": "string"
+  }
+}
+```
+
+
 ## Installation and Usage
 
 1. Clone or download the repository

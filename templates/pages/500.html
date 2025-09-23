@@ -17,7 +17,17 @@
 
             {{if .ErrorMessage}}
                 <div class="callout danger">
-                    <strong>Error Details:</strong> {{.ErrorMessage}}
+                    <div class="sidecar-end">
+                        <div>
+                            <strong>Error Details:</strong> {{.ErrorMessage}}
+                        </div>
+
+                        {{if .CurrentFile}}
+                            <div>
+                                <a href="/edit/{{.CurrentFile.ID}}" class="btn danger">Edit File</a>
+                            </div>
+                        {{end}}
+                    </div>
                 </div>
             {{end}}
         </div>
