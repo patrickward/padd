@@ -2,7 +2,6 @@ package files
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -170,8 +169,14 @@ func (d *Document) insertInSection(lines []string, formattedEntry string, config
 
 	// If the target header is empty, we treat it as not found and just prepend to top
 	if targetHeader == "##" || targetHeader == "" {
-		log.Println("No valid section header provided; prepending entry to top of file")
-		return append([]string{formattedEntry}, lines...)
+		// Need to find the frontmatter and insert the entry after it
+		bounds := contentutil.FindFrontmatter(lines)
+		if bounds.Found {
+			insertPos := bounds.End + 1
+			sectionStartIdx = insertPos
+		} else {
+			return append([]string{formattedEntry}, lines...)
+		}
 	}
 
 	for i, line := range lines {
@@ -189,9 +194,8 @@ func (d *Document) insertInSection(lines []string, formattedEntry string, config
 		}
 	}
 
-	// If the section not found, create it at the top
+	// If the section is not found, create it at the top
 	if sectionStartIdx == -1 {
-		log.Println("Section not found; creating new section: ", config.SectionHeader)
 		return d.createNewSection(lines, formattedEntry, config)
 	}
 

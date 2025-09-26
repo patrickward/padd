@@ -1,6 +1,8 @@
 package contentutil
 
-import "strings"
+import (
+	"strings"
+)
 
 type FrontmatterBounds struct {
 	Start int
@@ -20,8 +22,8 @@ func FindFrontmatter(lines []string) FrontmatterBounds {
 		startIdx++
 	}
 
-	// Return empty bounds if no frontmatter found, i.e., the first non-blank line is not "---"
-	if startIdx >= len(lines) || strings.TrimSpace(lines[startIdx]) != "---" {
+	// Return empty bounds if no frontmatter found, i.e., the first non-blank does not start with "---"
+	if startIdx >= len(lines) || !strings.HasPrefix(strings.TrimSpace(lines[startIdx]), "---") {
 		return FrontmatterBounds{}
 	}
 
@@ -30,7 +32,7 @@ func FindFrontmatter(lines []string) FrontmatterBounds {
 		line := strings.TrimSpace(lines[i])
 
 		// Closing delimiter found
-		if line == "---" {
+		if strings.HasPrefix(line, "---") {
 			return FrontmatterBounds{
 				Start: startIdx,
 				End:   i + 1,
